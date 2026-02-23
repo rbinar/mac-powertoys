@@ -1,9 +1,10 @@
-# 🎨 Menu Bar Color Picker v1.0.0
+# ⚙️ Mac Powertoys v1.0.0
 
-A powerful color picker utility that lives in your macOS menu bar.
+A collection of powerful utilities for macOS, accessible from your menu bar.
 
 ## ✨ Features
 
+### 🎨 Color Picker
 - 🎯 **Screen Color Picker**: Use the eyedropper tool to pick any color from your screen
 - 🎨 **Native Color Panel**: Access macOS's built-in color picker
 - 📋 **Auto-Copy**: Hex codes are automatically copied to clipboard
@@ -14,14 +15,14 @@ A powerful color picker utility that lives in your macOS menu bar.
 
 ## 📋 Requirements
 
-- macOS 11.0 (Big Sur) or later
-- 64-bit Intel or Apple Silicon Mac
+- macOS 15.5 or later
+- Apple Silicon or Intel Mac
 
 ## 🚀 Installation
 
-1. Download `MenuBarColorPicker.dmg` from the assets below
+1. Download `MacPowertoys.dmg` from the assets below
 2. Open the DMG file
-3. Drag `MenuBarColorPicker.app` to your Applications folder
+3. Drag `MacPowertoys.app` to your Applications folder
 4. Launch from Applications or Spotlight
 
 ## 🎯 Usage
@@ -47,5 +48,5 @@ None at this time.
 
 ## 🔗 Links
 
-- [Source Code](https://github.com/rbinar/menu-bar-color-picker)
-- [Report Issues](https://github.com/rbinar/menu-bar-color-picker/issues)
+- [Source Code](https://github.com/rbinar/mac-powertoys)
+- [Report Issues](https://github.com/rbinar/mac-powertoys/issues)

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct MenuBarColorPickerApp: App {
+struct MacPowertoysApp: App {
     @StateObject private var model = ColorModel()
 
     init() {
@@ -12,17 +12,15 @@ struct MenuBarColorPickerApp: App {
     }
 
     var body: some Scene {
-        // Menu bar icon + popover
-        MenuBarExtra("Color Picker", systemImage: "eyedropper.halffull") {
+        MenuBarExtra("Mac Powertoys", systemImage: "wrench.and.screwdriver") {
             ContentView()
                 .environmentObject(model)
-                .frame(width: 340) // popover width
+                .frame(width: 340)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-                    // Also close color panel when app is closing
                     model.closeColorPanel()
                 }
         }
-        .menuBarExtraStyle(.window) // popover that behaves like a window
+        .menuBarExtraStyle(.window)
     }
 }
