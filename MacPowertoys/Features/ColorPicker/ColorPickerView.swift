@@ -1,11 +1,30 @@
 import SwiftUI
 import AppKit
 
-struct ContentView: View {
+struct ColorPickerView: View {
     @EnvironmentObject var model: ColorModel
+    let onBack: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Navigation header
+            HStack {
+                Button {
+                    onBack()
+                } label: {
+                    Label("Back", systemImage: "chevron.left")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.plain)
+
+                Text("Color Picker")
+                    .font(.system(.headline, design: .rounded))
+
+                Spacer()
+            }
+
+            Divider()
+
             HStack {
                 Button {
                     model.pickFromScreen()
@@ -38,25 +57,11 @@ struct ContentView: View {
             ValueRow(title: "HSL", value: model.hslString, onCopy: { model.copy(model.hslString) })
             ValueRow(title: "HSV", value: model.hsvString, onCopy: { model.copy(model.hsvString) })
 
-            HStack {
-                // Color history
-                if !model.colorHistory.isEmpty {
-                    ColorHistoryView()
-                        .environmentObject(model)
-                }
-                
-                Spacer()
-                Button {
-                    NSApplication.shared.terminate(nil)
-                } label: {
-                    Label("Quit", systemImage: "power")
-                        .labelStyle(.titleAndIcon)
-                }
-                .keyboardShortcut("q")
-                .buttonStyle(.bordered)
+            if !model.colorHistory.isEmpty {
+                ColorHistoryView()
+                    .environmentObject(model)
             }
         }
-        .padding(12)
     }
 }
 
@@ -87,14 +92,29 @@ struct ValueRow: View {
 
 struct SwatchView: View {
     let nsColor: NSColor
+    var swatchHeight: CGFloat = 38
+    var swatchCornerRadius: CGFloat = 6
+    var onSelect: ((NSColor) -> Void)? = nil
+
     var body: some View {
         let shades = ColorMath.shades(of: nsColor, count: 7)
         return HStack(spacing: 6) {
             ForEach(0..<shades.count, id: \.self) { i in
-                Rectangle()
-                    .fill(Color(nsColor: shades[i]))
-                    .frame(height: 38)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                if let onSelect {
+                    Button {
+                        onSelect(shades[i])
+                    } label: {
+                        RoundedRectangle(cornerRadius: swatchCornerRadius)
+                            .fill(Color(nsColor: shades[i]))
+                            .frame(height: swatchHeight)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Use shade \(ColorMath.hexString(shades[i]))")
+                } else {
+                    RoundedRectangle(cornerRadius: swatchCornerRadius)
+                        .fill(Color(nsColor: shades[i]))
+                        .frame(height: swatchHeight)
+                }
             }
         }
     }
@@ -122,8 +142,7 @@ struct ColorHistoryView: View {
                                 .stroke(.secondary.opacity(0.3), lineWidth: 0.5)
                         )
                         .overlay(
-                            // Indicator for selected color
-                            model.nsColor == color ? 
+                            model.nsColor == color ?
                             Circle()
                                 .stroke(.primary, lineWidth: 1.5)
                                 .frame(width: 22, height: 22)

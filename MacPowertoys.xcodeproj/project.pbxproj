@@ -12,27 +12,27 @@
 			containerPortal = B52E96482E7ACB5600DB7440 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B52E964F2E7ACB5600DB7440;
-			remoteInfo = MenuBarColorPicker;
+			remoteInfo = MacPowertoys;
 		};
 		B52E96692E7ACB5700DB7440 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B52E96482E7ACB5600DB7440 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B52E964F2E7ACB5600DB7440;
-			remoteInfo = MenuBarColorPicker;
+			remoteInfo = MacPowertoys;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B52E96502E7ACB5600DB7440 /* MenuBarColorPicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuBarColorPicker.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B52E965E2E7ACB5700DB7440 /* MenuBarColorPickerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuBarColorPickerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B52E96682E7ACB5700DB7440 /* MenuBarColorPickerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuBarColorPickerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B52E96502E7ACB5600DB7440 /* MacPowertoys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacPowertoys.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B52E965E2E7ACB5700DB7440 /* MacPowertoysTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacPowertoysTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B52E96682E7ACB5700DB7440 /* MacPowertoysUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacPowertoysUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B52E96522E7ACB5600DB7440 /* MenuBarColorPicker */ = {
+		B52E96522E7ACB5600DB7440 /* MacPowertoys */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MenuBarColorPicker;
+			path = MacPowertoys;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -65,7 +65,7 @@
 		B52E96472E7ACB5600DB7440 = {
 			isa = PBXGroup;
 			children = (
-				B52E96522E7ACB5600DB7440 /* MenuBarColorPicker */,
+				B52E96522E7ACB5600DB7440 /* MacPowertoys */,
 				B52E96512E7ACB5600DB7440 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,9 +73,9 @@
 		B52E96512E7ACB5600DB7440 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B52E96502E7ACB5600DB7440 /* MenuBarColorPicker.app */,
-				B52E965E2E7ACB5700DB7440 /* MenuBarColorPickerTests.xctest */,
-				B52E96682E7ACB5700DB7440 /* MenuBarColorPickerUITests.xctest */,
+				B52E96502E7ACB5600DB7440 /* MacPowertoys.app */,
+				B52E965E2E7ACB5700DB7440 /* MacPowertoysTests.xctest */,
+				B52E96682E7ACB5700DB7440 /* MacPowertoysUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,9 +83,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B52E964F2E7ACB5600DB7440 /* MenuBarColorPicker */ = {
+		B52E964F2E7ACB5600DB7440 /* MacPowertoys */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MenuBarColorPicker" */;
+			buildConfigurationList = B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoys" */;
 			buildPhases = (
 				B52E964C2E7ACB5600DB7440 /* Sources */,
 				B52E964D2E7ACB5600DB7440 /* Frameworks */,
@@ -96,18 +96,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B52E96522E7ACB5600DB7440 /* MenuBarColorPicker */,
+				B52E96522E7ACB5600DB7440 /* MacPowertoys */,
 			);
-			name = MenuBarColorPicker;
+			name = MacPowertoys;
 			packageProductDependencies = (
 			);
-			productName = MenuBarColorPicker;
-			productReference = B52E96502E7ACB5600DB7440 /* MenuBarColorPicker.app */;
+			productName = MacPowertoys;
+			productReference = B52E96502E7ACB5600DB7440 /* MacPowertoys.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B52E965D2E7ACB5700DB7440 /* MenuBarColorPickerTests */ = {
+		B52E965D2E7ACB5700DB7440 /* MacPowertoysTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MenuBarColorPickerTests" */;
+			buildConfigurationList = B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysTests" */;
 			buildPhases = (
 				B52E965A2E7ACB5700DB7440 /* Sources */,
 				B52E965B2E7ACB5700DB7440 /* Frameworks */,
@@ -118,16 +118,16 @@
 			dependencies = (
 				B52E96602E7ACB5700DB7440 /* PBXTargetDependency */,
 			);
-			name = MenuBarColorPickerTests;
+			name = MacPowertoysTests;
 			packageProductDependencies = (
 			);
-			productName = MenuBarColorPickerTests;
-			productReference = B52E965E2E7ACB5700DB7440 /* MenuBarColorPickerTests.xctest */;
+			productName = MacPowertoysTests;
+			productReference = B52E965E2E7ACB5700DB7440 /* MacPowertoysTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B52E96672E7ACB5700DB7440 /* MenuBarColorPickerUITests */ = {
+		B52E96672E7ACB5700DB7440 /* MacPowertoysUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MenuBarColorPickerUITests" */;
+			buildConfigurationList = B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysUITests" */;
 			buildPhases = (
 				B52E96642E7ACB5700DB7440 /* Sources */,
 				B52E96652E7ACB5700DB7440 /* Frameworks */,
@@ -138,11 +138,11 @@
 			dependencies = (
 				B52E966A2E7ACB5700DB7440 /* PBXTargetDependency */,
 			);
-			name = MenuBarColorPickerUITests;
+			name = MacPowertoysUITests;
 			packageProductDependencies = (
 			);
-			productName = MenuBarColorPickerUITests;
-			productReference = B52E96682E7ACB5700DB7440 /* MenuBarColorPickerUITests.xctest */;
+			productName = MacPowertoysUITests;
+			productReference = B52E96682E7ACB5700DB7440 /* MacPowertoysUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -168,7 +168,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MenuBarColorPicker" */;
+			buildConfigurationList = B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MacPowertoys" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -182,9 +182,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B52E964F2E7ACB5600DB7440 /* MenuBarColorPicker */,
-				B52E965D2E7ACB5700DB7440 /* MenuBarColorPickerTests */,
-				B52E96672E7ACB5700DB7440 /* MenuBarColorPickerUITests */,
+				B52E964F2E7ACB5600DB7440 /* MacPowertoys */,
+				B52E965D2E7ACB5700DB7440 /* MacPowertoysTests */,
+				B52E96672E7ACB5700DB7440 /* MacPowertoysUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -240,12 +240,12 @@
 /* Begin PBXTargetDependency section */
 		B52E96602E7ACB5700DB7440 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B52E964F2E7ACB5600DB7440 /* MenuBarColorPicker */;
+			target = B52E964F2E7ACB5600DB7440 /* MacPowertoys */;
 			targetProxy = B52E965F2E7ACB5700DB7440 /* PBXContainerItemProxy */;
 		};
 		B52E966A2E7ACB5700DB7440 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B52E964F2E7ACB5600DB7440 /* MenuBarColorPicker */;
+			target = B52E964F2E7ACB5600DB7440 /* MacPowertoys */;
 			targetProxy = B52E96692E7ACB5700DB7440 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -374,7 +374,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = MenuBarColorPicker/MenuBarColorPicker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = MacPowertoys/MacPowertoys.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -387,7 +387,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MenuBarColorPicker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rbinar.MacPowertoys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -400,7 +400,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = MenuBarColorPicker/MenuBarColorPicker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = MacPowertoys/MacPowertoys.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -413,7 +413,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MenuBarColorPicker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rbinar.MacPowertoys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -430,11 +430,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MenuBarColorPickerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MenuBarColorPicker.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MenuBarColorPicker";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacPowertoys.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacPowertoys";
 			};
 			name = Debug;
 		};
@@ -447,11 +447,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MenuBarColorPickerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MenuBarColorPicker.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MenuBarColorPicker";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacPowertoys.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacPowertoys";
 			};
 			name = Release;
 		};
@@ -462,11 +462,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MenuBarColorPickerUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MenuBarColorPicker;
+				TEST_TARGET_NAME = MacPowertoys;
 			};
 			name = Debug;
 		};
@@ -477,18 +477,18 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MenuBarColorPickerUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MenuBarColorPicker;
+				TEST_TARGET_NAME = MacPowertoys;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MenuBarColorPicker" */ = {
+		B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MacPowertoys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96702E7ACB5700DB7440 /* Debug */,
@@ -497,7 +497,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MenuBarColorPicker" */ = {
+		B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96732E7ACB5700DB7440 /* Debug */,
@@ -506,7 +506,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MenuBarColorPickerTests" */ = {
+		B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96762E7ACB5700DB7440 /* Debug */,
@@ -515,7 +515,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MenuBarColorPickerUITests" */ = {
+		B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96792E7ACB5700DB7440 /* Debug */,

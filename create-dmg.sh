@@ -6,7 +6,7 @@ if [ -z "$VERSION" ]; then
     VERSION="1.0.0"
 fi
 
-APP_NAME="MenuBarColorPicker"
+APP_NAME="MacPowertoys"
 DMG_NAME="${APP_NAME}-v${VERSION}.dmg"
 APP_PATH="./build/Build/Products/Release/${APP_NAME}.app"
 
@@ -24,7 +24,7 @@ ln -s /Applications dmg-staging/Applications
 
 # Create DMG with better styling
 create-dmg \
-  --volname "Menu Bar Color Picker" \
+  --volname "Mac Powertoys" \
   --window-pos 200 120 \
   --window-size 800 500 \
   --icon-size 120 \
@@ -36,7 +36,7 @@ create-dmg \
     echo "❌ Enhanced DMG creation failed, trying basic method..."
     
     # Fallback method
-    hdiutil create -volname "Menu Bar Color Picker" \
+    hdiutil create -volname "Mac Powertoys" \
                    -srcfolder dmg-staging \
                    -ov -format UDZO \
                    "$DMG_NAME"
