@@ -12,27 +12,27 @@
 			containerPortal = B52E96482E7ACB5600DB7440 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B52E964F2E7ACB5600DB7440;
-			remoteInfo = MacPowertoys;
+			remoteInfo = MacPowerToys;
 		};
 		B52E96692E7ACB5700DB7440 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B52E96482E7ACB5600DB7440 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B52E964F2E7ACB5600DB7440;
-			remoteInfo = MacPowertoys;
+			remoteInfo = MacPowerToys;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B52E96502E7ACB5600DB7440 /* MacPowertoys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacPowertoys.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B52E965E2E7ACB5700DB7440 /* MacPowertoysTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacPowertoysTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B52E96682E7ACB5700DB7440 /* MacPowertoysUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacPowertoysUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B52E96502E7ACB5600DB7440 /* MacPowerToys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacPowerToys.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B52E965E2E7ACB5700DB7440 /* MacPowerToysTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacPowerToysTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B52E96682E7ACB5700DB7440 /* MacPowerToysUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacPowerToysUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B52E96522E7ACB5600DB7440 /* MacPowertoys */ = {
+		B52E96522E7ACB5600DB7440 /* MacPowerToys */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MacPowertoys;
+			path = MacPowerToys;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -65,7 +65,7 @@
 		B52E96472E7ACB5600DB7440 = {
 			isa = PBXGroup;
 			children = (
-				B52E96522E7ACB5600DB7440 /* MacPowertoys */,
+				B52E96522E7ACB5600DB7440 /* MacPowerToys */,
 				B52E96512E7ACB5600DB7440 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,9 +73,9 @@
 		B52E96512E7ACB5600DB7440 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B52E96502E7ACB5600DB7440 /* MacPowertoys.app */,
-				B52E965E2E7ACB5700DB7440 /* MacPowertoysTests.xctest */,
-				B52E96682E7ACB5700DB7440 /* MacPowertoysUITests.xctest */,
+				B52E96502E7ACB5600DB7440 /* MacPowerToys.app */,
+				B52E965E2E7ACB5700DB7440 /* MacPowerToysTests.xctest */,
+				B52E96682E7ACB5700DB7440 /* MacPowerToysUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,9 +83,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B52E964F2E7ACB5600DB7440 /* MacPowertoys */ = {
+		B52E964F2E7ACB5600DB7440 /* MacPowerToys */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoys" */;
+			buildConfigurationList = B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowerToys" */;
 			buildPhases = (
 				B52E964C2E7ACB5600DB7440 /* Sources */,
 				B52E964D2E7ACB5600DB7440 /* Frameworks */,
@@ -96,18 +96,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B52E96522E7ACB5600DB7440 /* MacPowertoys */,
+				B52E96522E7ACB5600DB7440 /* MacPowerToys */,
 			);
-			name = MacPowertoys;
+			name = MacPowerToys;
 			packageProductDependencies = (
 			);
-			productName = MacPowertoys;
-			productReference = B52E96502E7ACB5600DB7440 /* MacPowertoys.app */;
+			productName = MacPowerToys;
+			productReference = B52E96502E7ACB5600DB7440 /* MacPowerToys.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B52E965D2E7ACB5700DB7440 /* MacPowertoysTests */ = {
+		B52E965D2E7ACB5700DB7440 /* MacPowerToysTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysTests" */;
+			buildConfigurationList = B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowerToysTests" */;
 			buildPhases = (
 				B52E965A2E7ACB5700DB7440 /* Sources */,
 				B52E965B2E7ACB5700DB7440 /* Frameworks */,
@@ -118,16 +118,16 @@
 			dependencies = (
 				B52E96602E7ACB5700DB7440 /* PBXTargetDependency */,
 			);
-			name = MacPowertoysTests;
+			name = MacPowerToysTests;
 			packageProductDependencies = (
 			);
-			productName = MacPowertoysTests;
-			productReference = B52E965E2E7ACB5700DB7440 /* MacPowertoysTests.xctest */;
+			productName = MacPowerToysTests;
+			productReference = B52E965E2E7ACB5700DB7440 /* MacPowerToysTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B52E96672E7ACB5700DB7440 /* MacPowertoysUITests */ = {
+		B52E96672E7ACB5700DB7440 /* MacPowerToysUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysUITests" */;
+			buildConfigurationList = B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowerToysUITests" */;
 			buildPhases = (
 				B52E96642E7ACB5700DB7440 /* Sources */,
 				B52E96652E7ACB5700DB7440 /* Frameworks */,
@@ -138,11 +138,11 @@
 			dependencies = (
 				B52E966A2E7ACB5700DB7440 /* PBXTargetDependency */,
 			);
-			name = MacPowertoysUITests;
+			name = MacPowerToysUITests;
 			packageProductDependencies = (
 			);
-			productName = MacPowertoysUITests;
-			productReference = B52E96682E7ACB5700DB7440 /* MacPowertoysUITests.xctest */;
+			productName = MacPowerToysUITests;
+			productReference = B52E96682E7ACB5700DB7440 /* MacPowerToysUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -168,7 +168,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MacPowertoys" */;
+			buildConfigurationList = B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MacPowerToys" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -182,9 +182,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B52E964F2E7ACB5600DB7440 /* MacPowertoys */,
-				B52E965D2E7ACB5700DB7440 /* MacPowertoysTests */,
-				B52E96672E7ACB5700DB7440 /* MacPowertoysUITests */,
+				B52E964F2E7ACB5600DB7440 /* MacPowerToys */,
+				B52E965D2E7ACB5700DB7440 /* MacPowerToysTests */,
+				B52E96672E7ACB5700DB7440 /* MacPowerToysUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -240,12 +240,12 @@
 /* Begin PBXTargetDependency section */
 		B52E96602E7ACB5700DB7440 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B52E964F2E7ACB5600DB7440 /* MacPowertoys */;
+			target = B52E964F2E7ACB5600DB7440 /* MacPowerToys */;
 			targetProxy = B52E965F2E7ACB5700DB7440 /* PBXContainerItemProxy */;
 		};
 		B52E966A2E7ACB5700DB7440 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B52E964F2E7ACB5600DB7440 /* MacPowertoys */;
+			target = B52E964F2E7ACB5600DB7440 /* MacPowerToys */;
 			targetProxy = B52E96692E7ACB5700DB7440 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -374,7 +374,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = MacPowertoys/MacPowertoys.entitlements;
+				CODE_SIGN_ENTITLEMENTS = MacPowerToys/MacPowerToys.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -387,7 +387,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rbinar.MacPowertoys;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rbinar.MacPowerToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -400,7 +400,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = MacPowertoys/MacPowertoys.entitlements;
+				CODE_SIGN_ENTITLEMENTS = MacPowerToys/MacPowerToys.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -413,7 +413,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rbinar.MacPowertoys;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rbinar.MacPowerToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -430,11 +430,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysTests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowerToysTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacPowertoys.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacPowertoys";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacPowerToys.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacPowerToys";
 			};
 			name = Debug;
 		};
@@ -447,11 +447,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysTests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowerToysTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacPowertoys.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacPowertoys";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacPowerToys.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacPowerToys";
 			};
 			name = Release;
 		};
@@ -462,11 +462,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowerToysUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MacPowertoys;
+				TEST_TARGET_NAME = MacPowerToys;
 			};
 			name = Debug;
 		};
@@ -477,18 +477,18 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowertoysUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = test.MacPowerToysUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MacPowertoys;
+				TEST_TARGET_NAME = MacPowerToys;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MacPowertoys" */ = {
+		B52E964B2E7ACB5600DB7440 /* Build configuration list for PBXProject "MacPowerToys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96702E7ACB5700DB7440 /* Debug */,
@@ -497,7 +497,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoys" */ = {
+		B52E96722E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowerToys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96732E7ACB5700DB7440 /* Debug */,
@@ -506,7 +506,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysTests" */ = {
+		B52E96752E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowerToysTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96762E7ACB5700DB7440 /* Debug */,
@@ -515,7 +515,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowertoysUITests" */ = {
+		B52E96782E7ACB5700DB7440 /* Build configuration list for PBXNativeTarget "MacPowerToysUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B52E96792E7ACB5700DB7440 /* Debug */,

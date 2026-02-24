@@ -1,24 +1,38 @@
 import SwiftUI
 
 @main
-struct MacPowertoysApp: App {
+struct MacPowerToysApp: App {
     @StateObject private var model = ColorModel()
+    @StateObject private var mouseUtilitiesModel = MouseUtilitiesModel()
+    @StateObject private var mouseHighlighterModel = MouseHighlighterModel()
+    @StateObject private var crosshairsModel = CrosshairsModel()
+    @StateObject private var cursorWrapModel = CursorWrapModel()
 
     init() {
         // Hide color panel at app startup
         DispatchQueue.main.async {
             NSColorPanel.shared.orderOut(nil)
         }
+
+
     }
 
     var body: some Scene {
-        MenuBarExtra("Mac Powertoys", systemImage: "wrench.and.screwdriver") {
+        MenuBarExtra("Mac PowerToys", systemImage: "wrench.and.screwdriver") {
             ContentView()
                 .environmentObject(model)
+                .environmentObject(mouseUtilitiesModel)
+                .environmentObject(mouseHighlighterModel)
+                .environmentObject(crosshairsModel)
+                .environmentObject(cursorWrapModel)
                 .frame(width: 340)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
                     model.closeColorPanel()
+                    mouseUtilitiesModel.stopMonitoring()
+                    mouseHighlighterModel.stopMonitoring()
+                    crosshairsModel.stopMonitoring()
+                    cursorWrapModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)
