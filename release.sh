@@ -1,5 +1,5 @@
 #!/bin/bash
-# release.sh - Automated release script for Mac Powertoys
+# release.sh - Automated release script for Mac PowerToys
 
 VERSION=$1
 if [ -z "$VERSION" ]; then
@@ -12,8 +12,8 @@ set -e
 echo "🏗️  Building release version $VERSION..."
 
 # Clean ve build
-xcodebuild -project MacPowertoys.xcodeproj \
-           -scheme MacPowertoys \
+xcodebuild -project MacPowerToys.xcodeproj \
+           -scheme MacPowerToys \
            -configuration Release \
            -derivedDataPath ./build \
            clean build
@@ -24,7 +24,7 @@ if security find-identity -v -p codesigning | grep -q "Developer ID Application"
     echo "📝 Developer ID found, signing application..."
     DEVELOPER_ID=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
     codesign --force --options runtime --sign "$DEVELOPER_ID" \
-             "./build/Build/Products/Release/MacPowertoys.app"
+             "./build/Build/Products/Release/MacPowerToys.app"
     echo "✅ Application signed with: $DEVELOPER_ID"
 else
     echo "⚠️  No Developer ID found - app will show security warning on other Macs"
@@ -41,26 +41,26 @@ fi
 
 # DMG oluştur
 create-dmg \
-  --volname "Mac Powertoys" \
-  --volicon "MacPowertoys/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
+    --volname "Mac PowerToys" \
+  --volicon "MacPowerToys/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
   --window-pos 200 120 \
   --window-size 800 400 \
   --icon-size 128 \
-  --icon "MacPowertoys.app" 200 190 \
-  --hide-extension "MacPowertoys.app" \
+  --icon "MacPowerToys.app" 200 190 \
+  --hide-extension "MacPowerToys.app" \
   --app-drop-link 600 190 \
   --background-color "#F5F5F7" \
-  "MacPowertoys-v${VERSION}.dmg" \
+  "MacPowerToys-v${VERSION}.dmg" \
   "./build/Build/Products/Release/" || {
     echo "DMG creation failed, trying alternative method..."
     # Alternative DMG creation
     mkdir -p dmg-temp
-    cp -R "./build/Build/Products/Release/MacPowertoys.app" dmg-temp/
+    cp -R "./build/Build/Products/Release/MacPowerToys.app" dmg-temp/
     ln -s /Applications dmg-temp/Applications
-    hdiutil create -volname "Mac Powertoys" \
+    hdiutil create -volname "Mac PowerToys" \
                    -srcfolder dmg-temp \
                    -ov -format UDZO \
-                   "MacPowertoys-v${VERSION}.dmg"
+                   "MacPowerToys-v${VERSION}.dmg"
     rm -rf dmg-temp
 }
 
@@ -74,14 +74,14 @@ git push origin main
 git push origin "v${VERSION}"
 
 echo "🚀 Release files ready!"
-echo "📦 DMG file: MacPowertoys-v${VERSION}.dmg"
+echo "📦 DMG file: MacPowerToys-v${VERSION}.dmg"
 echo "📝 Release notes: RELEASE_NOTES.md"
 echo ""
 echo "Next steps:"
 echo "1. Go to https://github.com/rbinar/mac-powertoys/releases"
 echo "2. Click 'Create a new release'"
 echo "3. Choose tag v${VERSION}"
-echo "4. Upload MacPowertoys-v${VERSION}.dmg"
+echo "4. Upload MacPowerToys-v${VERSION}.dmg"
 echo "5. Copy content from RELEASE_NOTES.md"
 echo "6. Publish release!"
 
@@ -90,8 +90,8 @@ if command -v gh &> /dev/null; then
     echo ""
     echo "🤖 GitHub CLI detected. Creating release automatically..."
     gh release create "v${VERSION}" \
-        "MacPowertoys-v${VERSION}.dmg" \
-        --title "Mac Powertoys v${VERSION}" \
+        "MacPowerToys-v${VERSION}.dmg" \
+        --title "Mac PowerToys v${VERSION}" \
         --notes-file RELEASE_NOTES.md
     echo "✅ Release v${VERSION} published successfully!"
     echo "📥 Download: https://github.com/$(gh repo view --json owner,name -q '.owner.login + "/" + .name")/releases/tag/v${VERSION}"

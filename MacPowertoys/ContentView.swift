@@ -3,10 +3,19 @@ import AppKit
 
 enum Feature: Hashable {
     case colorPicker
+    case mouseUtilitiesHub
+    case findMyMouse
+    case mouseHighlighter
+    case crosshairs
+    case cursorWrap
 }
 
 struct ContentView: View {
     @EnvironmentObject var model: ColorModel
+    @EnvironmentObject var mouseUtilitiesModel: MouseUtilitiesModel
+    @EnvironmentObject var mouseHighlighterModel: MouseHighlighterModel
+    @EnvironmentObject var crosshairsModel: CrosshairsModel
+    @EnvironmentObject var cursorWrapModel: CursorWrapModel
     @State private var activeFeature: Feature? = nil
 
     var body: some View {
@@ -29,7 +38,7 @@ struct ContentView: View {
                 Image(systemName: "wrench.and.screwdriver")
                     .font(.title3)
                     .foregroundStyle(.secondary)
-                Text("Mac Powertoys")
+                Text("Mac PowerToys")
                     .font(.system(.headline, design: .rounded))
             }
 
@@ -116,6 +125,53 @@ struct ContentView: View {
                     .fill(.quaternary.opacity(0.45))
             )
 
+            // Mouse Utilities module
+            VStack(alignment: .leading, spacing: 12) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        activeFeature = .mouseUtilitiesHub
+                    }
+                } label: {
+                    HStack {
+                        Text("Mouse Utilities")
+                            .font(.system(.title3, design: .rounded))
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                HStack(spacing: 10) {
+                    Image(systemName: "cursorarrow.rays")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.14))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        )
+
+                    Text(mouseUtilitiesStatusText)
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.quaternary.opacity(0.45))
+            )
+
             Divider()
 
             // Footer
@@ -139,12 +195,159 @@ struct ContentView: View {
     private func featureView(for feature: Feature) -> some View {
         switch feature {
         case .colorPicker:
-            ColorPickerView(onBack: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = nil
-                }
-            })
-            .environmentObject(model)
+            ColorPickerView(onBack: { goBack() })
+                .environmentObject(model)
+        case .mouseUtilitiesHub:
+            mouseUtilitiesHubView
+        case .findMyMouse:
+            MouseUtilitiesView(onBack: { goBack(to: .mouseUtilitiesHub) })
+                .environmentObject(mouseUtilitiesModel)
+        case .mouseHighlighter:
+            MouseHighlighterView(onBack: { goBack(to: .mouseUtilitiesHub) })
+                .environmentObject(mouseHighlighterModel)
+        case .crosshairs:
+            CrosshairsView(onBack: { goBack(to: .mouseUtilitiesHub) })
+                .environmentObject(crosshairsModel)
+        case .cursorWrap:
+            CursorWrapView(onBack: { goBack(to: .mouseUtilitiesHub) })
+                .environmentObject(cursorWrapModel)
         }
+    }
+
+    private func goBack(to feature: Feature? = nil) {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            activeFeature = feature
+        }
+    }
+
+    // MARK: - Mouse Utilities Hub
+
+    private var mouseUtilitiesHubView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Navigation header
+            HStack {
+                Button { goBack() } label: {
+                    Label("Back", systemImage: "chevron.left")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.plain)
+
+                Text("Mouse Utilities")
+                    .font(.system(.headline, design: .rounded))
+
+                Spacer()
+            }
+
+            Divider()
+
+            mouseUtilityRow(
+                title: "Find My Mouse",
+                icon: "cursorarrow.rays",
+                description: "Spotlight on cursor",
+                shortcut: "Double ⌃",
+                isEnabled: $mouseUtilitiesModel.isEnabled,
+                feature: .findMyMouse
+            )
+
+            mouseUtilityRow(
+                title: "Mouse Highlighter",
+                icon: "hand.tap",
+                description: "Highlight clicks",
+                shortcut: "Double Left ⌥",
+                isEnabled: $mouseHighlighterModel.isEnabled,
+                feature: .mouseHighlighter
+            )
+
+            mouseUtilityRow(
+                title: "Mouse Crosshairs",
+                icon: "plus.circle",
+                description: "Crosshair overlay",
+                shortcut: "Double Right ⌥",
+                isEnabled: $crosshairsModel.isEnabled,
+                feature: .crosshairs
+            )
+
+            mouseUtilityRow(
+                title: "Cursor Wrap",
+                icon: "arrow.trianglehead.2.counterclockwise",
+                description: "Wrap at edges",
+                shortcut: nil,
+                isEnabled: $cursorWrapModel.isEnabled,
+                feature: .cursorWrap
+            )
+        }
+    }
+
+    private func mouseUtilityRow(
+        title: String,
+        icon: String,
+        description: String,
+        shortcut: String?,
+        isEnabled: Binding<Bool>,
+        feature: Feature
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 28, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(.white.opacity(0.14))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                )
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = feature
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.medium)
+                    HStack(spacing: 4) {
+                        Text(description)
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundStyle(.tertiary)
+                        if let shortcut {
+                            Text("·")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundStyle(.quaternary)
+                            Text(shortcut)
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(.quaternary)
+                        }
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Toggle("", isOn: isEnabled)
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .controlSize(.mini)
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Helper
+
+    private var mouseUtilitiesStatusText: String {
+        let count = [
+            mouseUtilitiesModel.isEnabled,
+            mouseHighlighterModel.isEnabled,
+            crosshairsModel.isEnabled,
+            cursorWrapModel.isEnabled
+        ].filter { $0 }.count
+
+        if count == 0 { return "All disabled" }
+        return "\(count) of 4 enabled"
     }
 }

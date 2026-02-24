@@ -6,7 +6,7 @@ if [ -z "$VERSION" ]; then
     VERSION="1.0.0"
 fi
 
-APP_NAME="MacPowertoys"
+APP_NAME="MacPowerToys"
 DMG_NAME="${APP_NAME}-v${VERSION}.dmg"
 APP_PATH="./build/Build/Products/Release/${APP_NAME}.app"
 
@@ -24,7 +24,7 @@ ln -s /Applications dmg-staging/Applications
 
 # Create DMG with better styling
 create-dmg \
-  --volname "Mac Powertoys" \
+  --volname "Mac PowerToys" \
   --window-pos 200 120 \
   --window-size 800 500 \
   --icon-size 120 \
@@ -36,7 +36,7 @@ create-dmg \
     echo "❌ Enhanced DMG creation failed, trying basic method..."
     
     # Fallback method
-    hdiutil create -volname "Mac Powertoys" \
+    hdiutil create -volname "Mac PowerToys" \
                    -srcfolder dmg-staging \
                    -ov -format UDZO \
                    "$DMG_NAME"

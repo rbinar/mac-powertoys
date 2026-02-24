@@ -1,8 +1,8 @@
-# ⚙️ Mac Powertoys
+# ⚙️ Mac PowerToys
 
 A collection of powerful utilities for macOS, accessible from your menu bar. Inspired by Microsoft PowerToys.
 
-![Mac Powertoys](https://img.shields.io/badge/macOS-15.5+-blue.svg)
+![Mac PowerToys](https://img.shields.io/badge/macOS-15.5+-blue.svg)
 ![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
@@ -29,14 +29,14 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 ## 🚀 Installation
 
 ### Download from Releases
-1. Download the latest `MacPowertoys.dmg` from [Releases](https://github.com/rbinar/mac-powertoys/releases)
+1. Download the latest `MacPowerToys.dmg` from [Releases](https://github.com/rbinar/mac-powertoys/releases)
 2. Open the DMG file
-3. Drag `MacPowertoys.app` to your Applications folder
+3. Drag `MacPowerToys.app` to your Applications folder
 4. Launch from Applications or Spotlight
 
 ### ⚠️ Security Notice (First Launch)
 Since this app is not notarized by Apple, you may see a security warning on first launch:
-1. If you see **"MacPowertoys" Cannot Be Opened**, click **"OK"**
+1. If you see **"MacPowerToys" Cannot Be Opened**, click **"OK"**
 2. Go to **System Preferences > Security & Privacy > General**
 3. Click **"Open Anyway"** next to the blocked app message
 4. Click **"Open"** in the confirmation dialog
@@ -47,13 +47,13 @@ This is a one-time setup - the app will launch normally afterwards.
 ```bash
 git clone https://github.com/rbinar/mac-powertoys.git
 cd mac-powertoys
-open MacPowertoys.xcodeproj
+open MacPowerToys.xcodeproj
 ```
 
 ## 🎯 Usage
 
 1. **Launch the app** - The wrench icon will appear in your menu bar
-2. **Click the menu bar icon** to open Mac Powertoys
+2. **Click the menu bar icon** to open Mac PowerToys
 3. **Select a tool** from the feature list
 4. **Color Picker**:
    - Click "Pick" button and use eyedropper on screen
