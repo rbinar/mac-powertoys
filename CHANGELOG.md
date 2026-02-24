@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Mac Powertoys will be documented in this file.
+All notable changes to Mac PowerToys will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,10 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Added a Mac Powertoys feature hub in the menu bar popover with quick access to modules. 2026-02-23 22:31
+- Added a Mac PowerToys feature hub in the menu bar popover with quick access to modules. 2026-02-23 22:31
+- Added Mouse Utilities module with four features: Find My Mouse, Mouse Highlighter, Mouse Crosshairs, and Cursor Wrap. 2026-02-24 12:55
+- Find My Mouse dims all screens and spotlights the cursor when activated via double-tap Left Control. 2026-02-24 12:55
+- Mouse Highlighter draws colored circles on left/right clicks to highlight cursor activity. 2026-02-24 12:55
+- Mouse Crosshairs shows a full-screen crosshair overlay that follows the cursor. 2026-02-24 12:55
+- Cursor Wrap teleports the cursor to the opposite screen edge when it hits a boundary. 2026-02-24 12:55
+- Global keyboard shortcuts for all Mouse Utilities features work without Accessibility permission. 2026-02-24 12:55
 
 ### Changed
-- Renamed the app and Xcode project from MenuBarColorPicker to MacPowertoys, including targets, scheme references, and bundle identifiers. 2026-02-23 22:31
+- Renamed the app and Xcode project from MenuBarColorPicker to MacPowerToys, including targets, scheme references, and bundle identifiers. 2026-02-23 22:31
 - Updated the main module card to a Control Center-like layout with quick actions directly on the first screen. 2026-02-23 22:31
 - Replaced the quick progress bar with a clickable shade gamut generated from the current color for faster selection. 2026-02-23 22:31
 - Unified main-menu and detail swatch rendering so both screens show the exact same alternative color gamut. 2026-02-23 22:31
@@ -23,13 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed remaining legacy naming references in project metadata, scripts, and release links after the rebrand. 2026-02-23 22:31
+- Mouse Highlighter and Crosshairs overlays now work correctly across all connected monitors. 2026-02-24 12:55
+- Find My Mouse spotlight now tracks the cursor accurately on external displays. 2026-02-24 12:55
 
 ### Security
 
 ## [1.0.0] - 2025-09-17
 
 ### Added
-- Initial release of Mac Powertoys with Color Picker feature
+- Initial release of Mac PowerToys with Color Picker feature
 - Screen color picker with eyedropper tool
 - Native macOS color panel integration
 - Automatic hex code copying to clipboard

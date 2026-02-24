@@ -1,4 +1,4 @@
-# ⚙️ Mac Powertoys v1.0.0
+# ⚙️ Mac PowerToys v1.0.0
 
 A collection of powerful utilities for macOS, accessible from your menu bar.
 
@@ -20,9 +20,9 @@ A collection of powerful utilities for macOS, accessible from your menu bar.
 
 ## 🚀 Installation
 
-1. Download `MacPowertoys.dmg` from the assets below
+1. Download `MacPowerToys.dmg` from the assets below
 2. Open the DMG file
-3. Drag `MacPowertoys.app` to your Applications folder
+3. Drag `MacPowerToys.app` to your Applications folder
 4. Launch from Applications or Spotlight
 
 ## 🎯 Usage
