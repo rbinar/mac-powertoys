@@ -15,7 +15,7 @@ A collection of powerful utilities for macOS, accessible from your menu bar.
 
 ## 📋 Requirements
 
-- macOS 15.5 or later
+- **macOS 15.5 or later** (Note: This is a significant update from the previous 11.0+ requirement)
 - Apple Silicon or Intel Mac
 
 ## 🚀 Installation
@@ -27,11 +27,12 @@ A collection of powerful utilities for macOS, accessible from your menu bar.
 
 ## 🎯 Usage
 
-1. Click the eyedropper icon in your menu bar
-2. Use the eyedropper tool to pick colors from anywhere on screen
-3. Or click the color picker button for manual color selection
-4. Hex codes are automatically copied to your clipboard
-5. View color history and different format representations
+1. Click the wrench icon in your menu bar
+2. Select a tool from the feature list
+3. For Color Picker: Use the eyedropper tool to pick colors from anywhere on screen
+4. Or click the color picker button for manual color selection
+5. Hex codes are automatically copied to your clipboard
+6. View color history and different format representations
 
 ## 📝 What's New in v1.0.0
 

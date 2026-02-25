@@ -25,7 +25,7 @@ final class CursorWrapModel: ObservableObject {
 
         lastCursorPosition = NSEvent.mouseLocation
 
-        trackingTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
+        trackingTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.checkAndWrap()
             }

@@ -149,7 +149,7 @@ class FindMyMouseOverlayView: NSView {
         ctx.setBlendMode(.normal)
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let gradientColors = [
-            CGColor(gray: 0, alpha: 0),
+            bgColor.withAlphaComponent(0).cgColor,
             bgColor.withAlphaComponent(currentOpacity).cgColor
         ] as CFArray
         let gradientLocations: [CGFloat] = [0.0, 1.0]

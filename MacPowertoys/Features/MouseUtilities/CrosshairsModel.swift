@@ -38,6 +38,7 @@ final class CrosshairsModel: ObservableObject {
     private var shortcutLocalMonitor: Any?
     private var lastOptionPressTime: Date?
     private let doublePressInterval: TimeInterval = 0.4
+    private let rightOptionKeyCode: UInt16 = 0x3D
 
     init() {
         registerShortcut()
@@ -56,8 +57,7 @@ final class CrosshairsModel: ObservableObject {
     }
 
     private func handleFlagsChanged(_ event: NSEvent) {
-        // Right Option key = keyCode 0x3D
-        guard event.modifierFlags.contains(.option), event.keyCode == 0x3D else { return }
+        guard event.modifierFlags.contains(.option), event.keyCode == rightOptionKeyCode else { return }
         let now = Date()
         if let last = lastOptionPressTime, now.timeIntervalSince(last) < doublePressInterval {
             lastOptionPressTime = nil

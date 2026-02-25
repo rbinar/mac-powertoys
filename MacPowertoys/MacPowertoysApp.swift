@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct MacPowerToysApp: App {
     @StateObject private var model = ColorModel()
-    @StateObject private var mouseUtilitiesModel = MouseUtilitiesModel()
+    @StateObject private var findMyMouseModel = FindMyMouseModel()
     @StateObject private var mouseHighlighterModel = MouseHighlighterModel()
     @StateObject private var crosshairsModel = CrosshairsModel()
     @StateObject private var cursorWrapModel = CursorWrapModel()
@@ -15,14 +15,16 @@ struct MacPowerToysApp: App {
             NSColorPanel.shared.orderOut(nil)
         }
 
-
+        // Request Accessibility permissions for global shortcuts
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
     }
 
     var body: some Scene {
         MenuBarExtra("Mac PowerToys", systemImage: "wrench.and.screwdriver") {
             ContentView()
                 .environmentObject(model)
-                .environmentObject(mouseUtilitiesModel)
+                .environmentObject(findMyMouseModel)
                 .environmentObject(mouseHighlighterModel)
                 .environmentObject(crosshairsModel)
                 .environmentObject(cursorWrapModel)
@@ -31,7 +33,7 @@ struct MacPowerToysApp: App {
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
                     model.closeColorPanel()
-                    mouseUtilitiesModel.stopMonitoring()
+                    findMyMouseModel.stopMonitoring()
                     mouseHighlighterModel.stopMonitoring()
                     crosshairsModel.stopMonitoring()
                     cursorWrapModel.stopMonitoring()

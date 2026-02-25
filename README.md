@@ -23,7 +23,7 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 
 ## 📋 Requirements
 
-- macOS 15.5 or later
+- **macOS 15.5 or later** (Note: This is a significant update from the previous 11.0+ requirement)
 - Apple Silicon or Intel Mac
 
 ## 🚀 Installation
