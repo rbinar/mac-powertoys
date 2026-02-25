@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct MouseUtilitiesView: View {
-    @EnvironmentObject var model: MouseUtilitiesModel
+struct FindMyMouseView: View {
+    @EnvironmentObject var model: FindMyMouseModel
     let onBack: () -> Void
 
     var body: some View {

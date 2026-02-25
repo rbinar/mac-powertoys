@@ -95,24 +95,22 @@ final class ScreenRulerModel: ObservableObject {
 
         // Check Screen Recording permissions
         if !CGPreflightScreenCaptureAccess() {
-            let granted = CGRequestScreenCaptureAccess()
-            if !granted {
-                DispatchQueue.main.async {
-                    let alert = NSAlert()
-                    alert.messageText = "Screen Recording Permission Required"
-                    alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
-                    alert.alertStyle = .warning
-                    alert.addButton(withTitle: "Open System Settings")
-                    alert.addButton(withTitle: "Cancel")
-                    if alert.runModal() == .alertFirstButtonReturn {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                            NSWorkspace.shared.open(url)
-                        }
+            CGRequestScreenCaptureAccess()
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = "Screen Recording Permission Required"
+                alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "Open System Settings")
+                alert.addButton(withTitle: "Cancel")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                        NSWorkspace.shared.open(url)
                     }
                 }
-                isEnabled = false
-                return
             }
+            isEnabled = false
+            return
         }
 
         isActive = true
@@ -345,7 +343,7 @@ final class ScreenRulerModel: ObservableObject {
             entry.view.setNeedsDisplay(entry.view.bounds)
         }
         toolbarView?.currentMode = mode
-        toolbarView?.setNeedsDisplay(toolbarView!.bounds)
+        toolbarView.map { $0.setNeedsDisplay($0.bounds) }
     }
 
     // MARK: - Tracking

@@ -22,12 +22,7 @@ struct CursorWrapView: View {
 
             Divider()
 
-            Toggle(isOn: Binding(
-                get: { model.isEnabled },
-                set: { newValue in
-                    model.isEnabled = newValue
-                }
-            )) {
+            Toggle(isOn: $model.isEnabled) {
                 Label("Enable Cursor Wrap", systemImage: "arrow.trianglehead.2.counterclockwise")
                     .font(.system(.body, design: .rounded))
             }

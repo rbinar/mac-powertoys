@@ -25,6 +25,7 @@ final class MouseHighlighterModel: ObservableObject {
     private var shortcutLocalMonitor: Any?
     private var lastOptionPressTime: Date?
     private let doublePressInterval: TimeInterval = 0.4
+    private let leftOptionKeyCode: UInt16 = 0x3A
 
     init() {
         registerShortcut()
@@ -43,8 +44,7 @@ final class MouseHighlighterModel: ObservableObject {
     }
 
     private func handleFlagsChanged(_ event: NSEvent) {
-        // Left Option key = keyCode 0x3A
-        guard event.modifierFlags.contains(.option), event.keyCode == 0x3A else { return }
+        guard event.modifierFlags.contains(.option), event.keyCode == leftOptionKeyCode else { return }
         let now = Date()
         if let last = lastOptionPressTime, now.timeIntervalSince(last) < doublePressInterval {
             lastOptionPressTime = nil

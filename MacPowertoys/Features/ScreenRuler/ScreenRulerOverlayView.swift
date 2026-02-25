@@ -236,14 +236,13 @@ class ScreenRulerToolbarView: NSView {
     private struct ToolbarButton {
         let mode: MeasurementMode?
         let symbol: String
-        let shortcut: String
     }
 
     private let buttons: [ToolbarButton] = [
-        ToolbarButton(mode: .bounds, symbol: "⊞", shortcut: "⌘1"),
-        ToolbarButton(mode: .spacing, symbol: "✛", shortcut: "⌘2"),
-        ToolbarButton(mode: .horizontal, symbol: "━", shortcut: "⌘3"),
-        ToolbarButton(mode: .vertical, symbol: "┃", shortcut: "⌘4"),
+        ToolbarButton(mode: .bounds, symbol: "⊞"),
+        ToolbarButton(mode: .spacing, symbol: "✛"),
+        ToolbarButton(mode: .horizontal, symbol: "━"),
+        ToolbarButton(mode: .vertical, symbol: "┃"),
     ]
 
     init(frame: NSRect, onModeChange: @escaping (MeasurementMode) -> Void, onClose: @escaping () -> Void) {

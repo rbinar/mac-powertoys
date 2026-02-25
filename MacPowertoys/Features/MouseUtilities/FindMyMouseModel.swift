@@ -9,7 +9,7 @@ enum ActivationMethod: String, CaseIterable, Identifiable {
 }
 
 @MainActor
-final class MouseUtilitiesModel: ObservableObject {
+final class FindMyMouseModel: ObservableObject {
     // MARK: - Settings
     @Published var isEnabled: Bool = false {
         didSet {

@@ -13,12 +13,13 @@ enum Feature: Hashable {
 
 struct ContentView: View {
     @EnvironmentObject var model: ColorModel
-    @EnvironmentObject var mouseUtilitiesModel: MouseUtilitiesModel
+    @EnvironmentObject var findMyMouseModel: FindMyMouseModel
     @EnvironmentObject var mouseHighlighterModel: MouseHighlighterModel
     @EnvironmentObject var crosshairsModel: CrosshairsModel
     @EnvironmentObject var cursorWrapModel: CursorWrapModel
     @EnvironmentObject var screenRulerModel: ScreenRulerModel
     @State private var activeFeature: Feature? = nil
+    @State private var showingQuitAlert = false
 
     var body: some View {
         Group {
@@ -235,13 +236,21 @@ struct ContentView: View {
             HStack {
                 Spacer()
                 Button {
-                    NSApplication.shared.terminate(nil)
+                    showingQuitAlert = true
                 } label: {
                     Label("Quit", systemImage: "power")
                         .labelStyle(.titleAndIcon)
                 }
                 .keyboardShortcut("q")
                 .buttonStyle(.bordered)
+                .alert("Quit Mac PowerToys?", isPresented: $showingQuitAlert) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Quit", role: .destructive) {
+                        NSApplication.shared.terminate(nil)
+                    }
+                } message: {
+                    Text("Are you sure you want to quit?")
+                }
             }
         }
     }
@@ -257,8 +266,8 @@ struct ContentView: View {
         case .mouseUtilitiesHub:
             mouseUtilitiesHubView
         case .findMyMouse:
-            MouseUtilitiesView(onBack: { goBack(to: .mouseUtilitiesHub) })
-                .environmentObject(mouseUtilitiesModel)
+            FindMyMouseView(onBack: { goBack(to: .mouseUtilitiesHub) })
+                .environmentObject(findMyMouseModel)
         case .mouseHighlighter:
             MouseHighlighterView(onBack: { goBack(to: .mouseUtilitiesHub) })
                 .environmentObject(mouseHighlighterModel)
@@ -305,7 +314,7 @@ struct ContentView: View {
                 icon: "cursorarrow.rays",
                 description: "Spotlight on cursor",
                 shortcut: "Double ⌃",
-                isEnabled: $mouseUtilitiesModel.isEnabled,
+                isEnabled: $findMyMouseModel.isEnabled,
                 feature: .findMyMouse
             )
 
@@ -401,7 +410,7 @@ struct ContentView: View {
 
     private var mouseUtilitiesStatusText: String {
         let count = [
-            mouseUtilitiesModel.isEnabled,
+            findMyMouseModel.isEnabled,
             mouseHighlighterModel.isEnabled,
             crosshairsModel.isEnabled,
             cursorWrapModel.isEnabled
