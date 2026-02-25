@@ -7,6 +7,7 @@ struct MacPowerToysApp: App {
     @StateObject private var mouseHighlighterModel = MouseHighlighterModel()
     @StateObject private var crosshairsModel = CrosshairsModel()
     @StateObject private var cursorWrapModel = CursorWrapModel()
+    @StateObject private var screenRulerModel = ScreenRulerModel()
 
     init() {
         // Hide color panel at app startup
@@ -25,6 +26,7 @@ struct MacPowerToysApp: App {
                 .environmentObject(mouseHighlighterModel)
                 .environmentObject(crosshairsModel)
                 .environmentObject(cursorWrapModel)
+                .environmentObject(screenRulerModel)
                 .frame(width: 340)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -33,6 +35,7 @@ struct MacPowerToysApp: App {
                     mouseHighlighterModel.stopMonitoring()
                     crosshairsModel.stopMonitoring()
                     cursorWrapModel.stopMonitoring()
+                    screenRulerModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

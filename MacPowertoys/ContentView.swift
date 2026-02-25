@@ -8,6 +8,7 @@ enum Feature: Hashable {
     case mouseHighlighter
     case crosshairs
     case cursorWrap
+    case screenRuler
 }
 
 struct ContentView: View {
@@ -16,6 +17,7 @@ struct ContentView: View {
     @EnvironmentObject var mouseHighlighterModel: MouseHighlighterModel
     @EnvironmentObject var crosshairsModel: CrosshairsModel
     @EnvironmentObject var cursorWrapModel: CursorWrapModel
+    @EnvironmentObject var screenRulerModel: ScreenRulerModel
     @State private var activeFeature: Feature? = nil
 
     var body: some View {
@@ -23,7 +25,10 @@ struct ContentView: View {
             if let feature = activeFeature {
                 featureView(for: feature)
             } else {
-                featureHub
+                ScrollView {
+                    featureHub
+                }
+                .frame(maxHeight: 500)
             }
         }
         .padding(12)
@@ -125,6 +130,58 @@ struct ContentView: View {
                     .fill(.quaternary.opacity(0.45))
             )
 
+            // Screen Ruler module
+            VStack(alignment: .leading, spacing: 12) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        activeFeature = .screenRuler
+                    }
+                } label: {
+                    HStack {
+                        Text("Screen Ruler")
+                            .font(.system(.title3, design: .rounded))
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                HStack(spacing: 10) {
+                    Image(systemName: "ruler")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.14))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        )
+
+                    Text(screenRulerModel.isEnabled ? "Active" : "Disabled")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Toggle("", isOn: $screenRulerModel.isEnabled)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .controlSize(.mini)
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.quaternary.opacity(0.45))
+            )
+
             // Mouse Utilities module
             VStack(alignment: .leading, spacing: 12) {
                 Button {
@@ -211,6 +268,9 @@ struct ContentView: View {
         case .cursorWrap:
             CursorWrapView(onBack: { goBack(to: .mouseUtilitiesHub) })
                 .environmentObject(cursorWrapModel)
+        case .screenRuler:
+            ScreenRulerView(onBack: { goBack() })
+                .environmentObject(screenRulerModel)
         }
     }
 
