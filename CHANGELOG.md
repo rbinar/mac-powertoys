@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Global keyboard shortcut ⌃⌥C (Control+Option+C) to launch the Color Picker screen sampler from anywhere. 2026-02-26 01:30
+- Global keyboard shortcut ⌃⌥R (Control+Option+R) to toggle Screen Ruler on/off from anywhere. 2026-02-26 01:30
+- ESC key closes the Screen Ruler overlay when active. 2026-02-26 01:30
 - Added Screen Recording permission check and alert for the Screen Ruler feature. 2026-02-26 01:10
 - Added a Mac PowerToys feature hub in the menu bar popover with quick access to modules. 2026-02-26 01:10
 - Added Mouse Utilities module with four features: Find My Mouse, Mouse Highlighter, Mouse Crosshairs, and Cursor Wrap. 2026-02-26 01:10
@@ -18,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global keyboard shortcuts for all Mouse Utilities features work without Accessibility permission. 2026-02-26 01:10
 
 ### Changed
+- Menu bar popover height now adjusts automatically based on content instead of a fixed max height. 2026-02-26 01:30
+- Module cards show a lighter hover effect on mouse-over for better interactivity feedback. 2026-02-26 01:30
+- Color Picker eyedropper and copy buttons are now circular instead of rounded squares. 2026-02-26 01:30
+- Mouse Utilities module icon changed from "cursorarrow.rays" to a simpler "cursorarrow". 2026-02-26 01:30
 - Renamed the app and Xcode project from MenuBarColorPicker to MacPowerToys, including targets, scheme references, and bundle identifiers. 2026-02-26 01:10
 - Updated the main module card to a Control Center-like layout with quick actions directly on the first screen. 2026-02-26 01:10
 - Replaced the quick progress bar with a clickable shade gamut generated from the current color for faster selection. 2026-02-26 01:10

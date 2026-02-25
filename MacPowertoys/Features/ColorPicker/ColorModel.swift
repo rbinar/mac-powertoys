@@ -1,6 +1,17 @@
 import Foundation
 import SwiftUI
 import AppKit
+import Carbon.HIToolbox
+
+// Global C callback for Carbon hotkey
+private func carbonHotKeyHandler(nextHandler: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?) -> OSStatus {
+    guard let userData else { return OSStatus(eventNotHandledErr) }
+    let model = Unmanaged<ColorModel>.fromOpaque(userData).takeUnretainedValue()
+    Task { @MainActor in
+        model.pickFromScreen()
+    }
+    return noErr
+}
 
 @MainActor
 final class ColorModel: ObservableObject {
@@ -15,6 +26,53 @@ final class ColorModel: ObservableObject {
     
     @Published var colorHistory: [NSColor] = []
     private let maxHistoryCount = 8
+
+    // Carbon hotkey
+    private var hotKeyRef: EventHotKeyRef?
+    private var eventHandlerRef: EventHandlerRef?
+
+    init() {
+        registerCarbonHotKey()
+    }
+
+    deinit {
+        if let ref = hotKeyRef {
+            UnregisterEventHotKey(ref)
+        }
+        if let ref = eventHandlerRef {
+            RemoveEventHandler(ref)
+        }
+    }
+
+    // MARK: - Global Shortcut (⌃⌥C) via Carbon HotKey
+
+    private func registerCarbonHotKey() {
+        // Register event handler
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        let selfPtr = Unmanaged.passUnretained(self).toOpaque()
+        InstallEventHandler(GetApplicationEventTarget(), carbonHotKeyHandler, 1, &eventType, selfPtr, &eventHandlerRef)
+
+        // Register hotkey: ⌃⌥C (keyCode 8 = C, controlKey + optionKey)
+        var hotKeyID = EventHotKeyID(signature: OSType(0x434F4C52), id: 1) // "COLR"
+        let modifiers: UInt32 = UInt32(controlKey | optionKey)
+        let status = RegisterEventHotKey(UInt32(kVK_ANSI_C), modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        if status == noErr {
+            print("[ColorPicker] Carbon HotKey ⌃⌥C registered successfully")
+        } else {
+            print("[ColorPicker] Failed to register Carbon HotKey: \(status)")
+        }
+    }
+
+    private func unregisterCarbonHotKey() {
+        if let ref = hotKeyRef {
+            UnregisterEventHotKey(ref)
+            hotKeyRef = nil
+        }
+        if let ref = eventHandlerRef {
+            RemoveEventHandler(ref)
+            eventHandlerRef = nil
+        }
+    }
 
     // Screen color picker
     func pickFromScreen() {

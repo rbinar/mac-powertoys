@@ -20,16 +20,18 @@ struct ContentView: View {
     @EnvironmentObject var screenRulerModel: ScreenRulerModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
+    
+    @State private var isColorPickerHovered = false
+    @State private var isScreenRulerHovered = false
+    @State private var isMouseUtilitiesHovered = false
 
     var body: some View {
         Group {
             if let feature = activeFeature {
                 featureView(for: feature)
             } else {
-                ScrollView {
-                    featureHub
-                }
-                .frame(maxHeight: 500)
+                featureHub
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(12)
@@ -78,11 +80,11 @@ struct ContentView: View {
                             .foregroundStyle(.primary)
                             .frame(width: 30, height: 30)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                Circle()
                                     .fill(.white.opacity(0.14))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                Circle()
                                     .stroke(.white.opacity(0.18), lineWidth: 0.8)
                             )
                     }
@@ -107,11 +109,11 @@ struct ContentView: View {
                             .foregroundStyle(.primary)
                             .frame(width: 30, height: 30)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                Circle()
                                     .fill(.white.opacity(0.14))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                Circle()
                                     .stroke(.white.opacity(0.18), lineWidth: 0.8)
                             )
                     }
@@ -128,8 +130,13 @@ struct ContentView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(.quaternary.opacity(0.45))
+                    .fill(isColorPickerHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
             )
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isColorPickerHovered = hovering
+                }
+            }
 
             // Screen Ruler module
             VStack(alignment: .leading, spacing: 12) {
@@ -180,8 +187,13 @@ struct ContentView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(.quaternary.opacity(0.45))
+                    .fill(isScreenRulerHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
             )
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isScreenRulerHovered = hovering
+                }
+            }
 
             // Mouse Utilities module
             VStack(alignment: .leading, spacing: 12) {
@@ -203,7 +215,7 @@ struct ContentView: View {
                 .buttonStyle(.plain)
 
                 HStack(spacing: 10) {
-                    Image(systemName: "cursorarrow.rays")
+                    Image(systemName: "cursorarrow")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
                         .frame(width: 30, height: 30)
@@ -227,8 +239,13 @@ struct ContentView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(.quaternary.opacity(0.45))
+                    .fill(isMouseUtilitiesHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
             )
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isMouseUtilitiesHovered = hovering
+                }
+            }
 
             Divider()
 
