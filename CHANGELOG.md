@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added Screen Recording permission check and alert for the Screen Ruler feature. 2026-02-26 00:45
 - Added a Mac PowerToys feature hub in the menu bar popover with quick access to modules. 2026-02-23 22:31
 - Added Mouse Utilities module with four features: Find My Mouse, Mouse Highlighter, Mouse Crosshairs, and Cursor Wrap. 2026-02-24 12:55
 - Find My Mouse dims all screens and spotlights the cursor when activated via double-tap Left Control. 2026-02-24 12:55
@@ -28,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Fixed Screen Ruler measurement lines to perfectly align with edges by removing the 4px cursor offset. 2026-02-26 00:45
+- Fixed Screen Ruler measurement values to be exact by removing the extra +1px padding. 2026-02-26 00:45
+- Fixed Screen Ruler to allow clicking on other apps and its own settings (including the color picker) while active. 2026-02-26 00:45
 - Fixed remaining legacy naming references in project metadata, scripts, and release links after the rebrand. 2026-02-23 22:31
 - Mouse Highlighter and Crosshairs overlays now work correctly across all connected monitors. 2026-02-24 12:55
 - Find My Mouse spotlight now tracks the cursor accurately on external displays. 2026-02-24 12:55
