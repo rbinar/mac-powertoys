@@ -1,6 +1,30 @@
 import Foundation
 import AppKit
 import ScreenCaptureKit
+import Carbon.HIToolbox
+
+// Global C callback for Screen Ruler hotkey
+private func screenRulerHotKeyHandler(nextHandler: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?) -> OSStatus {
+    guard let userData, let event else { return OSStatus(eventNotHandledErr) }
+    let model = Unmanaged<ScreenRulerModel>.fromOpaque(userData).takeUnretainedValue()
+    
+    var hotKeyID = EventHotKeyID()
+    GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
+    
+    Task { @MainActor in
+        switch hotKeyID.id {
+        case 2: // ⌃⌥R toggle
+            model.isEnabled.toggle()
+        case 3: // ESC close
+            if model.isEnabled {
+                model.isEnabled = false
+            }
+        default:
+            break
+        }
+    }
+    return noErr
+}
 
 // MARK: - Enums
 
@@ -87,6 +111,42 @@ final class ScreenRulerModel: ObservableObject {
     private var mouseUpLocalMonitor: Any?
     private var scrollGlobalMonitor: Any?
     private var scrollLocalMonitor: Any?
+
+    // Carbon hotkey
+    private var hotKeyRef: EventHotKeyRef?
+    private var escHotKeyRef: EventHotKeyRef?
+    private var eventHandlerRef: EventHandlerRef?
+
+    init() {
+        registerCarbonHotKey()
+    }
+
+    // MARK: - Global Shortcut (⌃⌥R) via Carbon HotKey
+
+    private func registerCarbonHotKey() {
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        let selfPtr = Unmanaged.passUnretained(self).toOpaque()
+        InstallEventHandler(GetApplicationEventTarget(), screenRulerHotKeyHandler, 1, &eventType, selfPtr, &eventHandlerRef)
+
+        // ⌃⌥R  (keyCode kVK_ANSI_R = 15)
+        var hotKeyID = EventHotKeyID(signature: OSType(0x52554C52), id: 2) // "RULR"
+        let modifiers: UInt32 = UInt32(controlKey | optionKey)
+        let status = RegisterEventHotKey(UInt32(kVK_ANSI_R), modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        if status == noErr {
+            print("[ScreenRuler] Carbon HotKey ⌃⌥R registered successfully")
+        } else {
+            print("[ScreenRuler] Failed to register Carbon HotKey: \(status)")
+        }
+
+        // ESC (no modifiers) to close
+        var escHotKeyID = EventHotKeyID(signature: OSType(0x52554C52), id: 3) // "RULR" id:3
+        let escStatus = RegisterEventHotKey(UInt32(kVK_Escape), 0, escHotKeyID, GetApplicationEventTarget(), 0, &escHotKeyRef)
+        if escStatus == noErr {
+            print("[ScreenRuler] Carbon HotKey ESC registered successfully")
+        } else {
+            print("[ScreenRuler] Failed to register ESC HotKey: \(escStatus)")
+        }
+    }
 
     // MARK: - Activation
 
@@ -804,5 +864,8 @@ final class ScreenRulerModel: ObservableObject {
 
     func stopMonitoring() {
         deactivate()
+        if let ref = hotKeyRef { UnregisterEventHotKey(ref); hotKeyRef = nil }
+        if let ref = escHotKeyRef { UnregisterEventHotKey(ref); escHotKeyRef = nil }
+        if let ref = eventHandlerRef { RemoveEventHandler(ref); eventHandlerRef = nil }
     }
 }
