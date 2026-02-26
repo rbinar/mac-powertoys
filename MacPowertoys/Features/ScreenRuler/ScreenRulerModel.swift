@@ -6,10 +6,12 @@ import Carbon.HIToolbox
 // Global C callback for Screen Ruler hotkey
 private func screenRulerHotKeyHandler(nextHandler: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?) -> OSStatus {
     guard let userData, let event else { return OSStatus(eventNotHandledErr) }
-    let model = Unmanaged<ScreenRulerModel>.fromOpaque(userData).takeUnretainedValue()
     
     var hotKeyID = EventHotKeyID()
-    GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
+    let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
+    guard status == noErr else { return status }
+
+    let model = Unmanaged<ScreenRulerModel>.fromOpaque(userData).takeUnretainedValue()
     
     Task { @MainActor in
         switch hotKeyID.id {
@@ -137,7 +139,10 @@ final class ScreenRulerModel: ObservableObject {
         } else {
             print("[ScreenRuler] Failed to register Carbon HotKey: \(status)")
         }
+    }
 
+    private func registerEscHotKey() {
+        guard escHotKeyRef == nil else { return }
         // ESC (no modifiers) to close
         var escHotKeyID = EventHotKeyID(signature: OSType(0x52554C52), id: 3) // "RULR" id:3
         let escStatus = RegisterEventHotKey(UInt32(kVK_Escape), 0, escHotKeyID, GetApplicationEventTarget(), 0, &escHotKeyRef)
@@ -148,6 +153,14 @@ final class ScreenRulerModel: ObservableObject {
         }
     }
 
+    private func unregisterEscHotKey() {
+        if let ref = escHotKeyRef {
+            UnregisterEventHotKey(ref)
+            escHotKeyRef = nil
+            print("[ScreenRuler] Carbon HotKey ESC unregistered")
+        }
+    }
+
     // MARK: - Activation
 
     private func activate() {
@@ -155,17 +168,19 @@ final class ScreenRulerModel: ObservableObject {
 
         // Check Screen Recording permissions
         if !CGPreflightScreenCaptureAccess() {
-            CGRequestScreenCaptureAccess()
-            DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = "Screen Recording Permission Required"
-                alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: "Open System Settings")
-                alert.addButton(withTitle: "Cancel")
-                if alert.runModal() == .alertFirstButtonReturn {
-                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                        NSWorkspace.shared.open(url)
+            // Only show the custom alert if the system can't prompt the user.
+            if !CGRequestScreenCaptureAccess() {
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Screen Recording Permission Required"
+                    alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
+                    alert.alertStyle = .warning
+                    alert.addButton(withTitle: "Open System Settings")
+                    alert.addButton(withTitle: "Cancel")
+                    if alert.runModal() == .alertFirstButtonReturn {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                            NSWorkspace.shared.open(url)
+                        }
                     }
                 }
             }
@@ -183,12 +198,14 @@ final class ScreenRulerModel: ObservableObject {
             elevateAppWindows()
             startTracking()
             registerActiveMonitors()
+            registerEscHotKey()
         }
     }
 
     private func deactivate() {
         guard isActive else { return }
         isActive = false
+        unregisterEscHotKey()
         stopTracking()
         removeActiveMonitors()
         hideToolbar()

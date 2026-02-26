@@ -4,6 +4,15 @@ import ScreenCaptureKit
 import Carbon.HIToolbox
 import VideoToolbox
 
+private enum ZoomItHotKey {
+    static let signature = OSType(0x5A4F4F4D) // "ZOOM"
+    static let toggleScreenZoom: UInt32 = 4
+    static let toggleLiveZoom: UInt32 = 5
+    static let close: UInt32 = 6
+}
+
+private let zoomIncrement = 0.1
+
 // Global C callback for ZoomIt hotkeys
 private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?) -> OSStatus {
     guard let userData, let event else { return OSStatus(eventNotHandledErr) }
@@ -14,36 +23,38 @@ private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: Event
     
     print("[ZoomIt] Hotkey pressed with ID: \(hotKeyID.id)")
     
-    var handled = true
-    Task { @MainActor in
-        switch hotKeyID.id {
-        case 4: // ⌃⌥Z toggle Screen Zoom
-            print("[ZoomIt] Toggle Screen Zoom")
-            if model.isZooming {
-                model.isEnabled = false
-            } else {
-                model.isEnabled = true
+    switch hotKeyID.id {
+    case ZoomItHotKey.toggleScreenZoom, ZoomItHotKey.toggleLiveZoom, ZoomItHotKey.close, 3:
+        Task { @MainActor in
+            switch hotKeyID.id {
+            case ZoomItHotKey.toggleScreenZoom: // ⌃⌥Z toggle Screen Zoom
+                print("[ZoomIt] Toggle Screen Zoom")
+                if model.isZooming {
+                    model.isEnabled = false
+                } else {
+                    model.isEnabled = true
+                }
+            case ZoomItHotKey.toggleLiveZoom: // ⌃⌥L toggle Live Zoom
+                print("[ZoomIt] Toggle Live Zoom")
+                if model.isLiveZooming {
+                    model.liveZoomEnabled = false
+                } else {
+                    model.liveZoomEnabled = true
+                }
+            case ZoomItHotKey.close, 3: // ESC close (3 is ScreenRuler's ESC ID, we catch it too just in case)
+                print("[ZoomIt] ESC pressed")
+                if model.isZooming || model.isLiveZooming {
+                    model.isEnabled = false
+                    model.liveZoomEnabled = false
+                }
+            default:
+                break
             }
-        case 5: // ⌃⌥L toggle Live Zoom
-            print("[ZoomIt] Toggle Live Zoom")
-            if model.isLiveZooming {
-                model.liveZoomEnabled = false
-            } else {
-                model.liveZoomEnabled = true
-            }
-        case 6, 3: // ESC close (3 is ScreenRuler's ESC ID, we catch it too just in case)
-            print("[ZoomIt] ESC pressed")
-            if model.isZooming || model.isLiveZooming {
-                model.isEnabled = false
-                model.liveZoomEnabled = false
-            }
-        default:
-            handled = false
-            break
         }
+        return noErr
+    default:
+        return OSStatus(eventNotHandledErr)
     }
-    
-    return handled ? noErr : OSStatus(eventNotHandledErr)
 }
 
 @MainActor
@@ -137,15 +148,15 @@ final class ZoomItModel: ObservableObject {
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
         
         // ⌃⌥Z (keyCode kVK_ANSI_Z = 6)
-        var zoomHotKeyID = EventHotKeyID(signature: OSType(0x5A4F4F4D), id: 4) // "ZOOM"
+        var zoomHotKeyID = EventHotKeyID(signature: ZoomItHotKey.signature, id: ZoomItHotKey.toggleScreenZoom) // "ZOOM"
         RegisterEventHotKey(UInt32(kVK_ANSI_Z), modifiers, zoomHotKeyID, GetApplicationEventTarget(), 0, &zoomHotKeyRef)
         
         // ⌃⌥L (keyCode kVK_ANSI_L = 37)
-        var liveZoomHotKeyID = EventHotKeyID(signature: OSType(0x5A4F4F4D), id: 5)
+        var liveZoomHotKeyID = EventHotKeyID(signature: ZoomItHotKey.signature, id: ZoomItHotKey.toggleLiveZoom)
         RegisterEventHotKey(UInt32(kVK_ANSI_L), modifiers, liveZoomHotKeyID, GetApplicationEventTarget(), 0, &liveZoomHotKeyRef)
         
         // ESC (no modifiers) to close
-        var escHotKeyID = EventHotKeyID(signature: OSType(0x5A4F4F4D), id: 6)
+        var escHotKeyID = EventHotKeyID(signature: ZoomItHotKey.signature, id: ZoomItHotKey.close)
         RegisterEventHotKey(UInt32(kVK_Escape), 0, escHotKeyID, GetApplicationEventTarget(), 0, &escHotKeyRef)
     }
     
@@ -397,7 +408,7 @@ final class ZoomItModel: ObservableObject {
             // Adjust zoom level
             let delta = event.scrollingDeltaY
             if delta != 0 {
-                let newLevel = max(1.25, min(4.0, magnificationLevel + (delta > 0 ? 0.1 : -0.1)))
+                let newLevel = max(1.25, min(4.0, magnificationLevel + (delta > 0 ? zoomIncrement : -zoomIncrement)))
                 magnificationLevel = newLevel
             }
         }
