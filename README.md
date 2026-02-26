@@ -34,9 +34,13 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - 🔄 **Cursor Wrap**: Teleport your cursor to the opposite screen edge when hitting a boundary
 
 ### 🔔 Webhook Notifier
-- 📡 **Real-time Notifications**: Receive and display webhook notifications instantly
+- 📡 **Real-time Notifications**: Receive and display macOS notifications instantly via webhooks
 - 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
-- 💬 **Interactive Alerts**: Click on notifications to take action
+- 💬 **ntfy Compatible**: Uses the open-source `ntfy` protocol. Works with any ntfy server (defaults to `https://ntfy.blinkbrosai.com`)
+- 🚀 **Easy Integration**: Trigger notifications with a simple HTTP POST request:
+  ```bash
+  curl -d "Build failed!" https://ntfy.blinkbrosai.com/YOUR_TOPIC_ID
+  ```
 - ⚙️ **Configurable**: Enable or disable specific webhooks as needed
 
 ### General
@@ -85,6 +89,7 @@ open MacPowerToys.xcodeproj
    - `Double Left Control`: Find My Mouse
    - `Double Left Option`: Mouse Highlighter
    - `Double Right Option`: Mouse Crosshairs
+   - **Cursor Wrap**: Enable from the Mouse Utilities menu to teleport cursor across screen edges
 4. **Color Picker**:
    - Click the eyedropper button and use it on screen
    - Click the color circle to open native color picker
@@ -92,6 +97,7 @@ open MacPowerToys.xcodeproj
    - Access previously picked colors from history
 5. **Webhook Notifier**:
    - Add custom topics to receive real-time notifications
+   - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
    - Click on notifications to view details
    - Toggle specific webhooks on or off as needed
 

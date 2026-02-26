@@ -10,6 +10,8 @@ struct MacPowerToysApp: App {
     @StateObject private var screenRulerModel = ScreenRulerModel()
     @StateObject private var zoomItModel = ZoomItModel()
     @StateObject private var webhookNotifierModel = WebhookNotifierModel()
+    @StateObject private var awakeModel = AwakeModel()
+    @StateObject private var mouseJigglerModel = MouseJigglerModel()
 
     init() {
         // Hide color panel at app startup
@@ -33,6 +35,8 @@ struct MacPowerToysApp: App {
                 .environmentObject(screenRulerModel)
                 .environmentObject(zoomItModel)
                 .environmentObject(webhookNotifierModel)
+                .environmentObject(awakeModel)
+                .environmentObject(mouseJigglerModel)
                 .frame(width: 340)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -44,6 +48,8 @@ struct MacPowerToysApp: App {
                     screenRulerModel.stopMonitoring()
                     zoomItModel.stopMonitoring()
                     webhookNotifierModel.stopMonitoring()
+                    awakeModel.stopMonitoring()
+                    mouseJigglerModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

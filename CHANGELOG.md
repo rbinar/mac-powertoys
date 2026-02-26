@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added Awake module to prevent Mac from sleeping with indefinite and timed modes 2026-02-27 01:10.
+- Added Keep Display On option to Awake module to prevent screen sleep 2026-02-27 01:10.
+- Added Mouse Jiggler module to simulate tiny mouse movements and prevent "Away" status in apps like Teams and Slack 2026-02-27 01:10.
+- Added adjustable interval setting (10s-120s) for Mouse Jiggler 2026-02-27 01:10.
 - Added Webhook Notifier module to receive and display real-time notifications instantly 2026-02-26 12:00.
 - Added ability to subscribe to specific topics and filter notifications in Webhook Notifier 2026-02-26 12:00.
 - Added interactive alerts for webhook notifications to take action directly 2026-02-26 12:00.
