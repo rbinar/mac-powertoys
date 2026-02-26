@@ -38,9 +38,11 @@ final class ColorModel: ObservableObject {
     deinit {
         if let ref = hotKeyRef {
             UnregisterEventHotKey(ref)
+            hotKeyRef = nil
         }
         if let ref = eventHandlerRef {
             RemoveEventHandler(ref)
+            eventHandlerRef = nil
         }
     }
 
@@ -60,17 +62,6 @@ final class ColorModel: ObservableObject {
             print("[ColorPicker] Carbon HotKey ⌃⌥C registered successfully")
         } else {
             print("[ColorPicker] Failed to register Carbon HotKey: \(status)")
-        }
-    }
-
-    private func unregisterCarbonHotKey() {
-        if let ref = hotKeyRef {
-            UnregisterEventHotKey(ref)
-            hotKeyRef = nil
-        }
-        if let ref = eventHandlerRef {
-            RemoveEventHandler(ref)
-            eventHandlerRef = nil
         }
     }
 

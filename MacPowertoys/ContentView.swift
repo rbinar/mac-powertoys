@@ -12,6 +12,47 @@ enum Feature: Hashable {
     case zoomIt
 }
 
+struct FeatureCardView<Content: View>: View {
+    let title: String
+    let action: () -> Void
+    @ViewBuilder let content: Content
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                action()
+            } label: {
+                HStack {
+                    Text(title)
+                        .font(.system(.title3, design: .rounded))
+                        .fontWeight(.semibold)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: 10) {
+                content
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(isHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
+        )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var model: ColorModel
     @EnvironmentObject var findMyMouseModel: FindMyMouseModel
@@ -22,11 +63,6 @@ struct ContentView: View {
     @EnvironmentObject var zoomItModel: ZoomItModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
-    
-    @State private var isColorPickerHovered = false
-    @State private var isScreenRulerHovered = false
-    @State private var isZoomItHovered = false
-    @State private var isMouseUtilitiesHovered = false
 
     var body: some View {
         Group {
@@ -56,255 +92,155 @@ struct ContentView: View {
             Divider()
 
             // Color Picker module in Control Center style
-            VStack(alignment: .leading, spacing: 12) {
+            FeatureCardView(title: "Color Picker", action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = .colorPicker
+                }
+            }) {
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        activeFeature = .colorPicker
-                    }
+                    model.pickFromScreen()
                 } label: {
-                    HStack {
-                        Text("Color Picker")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
-                    }
-                    .contentShape(Rectangle())
+                    Image(systemName: "eyedropper")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            Circle()
+                                .fill(.white.opacity(0.14))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        )
                 }
                 .buttonStyle(.plain)
+                .help("Pick from screen")
 
-                HStack(spacing: 10) {
-                    Button {
-                        model.pickFromScreen()
-                    } label: {
-                        Image(systemName: "eyedropper")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 30, height: 30)
-                            .background(
-                                Circle()
-                                    .fill(.white.opacity(0.14))
-                            )
-                            .overlay(
-                                Circle()
-                                    .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                            )
+                SwatchView(
+                    nsColor: model.nsColor,
+                    swatchHeight: 22,
+                    swatchCornerRadius: 5,
+                    onSelect: { shade in
+                        model.selectFromHistory(shade)
                     }
-                    .buttonStyle(.plain)
-                    .help("Pick from screen")
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                    SwatchView(
-                        nsColor: model.nsColor,
-                        swatchHeight: 22,
-                        swatchCornerRadius: 5,
-                        onSelect: { shade in
-                            model.selectFromHistory(shade)
-                        }
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    Button {
-                        model.copy(model.hexString)
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 30, height: 30)
-                            .background(
-                                Circle()
-                                    .fill(.white.opacity(0.14))
-                            )
-                            .overlay(
-                                Circle()
-                                    .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .help("Copy \(model.hexString)")
-
-                    Circle()
-                        .fill(Color(nsColor: model.nsColor))
-                        .frame(width: 26, height: 26)
-                        .overlay(Circle().stroke(.secondary.opacity(0.4), lineWidth: 0.7))
-                        .help(model.hexString)
+                Button {
+                    model.copy(model.hexString)
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            Circle()
+                                .fill(.white.opacity(0.14))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        )
                 }
-            }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(isColorPickerHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
-            )
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isColorPickerHovered = hovering
-                }
+                .buttonStyle(.plain)
+                .help("Copy \(model.hexString)")
+
+                Circle()
+                    .fill(Color(nsColor: model.nsColor))
+                    .frame(width: 26, height: 26)
+                    .overlay(Circle().stroke(.secondary.opacity(0.4), lineWidth: 0.7))
+                    .help(model.hexString)
             }
 
             // Screen Ruler module
-            VStack(alignment: .leading, spacing: 12) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        activeFeature = .screenRuler
-                    }
-                } label: {
-                    HStack {
-                        Text("Screen Ruler")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
-                    }
-                    .contentShape(Rectangle())
+            FeatureCardView(title: "Screen Ruler", action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = .screenRuler
                 }
-                .buttonStyle(.plain)
+            }) {
+                Image(systemName: "ruler")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.white.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                    )
 
-                HStack(spacing: 10) {
-                    Image(systemName: "ruler")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 30, height: 30)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(.white.opacity(0.14))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                        )
+                Text(screenRulerModel.isEnabled ? "Active" : "Disabled")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-                    Text(screenRulerModel.isEnabled ? "Active" : "Disabled")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                Spacer()
 
-                    Spacer()
-
-                    Toggle("", isOn: $screenRulerModel.isEnabled)
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .controlSize(.mini)
-                }
-            }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(isScreenRulerHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
-            )
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isScreenRulerHovered = hovering
-                }
+                Toggle("", isOn: $screenRulerModel.isEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .controlSize(.mini)
             }
 
             // ZoomIt module
-            VStack(alignment: .leading, spacing: 12) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        activeFeature = .zoomIt
-                    }
-                } label: {
-                    HStack {
-                        Text("ZoomIt")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
-                    }
-                    .contentShape(Rectangle())
+            FeatureCardView(title: "ZoomIt", action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = .zoomIt
                 }
-                .buttonStyle(.plain)
+            }) {
+                Image(systemName: "magnifyingglass")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.white.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                    )
 
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 30, height: 30)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(.white.opacity(0.14))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                        )
+                Text(zoomItModel.isEnabled ? "Active" : "Disabled")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-                    Text(zoomItModel.isEnabled ? "Active" : "Disabled")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                Spacer()
 
-                    Spacer()
-
-                    Toggle("", isOn: $zoomItModel.isEnabled)
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .controlSize(.mini)
-                }
-            }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(isZoomItHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
-            )
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isZoomItHovered = hovering
-                }
+                Toggle("", isOn: $zoomItModel.isEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .controlSize(.mini)
             }
 
             // Mouse Utilities module
-            VStack(alignment: .leading, spacing: 12) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        activeFeature = .mouseUtilitiesHub
-                    }
-                } label: {
-                    HStack {
-                        Text("Mouse Utilities")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
-                    }
-                    .contentShape(Rectangle())
+            FeatureCardView(title: "Mouse Utilities", action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = .mouseUtilitiesHub
                 }
-                .buttonStyle(.plain)
+            }) {
+                Image(systemName: "cursorarrow")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.white.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                    )
 
-                HStack(spacing: 10) {
-                    Image(systemName: "cursorarrow")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 30, height: 30)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(.white.opacity(0.14))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                        )
+                Text(mouseUtilitiesStatusText)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-                    Text(mouseUtilitiesStatusText)
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-
-                    Spacer()
-                }
-            }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(isMouseUtilitiesHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
-            )
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isMouseUtilitiesHovered = hovering
-                }
+                Spacer()
             }
 
             Divider()
