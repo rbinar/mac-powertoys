@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added Webhook Notifier module to receive and display real-time notifications instantly 2026-02-26 12:00.
+- Added ability to subscribe to specific topics and filter notifications in Webhook Notifier 2026-02-26 12:00.
+- Added interactive alerts for webhook notifications to take action directly 2026-02-26 12:00.
+- Added toggle to enable or disable specific webhooks as needed 2026-02-26 12:00.
 - Added ZoomIt module with Screen Zoom (⌃⌥Z) and Live Zoom (⌃⌥L) features 2026-02-26 03:48.
 - Screen Zoom allows static magnification of the screen with smooth panning 2026-02-26 03:48.
 - Live Zoom provides real-time magnification following the cursor using high-performance ScreenCaptureKit 2026-02-26 03:48.

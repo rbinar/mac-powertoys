@@ -10,6 +10,7 @@ enum Feature: Hashable {
     case cursorWrap
     case screenRuler
     case zoomIt
+    case webhookNotifier
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -61,6 +62,7 @@ struct ContentView: View {
     @EnvironmentObject var cursorWrapModel: CursorWrapModel
     @EnvironmentObject var screenRulerModel: ScreenRulerModel
     @EnvironmentObject var zoomItModel: ZoomItModel
+    @EnvironmentObject var webhookNotifierModel: WebhookNotifierModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -68,6 +70,7 @@ struct ContentView: View {
         Group {
             if let feature = activeFeature {
                 featureView(for: feature)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 featureHub
                     .fixedSize(horizontal: false, vertical: true)
@@ -243,6 +246,39 @@ struct ContentView: View {
                 Spacer()
             }
 
+            // Webhook Notifier module
+            FeatureCardView(title: "Webhook Notifier", action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = .webhookNotifier
+                }
+            }) {
+                Image(systemName: "bell.badge")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.white.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                    )
+
+                let activeCount = webhookNotifierModel.topics.filter { $0.isActive }.count
+                Text(webhookNotifierModel.isEnabled ? "\(activeCount) active webhooks" : "Disabled")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Spacer()
+
+                Toggle("", isOn: $webhookNotifierModel.isEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .controlSize(.mini)
+            }
+
             Divider()
 
             // Footer
@@ -296,6 +332,9 @@ struct ContentView: View {
         case .zoomIt:
             ZoomItView(onBack: { goBack() })
                 .environmentObject(zoomItModel)
+        case .webhookNotifier:
+            WebhookNotifierView(onBack: { goBack() })
+                .environmentObject(webhookNotifierModel)
         }
     }
 

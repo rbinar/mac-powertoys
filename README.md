@@ -33,6 +33,12 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - ➕ **Mouse Crosshairs**: Full-screen crosshairs centered on your cursor (Double-tap `Right Option`)
 - 🔄 **Cursor Wrap**: Teleport your cursor to the opposite screen edge when hitting a boundary
 
+### 🔔 Webhook Notifier
+- 📡 **Real-time Notifications**: Receive and display webhook notifications instantly
+- 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
+- 💬 **Interactive Alerts**: Click on notifications to take action
+- ⚙️ **Configurable**: Enable or disable specific webhooks as needed
+
 ### General
 - ⚡ **Menu Bar Integration**: Quick access from the menu bar with a Control Center style hub
 - 🔊 **Audio Feedback**: Haptic and sound feedback when colors are picked
@@ -84,6 +90,10 @@ open MacPowerToys.xcodeproj
    - Click the color circle to open native color picker
    - View HEX, RGB, HSL, and HSV representations
    - Access previously picked colors from history
+5. **Webhook Notifier**:
+   - Add custom topics to receive real-time notifications
+   - Click on notifications to view details
+   - Toggle specific webhooks on or off as needed
 
 ## 🛠️ Development
 
