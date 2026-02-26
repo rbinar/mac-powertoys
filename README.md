@@ -33,6 +33,15 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - ➕ **Mouse Crosshairs**: Full-screen crosshairs centered on your cursor (Double-tap `Right Option`)
 - 🔄 **Cursor Wrap**: Teleport your cursor to the opposite screen edge when hitting a boundary
 
+### ☕ Awake
+- 🚫 **Prevent Sleep**: Keep your Mac awake indefinitely or for a specific duration
+- 🖥️ **Display Control**: Choose whether to keep the display on or just the system awake
+- ⏱️ **Timed Mode**: Set a timer (15m, 30m, 1h, 2h, 4h) to automatically allow sleep after the duration
+
+### 🖱️ Mouse Jiggler
+- 🏃 **Stay Active**: Simulates tiny, invisible mouse movements to prevent "Away" status in apps like Teams, Slack, and Zoom
+- ⚙️ **Adjustable Interval**: Customize how often the mouse jiggles (10s to 120s)
+
 ### 🔔 Webhook Notifier
 - 📡 **Real-time Notifications**: Receive and display macOS notifications instantly via webhooks
 - 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
@@ -90,12 +99,15 @@ open MacPowerToys.xcodeproj
    - `Double Left Option`: Mouse Highlighter
    - `Double Right Option`: Mouse Crosshairs
    - **Cursor Wrap**: Enable from the Mouse Utilities menu to teleport cursor across screen edges
-4. **Color Picker**:
+4. **Awake & Mouse Jiggler**:
+   - Enable **Awake** to prevent your Mac from sleeping (choose indefinite or set a timer)
+   - Enable **Mouse Jiggler** to simulate mouse movements and stay active in communication apps
+5. **Color Picker**:
    - Click the eyedropper button and use it on screen
    - Click the color circle to open native color picker
    - View HEX, RGB, HSL, and HSV representations
    - Access previously picked colors from history
-5. **Webhook Notifier**:
+6. **Webhook Notifier**:
    - Add custom topics to receive real-time notifications
    - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
    - Click on notifications to view details
