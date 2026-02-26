@@ -9,6 +9,7 @@ enum Feature: Hashable {
     case crosshairs
     case cursorWrap
     case screenRuler
+    case zoomIt
 }
 
 struct ContentView: View {
@@ -18,11 +19,13 @@ struct ContentView: View {
     @EnvironmentObject var crosshairsModel: CrosshairsModel
     @EnvironmentObject var cursorWrapModel: CursorWrapModel
     @EnvironmentObject var screenRulerModel: ScreenRulerModel
+    @EnvironmentObject var zoomItModel: ZoomItModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
     
     @State private var isColorPickerHovered = false
     @State private var isScreenRulerHovered = false
+    @State private var isZoomItHovered = false
     @State private var isMouseUtilitiesHovered = false
 
     var body: some View {
@@ -195,6 +198,63 @@ struct ContentView: View {
                 }
             }
 
+            // ZoomIt module
+            VStack(alignment: .leading, spacing: 12) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        activeFeature = .zoomIt
+                    }
+                } label: {
+                    HStack {
+                        Text("ZoomIt")
+                            .font(.system(.title3, design: .rounded))
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.14))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        )
+
+                    Text(zoomItModel.isEnabled ? "Active" : "Disabled")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Toggle("", isOn: $zoomItModel.isEnabled)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .controlSize(.mini)
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(isZoomItHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
+            )
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isZoomItHovered = hovering
+                }
+            }
+
             // Mouse Utilities module
             VStack(alignment: .leading, spacing: 12) {
                 Button {
@@ -297,6 +357,9 @@ struct ContentView: View {
         case .screenRuler:
             ScreenRulerView(onBack: { goBack() })
                 .environmentObject(screenRulerModel)
+        case .zoomIt:
+            ZoomItView(onBack: { goBack() })
+                .environmentObject(zoomItModel)
         }
     }
 

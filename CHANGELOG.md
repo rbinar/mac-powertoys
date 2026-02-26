@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added ZoomIt module with Screen Zoom (⌃⌥Z) and Live Zoom (⌃⌥L) features. 2026-02-26 03:30
+- Screen Zoom allows static magnification of the screen with smooth panning. 2026-02-26 03:30
+- Live Zoom provides real-time magnification following the cursor using high-performance ScreenCaptureKit. 2026-02-26 03:30
 - Global keyboard shortcut ⌃⌥C (Control+Option+C) to launch the Color Picker screen sampler from anywhere. 2026-02-26 01:30
 - Global keyboard shortcut ⌃⌥R (Control+Option+R) to toggle Screen Ruler on/off from anywhere. 2026-02-26 01:30
 - ESC key closes the Screen Ruler overlay when active. 2026-02-26 01:30
