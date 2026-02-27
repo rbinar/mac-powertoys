@@ -13,6 +13,7 @@ enum Feature: Hashable {
     case webhookNotifier
     case awake
     case mouseJiggler
+    case clipboardManager
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -23,16 +24,17 @@ struct FeatureCardView<Content: View>: View {
     @State private var isHovered = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             Button {
                 action()
             } label: {
                 HStack {
                     Text(title)
-                        .font(.system(.title3, design: .rounded))
+                        .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.semibold)
                     Spacer()
                     Image(systemName: "chevron.right")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
                 .contentShape(Rectangle())
@@ -43,9 +45,74 @@ struct FeatureCardView<Content: View>: View {
                 content
             }
         }
-        .padding(14)
+        .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
+        )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+struct CompactFeatureCard: View {
+    let title: String
+    let icon: String
+    let statusText: String
+    let isEnabled: Binding<Bool>?
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 7)
+                            .fill(.white.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                    )
+                Spacer()
+                if let binding = isEnabled {
+                    Toggle("", isOn: binding)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .controlSize(.mini)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            
+            Text(title)
+                .font(.system(.caption, design: .rounded))
+                .fontWeight(.semibold)
+                .lineLimit(1)
+            
+            Text(statusText)
+                .font(.system(size: 10, design: .rounded))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            action()
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 14)
                 .fill(isHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
         )
         .onHover { hovering in
@@ -67,6 +134,7 @@ struct ContentView: View {
     @EnvironmentObject var webhookNotifierModel: WebhookNotifierModel
     @EnvironmentObject var awakeModel: AwakeModel
     @EnvironmentObject var mouseJigglerModel: MouseJigglerModel
+    @EnvironmentObject var clipboardManagerModel: ClipboardManagerModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -74,19 +142,23 @@ struct ContentView: View {
         Group {
             if let feature = activeFeature {
                 featureView(for: feature)
-                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 featureHub
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(12)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowClipboardManager"))) { _ in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                activeFeature = .clipboardManager
+            }
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     // MARK: - Feature Hub (main menu)
 
     private var featureHub: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 6) {
             // Header
             HStack(spacing: 8) {
                 Image(systemName: "wrench.and.screwdriver")
@@ -98,7 +170,7 @@ struct ContentView: View {
 
             Divider()
 
-            // Color Picker module in Control Center style
+            // Color Picker module - full width (has special controls)
             FeatureCardView(title: "Color Picker", action: {
                 withAnimation(.easeInOut(duration: 0.15)) {
                     activeFeature = .colorPicker
@@ -110,7 +182,7 @@ struct ContentView: View {
                     Image(systemName: "eyedropper")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
-                        .frame(width: 30, height: 30)
+                        .frame(width: 28, height: 28)
                         .background(
                             Circle()
                                 .fill(.white.opacity(0.14))
@@ -139,7 +211,7 @@ struct ContentView: View {
                     Image(systemName: "doc.on.doc")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.primary)
-                        .frame(width: 30, height: 30)
+                        .frame(width: 28, height: 28)
                         .background(
                             Circle()
                                 .fill(.white.opacity(0.14))
@@ -154,103 +226,66 @@ struct ContentView: View {
 
                 Circle()
                     .fill(Color(nsColor: model.nsColor))
-                    .frame(width: 26, height: 26)
+                    .frame(width: 22, height: 22)
                     .overlay(Circle().stroke(.secondary.opacity(0.4), lineWidth: 0.7))
                     .help(model.hexString)
             }
 
-            // Screen Ruler module
-            FeatureCardView(title: "Screen Ruler", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .screenRuler
-                }
-            }) {
-                Image(systemName: "ruler")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
-
-                Text(screenRulerModel.isEnabled ? "Active" : "Disabled")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                Toggle("", isOn: $screenRulerModel.isEnabled)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .controlSize(.mini)
+            // Row 1: Screen Ruler | ZoomIt
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Screen Ruler",
+                    icon: "ruler",
+                    statusText: screenRulerModel.isEnabled ? "Active" : "Disabled",
+                    isEnabled: $screenRulerModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenRuler } }
+                )
+                CompactFeatureCard(
+                    title: "ZoomIt",
+                    icon: "magnifyingglass",
+                    statusText: zoomItModel.isEnabled ? "Active" : "Disabled",
+                    isEnabled: $zoomItModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .zoomIt } }
+                )
             }
 
-            // ZoomIt module
-            FeatureCardView(title: "ZoomIt", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .zoomIt
-                }
-            }) {
-                Image(systemName: "magnifyingglass")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
-
-                Text(zoomItModel.isEnabled ? "Active" : "Disabled")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                Toggle("", isOn: $zoomItModel.isEnabled)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .controlSize(.mini)
+            // Row 2: Mouse Utilities | Mouse Jiggler
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Mouse Utilities",
+                    icon: "cursorarrow",
+                    statusText: mouseUtilitiesStatusText,
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .mouseUtilitiesHub } }
+                )
+                CompactFeatureCard(
+                    title: "Mouse Jiggler",
+                    icon: "computermouse.fill",
+                    statusText: mouseJigglerModel.isEnabled ? "Active" : "Disabled",
+                    isEnabled: $mouseJigglerModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .mouseJiggler } }
+                )
             }
 
-            // Mouse Utilities module
-            FeatureCardView(title: "Mouse Utilities", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .mouseUtilitiesHub
-                }
-            }) {
-                Image(systemName: "cursorarrow")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
-
-                Text(mouseUtilitiesStatusText)
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
+            // Row 3: Awake | Clipboard Manager
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Awake",
+                    icon: "cup.and.saucer.fill",
+                    statusText: awakeModel.isEnabled ? (awakeModel.isIndefinite ? "Indefinite" : awakeModel.formattedRemaining) : "Disabled",
+                    isEnabled: $awakeModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .awake } }
+                )
+                CompactFeatureCard(
+                    title: "Clipboard Manager",
+                    icon: "doc.on.clipboard",
+                    statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Disabled",
+                    isEnabled: $clipboardManagerModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .clipboardManager } }
+                )
             }
 
-            // Webhook Notifier module
+            // Webhook Notifier - full width
             FeatureCardView(title: "Webhook Notifier", action: {
                 withAnimation(.easeInOut(duration: 0.15)) {
                     activeFeature = .webhookNotifier
@@ -259,13 +294,13 @@ struct ContentView: View {
                 Image(systemName: "bell.badge")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 28, height: 28)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 7)
                             .fill(.white.opacity(0.14))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 7)
                             .stroke(.white.opacity(0.18), lineWidth: 0.8)
                     )
 
@@ -278,77 +313,6 @@ struct ContentView: View {
                 Spacer()
 
                 Toggle("", isOn: $webhookNotifierModel.isEnabled)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .controlSize(.mini)
-            }
-
-            // Awake module
-            FeatureCardView(title: "Awake", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .awake
-                }
-            }) {
-                Image(systemName: "cup.and.saucer.fill")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
-
-                if awakeModel.isEnabled {
-                    Text(awakeModel.isIndefinite ? "Indefinite" : awakeModel.formattedRemaining)
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                } else {
-                    Text("Disabled")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                Toggle("", isOn: $awakeModel.isEnabled)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .controlSize(.mini)
-            }
-
-            // Mouse Jiggler module
-            FeatureCardView(title: "Mouse Jiggler", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .mouseJiggler
-                }
-            }) {
-                Image(systemName: "computermouse.fill")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
-
-                Text(mouseJigglerModel.isEnabled ? "Active" : "Disabled")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                Toggle("", isOn: $mouseJigglerModel.isEnabled)
                     .toggleStyle(.switch)
                     .labelsHidden()
                     .controlSize(.mini)
@@ -416,6 +380,9 @@ struct ContentView: View {
         case .mouseJiggler:
             MouseJigglerView(onBack: { goBack() })
                 .environmentObject(mouseJigglerModel)
+        case .clipboardManager:
+            ClipboardManagerView(onBack: { goBack() })
+                .environmentObject(clipboardManagerModel)
         }
     }
 
