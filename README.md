@@ -56,7 +56,12 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - 🌗 **Theme Toggle**: Switch between light and dark themes for comfortable reading
 - 📂 **Recent Files**: Quick access to recently opened Markdown files
 - 🔄 **Auto-Reload**: Preview updates automatically when the file changes on disk
-
+### ✍️ Screen Annotation
+- 🖌️ **Draw on Screen**: Annotate your screen with freehand, lines, arrows, rectangles, ellipses, and text (Global Shortcut: `⌃⌥D`)
+- 🎨 **Color & Width**: Choose from preset colors and adjust line width on the fly
+- 🌑 **Dim Background**: Optionally dim the screen for better annotation visibility
+- ↩️ **Undo**: Undo drawings with `⌘Z` or right-click
+- ⌨️ **Text Tool**: Add text annotations directly on screen
 ### �🔔 Webhook Notifier
 - 📡 **Real-time Notifications**: Receive and display macOS notifications instantly via webhooks
 - 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
@@ -111,6 +116,7 @@ open MacPowerToys.xcodeproj
    - `⌃⌥Z` (Control+Option+Z): Toggle Screen Zoom
    - `⌃⌥L` (Control+Option+L): Toggle Live Zoom
    - `⌃⌥V` (Control+Option+V): Open Clipboard Manager
+   - `⌃⌥D` (Control+Option+D): Toggle Screen Annotation
    - `Double Left Control`: Find My Mouse
    - `Double Left Option`: Mouse Highlighter
    - `Double Right Option`: Mouse Crosshairs
@@ -128,7 +134,11 @@ open MacPowerToys.xcodeproj
    - Click the color circle to open native color picker
    - View HEX, RGB, HSL, and HSV representations
    - Access previously picked colors from history
-7. **Webhook Notifier**:
+7. **Screen Annotation**:
+   - Enable and press `⌃⌥D` to enter annotation mode
+   - Use the toolbar to switch between freehand, line, arrow, rectangle, ellipse, and text tools
+   - Right-click or `⌘Z` to undo, `Esc` to close
+8. **Webhook Notifier**:
    - Add custom topics to receive real-time notifications
    - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
    - Click on notifications to view details
