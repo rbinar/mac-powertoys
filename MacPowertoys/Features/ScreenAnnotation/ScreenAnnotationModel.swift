@@ -110,17 +110,12 @@ final class ScreenAnnotationModel: ObservableObject {
     private var pendingTextPoint: NSPoint = .zero
     private var elevatedWindows: [NSWindow] = []
 
-    // Event monitors
+    // Event monitors (global only — local monitors would cause double-firing)
     private var mouseDownGlobalMonitor: Any?
-    private var mouseDownLocalMonitor: Any?
     private var mouseDragGlobalMonitor: Any?
-    private var mouseDragLocalMonitor: Any?
     private var mouseUpGlobalMonitor: Any?
-    private var mouseUpLocalMonitor: Any?
     private var keyGlobalMonitor: Any?
-    private var keyLocalMonitor: Any?
     private var rightMouseDownGlobalMonitor: Any?
-    private var rightMouseDownLocalMonitor: Any?
 
     // Carbon hotkey
     private var hotKeyRef: EventHotKeyRef?
@@ -352,51 +347,26 @@ final class ScreenAnnotationModel: ObservableObject {
         mouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
             Task { @MainActor in self?.handleMouseDown(event) }
         }
-        mouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDown(event) }
-            return event
-        }
         mouseDragGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
             Task { @MainActor in self?.handleMouseDragged(event) }
-        }
-        mouseDragLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDragged(event) }
-            return event
         }
         mouseUpGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
             Task { @MainActor in self?.handleMouseUp(event) }
         }
-        mouseUpLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            Task { @MainActor in self?.handleMouseUp(event) }
-            return event
-        }
         keyGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             Task { @MainActor in self?.handleKeyDown(event) }
         }
-        keyLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            Task { @MainActor in self?.handleKeyDown(event) }
-            return event
-        }
         rightMouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
             Task { @MainActor in self?.handleRightMouseDown(event) }
-        }
-        rightMouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleRightMouseDown(event) }
-            return event
         }
     }
 
     private func removeActiveMonitors() {
         if let m = mouseDownGlobalMonitor { NSEvent.removeMonitor(m); mouseDownGlobalMonitor = nil }
-        if let m = mouseDownLocalMonitor { NSEvent.removeMonitor(m); mouseDownLocalMonitor = nil }
         if let m = mouseDragGlobalMonitor { NSEvent.removeMonitor(m); mouseDragGlobalMonitor = nil }
-        if let m = mouseDragLocalMonitor { NSEvent.removeMonitor(m); mouseDragLocalMonitor = nil }
         if let m = mouseUpGlobalMonitor { NSEvent.removeMonitor(m); mouseUpGlobalMonitor = nil }
-        if let m = mouseUpLocalMonitor { NSEvent.removeMonitor(m); mouseUpLocalMonitor = nil }
         if let m = keyGlobalMonitor { NSEvent.removeMonitor(m); keyGlobalMonitor = nil }
-        if let m = keyLocalMonitor { NSEvent.removeMonitor(m); keyLocalMonitor = nil }
         if let m = rightMouseDownGlobalMonitor { NSEvent.removeMonitor(m); rightMouseDownGlobalMonitor = nil }
-        if let m = rightMouseDownLocalMonitor { NSEvent.removeMonitor(m); rightMouseDownLocalMonitor = nil }
     }
 
     // MARK: - Mouse Event Handling
@@ -733,12 +703,31 @@ final class ScreenAnnotationModel: ObservableObject {
     }
 
     func saveScreenshot() {
-        guard let mainEntry = overlayWindows.first else { return }
-        let view = mainEntry.view
-        guard let bitmapRep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
-        view.cacheDisplay(in: view.bounds, to: bitmapRep)
+        guard !overlayWindows.isEmpty else { return }
 
-        guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else { return }
+        // Compute union frame of all screens in screen coordinates
+        let unionFrame = overlayWindows.reduce(CGRect.null) { $0.union($1.window.frame) }
+        let compositeWidth = Int(unionFrame.width)
+        let compositeHeight = Int(unionFrame.height)
+
+        guard let compositeImage = NSImage(size: NSSize(width: compositeWidth, height: compositeHeight)) as NSImage? else { return }
+        compositeImage.lockFocus()
+        for entry in overlayWindows {
+            guard let bitmapRep = entry.view.bitmapImageRepForCachingDisplay(in: entry.view.bounds) else { continue }
+            entry.view.cacheDisplay(in: entry.view.bounds, to: bitmapRep)
+            let drawRect = NSRect(
+                x: entry.window.frame.origin.x - unionFrame.origin.x,
+                y: entry.window.frame.origin.y - unionFrame.origin.y,
+                width: entry.window.frame.width,
+                height: entry.window.frame.height
+            )
+            bitmapRep.draw(in: drawRect)
+        }
+        compositeImage.unlockFocus()
+
+        guard let tiffData = compositeImage.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiffData),
+              let pngData = bitmap.representation(using: .png, properties: [:]) else { return }
 
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
@@ -750,7 +739,6 @@ final class ScreenAnnotationModel: ObservableObject {
         do {
             try pngData.write(to: fileURL)
             print("[ScreenAnnotation] Screenshot saved to \(fileURL.path)")
-            // Show system sound feedback
             NSSound(named: "Tink")?.play()
         } catch {
             print("[ScreenAnnotation] Failed to save screenshot: \(error)")
