@@ -1,13 +1,14 @@
 # Changelog
 
-All notable changes to Mac PowerToys will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](https://semver.org/)
 
 ## [Unreleased]
 
 ### Added
+- Video Converter module: FFmpeg-powered conversion between 16 formats (MP4, MOV, MKV, WEBM, AVI, MP3, AAC, WAV, FLAC, GIF, etc.) with quality presets, resolution options, and real-time progress. 2026-02-28 14:00
+- Drag & drop file input and one-click FFmpeg installation via Homebrew in Video Converter. 2026-02-28 14:00
+- Conversion history with "Show in Finder" for recent outputs in Video Converter. 2026-02-28 14:00
+- Scrollable content areas in Color Picker, Crosshairs, Find My Mouse, Mouse Highlighter, Screen Annotation, Screen Ruler, and main hub views. 2026-02-28 14:00
 - PR code review fixes documentation under `docs/pr-review-fixes.md`. 2026-02-27 12:00
 - Screen Annotation module with freehand, line, arrow, rectangle, ellipse, and text drawing tools (`⌃⌥D`).
 - Customizable default color, line width, and dim-background option for Screen Annotation.
@@ -63,6 +64,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed MouseUtilities module to FindMyMouse for better clarity.
 - Improved error logging across Webhook Notifier, Clipboard Manager, and Markdown Preview with proper do-catch blocks. 2026-02-27 12:00
 - Replaced `DispatchQueue.main.asyncAfter` with structured `Task.sleep` in Clipboard Manager. 2026-02-27 12:00
+- Clipboard Manager icon updated from `doc.on.clipboard` to `list.clipboard`. 2026-02-28 14:00
+- Menu bar popover now has a fixed height (340×560) for consistent layout. 2026-02-28 14:00
+- Accessibility permission prompt only appears if not already granted, avoiding repeated dialogs. 2026-02-28 14:00
+- App Sandbox disabled to support FFmpeg execution via NSUserUnixTask. 2026-02-28 14:00
+- Bundle version bumped to 2. 2026-02-28 14:00
 
 ### Deprecated
 
