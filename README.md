@@ -49,7 +49,15 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - 🏃 **Stay Active**: Simulates tiny, invisible mouse movements to prevent "Away" status in apps like Teams, Slack, and Zoom
 - ⚙️ **Adjustable Interval**: Customize how often the mouse jiggles (10s to 120s)
 
-### 🔔 Webhook Notifier
+### � Markdown Preview
+- 👁️ **Live Preview**: Open and preview Markdown files in a resizable window with GitHub-flavored styling
+- 📄 **PDF Export**: Export your Markdown as PDF directly from the preview window toolbar
+- 📋 **Paste from Clipboard**: Preview Markdown content pasted from clipboard without opening a file
+- 🌗 **Theme Toggle**: Switch between light and dark themes for comfortable reading
+- 📂 **Recent Files**: Quick access to recently opened Markdown files
+- 🔄 **Auto-Reload**: Preview updates automatically when the file changes on disk
+
+### �🔔 Webhook Notifier
 - 📡 **Real-time Notifications**: Receive and display macOS notifications instantly via webhooks
 - 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
 - 💬 **ntfy Compatible**: Uses the open-source `ntfy` protocol. Works with any ntfy server (defaults to `https://ntfy.blinkbrosai.com`)
