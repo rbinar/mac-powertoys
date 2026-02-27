@@ -14,6 +14,7 @@ struct MacPowerToysApp: App {
     @StateObject private var mouseJigglerModel = MouseJigglerModel()
     @StateObject private var clipboardManagerModel = ClipboardManagerModel()
     @StateObject private var markdownPreviewModel = MarkdownPreviewModel()
+    @StateObject private var screenAnnotationModel = ScreenAnnotationModel()
 
     init() {
         // Hide color panel at app startup
@@ -41,6 +42,7 @@ struct MacPowerToysApp: App {
                 .environmentObject(mouseJigglerModel)
                 .environmentObject(clipboardManagerModel)
                 .environmentObject(markdownPreviewModel)
+                .environmentObject(screenAnnotationModel)
                 .frame(width: 340)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -56,6 +58,7 @@ struct MacPowerToysApp: App {
                     mouseJigglerModel.stopMonitoring()
                     clipboardManagerModel.stopMonitoring()
                     markdownPreviewModel.stopMonitoring()
+                    screenAnnotationModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

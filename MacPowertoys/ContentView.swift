@@ -15,6 +15,7 @@ enum Feature: Hashable {
     case mouseJiggler
     case clipboardManager
     case markdownPreview
+    case screenAnnotation
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -137,6 +138,7 @@ struct ContentView: View {
     @EnvironmentObject var mouseJigglerModel: MouseJigglerModel
     @EnvironmentObject var clipboardManagerModel: ClipboardManagerModel
     @EnvironmentObject var markdownPreviewModel: MarkdownPreviewModel
+    @EnvironmentObject var screenAnnotationModel: ScreenAnnotationModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -287,7 +289,7 @@ struct ContentView: View {
                 )
             }
 
-            // Row 4: Markdown Preview
+            // Row 4: Markdown Preview | Screen Annotation
             HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Markdown Preview",
@@ -296,8 +298,13 @@ struct ContentView: View {
                     isEnabled: nil,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .markdownPreview } }
                 )
-                Spacer()
-                    .frame(maxWidth: .infinity)
+                CompactFeatureCard(
+                    title: "Annotation",
+                    icon: "pencil.tip.crop.circle",
+                    statusText: screenAnnotationModel.isEnabled ? "Active" : "Disabled",
+                    isEnabled: $screenAnnotationModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenAnnotation } }
+                )
             }
 
             // Webhook Notifier - full width
@@ -401,6 +408,9 @@ struct ContentView: View {
         case .markdownPreview:
             MarkdownPreviewView(onBack: { goBack() })
                 .environmentObject(markdownPreviewModel)
+        case .screenAnnotation:
+            ScreenAnnotationView(onBack: { goBack() })
+                .environmentObject(screenAnnotationModel)
         }
     }
 
