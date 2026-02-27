@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added Markdown Preview module with live preview of `.md` files in a resizable window 2026-02-27 05:00.
+- PDF export for Markdown files directly from the preview window toolbar 2026-02-27 05:00.
+- Paste from Clipboard support to preview markdown content without opening a file 2026-02-27 05:00.
+- Light/Dark theme toggle for Markdown Preview 2026-02-27 05:00.
+- Recent files list with security-scoped bookmarks for persistent sandbox access 2026-02-27 05:00.
+- Auto-reload when the previewed markdown file changes on disk 2026-02-27 05:00.
 - Added Clipboard Manager module to track copied text and images with searchable history (`⌃⌥V`) 2026-02-27 04:05.
 - Pin important clipboard items to keep them permanently 2026-02-27 04:05.
 - Adjustable history limit (10, 25, 50, or 100 items) for Clipboard Manager 2026-02-27 04:05.

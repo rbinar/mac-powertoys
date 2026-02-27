@@ -14,6 +14,7 @@ enum Feature: Hashable {
     case awake
     case mouseJiggler
     case clipboardManager
+    case markdownPreview
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -135,6 +136,7 @@ struct ContentView: View {
     @EnvironmentObject var awakeModel: AwakeModel
     @EnvironmentObject var mouseJigglerModel: MouseJigglerModel
     @EnvironmentObject var clipboardManagerModel: ClipboardManagerModel
+    @EnvironmentObject var markdownPreviewModel: MarkdownPreviewModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -285,6 +287,19 @@ struct ContentView: View {
                 )
             }
 
+            // Row 4: Markdown Preview
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Markdown Preview",
+                    icon: "doc.richtext",
+                    statusText: "\(markdownPreviewModel.recentFiles.count) recent",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .markdownPreview } }
+                )
+                Spacer()
+                    .frame(maxWidth: .infinity)
+            }
+
             // Webhook Notifier - full width
             FeatureCardView(title: "Webhook Notifier", action: {
                 withAnimation(.easeInOut(duration: 0.15)) {
@@ -383,6 +398,9 @@ struct ContentView: View {
         case .clipboardManager:
             ClipboardManagerView(onBack: { goBack() })
                 .environmentObject(clipboardManagerModel)
+        case .markdownPreview:
+            MarkdownPreviewView(onBack: { goBack() })
+                .environmentObject(markdownPreviewModel)
         }
     }
 
