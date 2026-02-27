@@ -22,6 +22,9 @@ struct ScreenAnnotationView: View {
 
             Divider()
 
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Screen Annotation", systemImage: "pencil.tip.crop.circle")
                     .font(.system(.body, design: .rounded))
@@ -109,6 +112,8 @@ struct ScreenAnnotationView: View {
                     toolRow("textformat", "Text annotation")
                 }
             }
+            } // VStack inside ScrollView
+            } // ScrollView
         }
     }
 

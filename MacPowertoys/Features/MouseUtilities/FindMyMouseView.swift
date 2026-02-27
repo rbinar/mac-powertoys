@@ -24,6 +24,9 @@ struct FindMyMouseView: View {
 
             Divider()
 
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+
             // Enable toggle
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Find My Mouse", systemImage: "cursorarrow.rays")
@@ -130,6 +133,8 @@ struct FindMyMouseView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            } // VStack inside ScrollView
+            } // ScrollView
         }
     }
 }

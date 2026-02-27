@@ -22,6 +22,9 @@ struct MouseHighlighterView: View {
 
             Divider()
 
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Mouse Highlighter", systemImage: "hand.tap")
                     .font(.system(.body, design: .rounded))
@@ -107,6 +110,8 @@ struct MouseHighlighterView: View {
                     Slider(value: $model.fadeDurationMs, in: 100...2000, step: 50)
                 }
             }
+            } // VStack inside ScrollView
+            } // ScrollView
         }
     }
 }

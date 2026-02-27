@@ -25,6 +25,9 @@ struct ColorPickerView: View {
 
             Divider()
 
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+
             HStack {
                 Button {
                     model.pickFromScreen()
@@ -61,6 +64,8 @@ struct ColorPickerView: View {
                 ColorHistoryView()
                     .environmentObject(model)
             }
+            } // VStack inside ScrollView
+            } // ScrollView
         }
     }
 }

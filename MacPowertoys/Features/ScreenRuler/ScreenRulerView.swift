@@ -22,6 +22,9 @@ struct ScreenRulerView: View {
 
             Divider()
 
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Screen Ruler", systemImage: "ruler")
                     .font(.system(.body, design: .rounded))
@@ -147,6 +150,8 @@ struct ScreenRulerView: View {
                     }
                 }
             }
+            } // VStack inside ScrollView
+            } // ScrollView
         }
     }
 

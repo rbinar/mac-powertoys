@@ -22,6 +22,9 @@ struct CrosshairsView: View {
 
             Divider()
 
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Crosshairs", systemImage: "plus.circle")
                     .font(.system(.body, design: .rounded))
@@ -121,6 +124,8 @@ struct CrosshairsView: View {
                     Slider(value: $model.borderSize, in: 0...5, step: 1)
                 }
             }
+            } // VStack inside ScrollView
+            } // ScrollView
         }
     }
 }
