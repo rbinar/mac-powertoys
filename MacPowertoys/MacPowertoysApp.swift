@@ -12,6 +12,7 @@ struct MacPowerToysApp: App {
     @StateObject private var webhookNotifierModel = WebhookNotifierModel()
     @StateObject private var awakeModel = AwakeModel()
     @StateObject private var mouseJigglerModel = MouseJigglerModel()
+    @StateObject private var clipboardManagerModel = ClipboardManagerModel()
 
     init() {
         // Hide color panel at app startup
@@ -37,6 +38,7 @@ struct MacPowerToysApp: App {
                 .environmentObject(webhookNotifierModel)
                 .environmentObject(awakeModel)
                 .environmentObject(mouseJigglerModel)
+                .environmentObject(clipboardManagerModel)
                 .frame(width: 340)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -50,6 +52,7 @@ struct MacPowerToysApp: App {
                     webhookNotifierModel.stopMonitoring()
                     awakeModel.stopMonitoring()
                     mouseJigglerModel.stopMonitoring()
+                    clipboardManagerModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

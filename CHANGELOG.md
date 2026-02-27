@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added Clipboard Manager module to track copied text and images with searchable history (`⌃⌥V`) 2026-02-27 04:05.
+- Pin important clipboard items to keep them permanently 2026-02-27 04:05.
+- Adjustable history limit (10, 25, 50, or 100 items) for Clipboard Manager 2026-02-27 04:05.
 - Added Awake module to prevent Mac from sleeping with indefinite and timed modes 2026-02-27 01:10.
 - Added Keep Display On option to Awake module to prevent screen sleep 2026-02-27 01:10.
 - Added Mouse Jiggler module to simulate tiny mouse movements and prevent "Away" status in apps like Teams and Slack 2026-02-27 01:10.
@@ -32,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global keyboard shortcuts for all Mouse Utilities features now require Accessibility permission 2026-02-26 03:48.
 
 ### Changed
+- Redesigned feature hub as a compact 2-column grid layout for better space utilization 2026-02-27 04:05.
 - Menu bar popover height now adjusts automatically based on content instead of a fixed max height 2026-02-26 03:48.
 - Module cards show a lighter hover effect on mouse-over for better interactivity feedback 2026-02-26 03:48.
 - Color Picker eyedropper and copy buttons are now circular instead of rounded squares 2026-02-26 03:48.
