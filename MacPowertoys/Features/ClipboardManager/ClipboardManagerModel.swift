@@ -15,12 +15,13 @@ struct ClipboardItem: Identifiable, Codable, Equatable {
     let createdAt: Date
     var isPinned: Bool
     
-    // Helper to get the image URL
+    // Helper to get the image URL (with path traversal protection)
     var imageURL: URL? {
         guard let fileName = imageFileName else { return nil }
+        let sanitizedName = (fileName as NSString).lastPathComponent
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let historyDir = appSupport.appendingPathComponent("ClipboardHistory", isDirectory: true)
-        return historyDir.appendingPathComponent(fileName)
+        return historyDir.appendingPathComponent(sanitizedName)
     }
 }
 
@@ -32,7 +33,7 @@ final class ClipboardManagerModel: ObservableObject {
             if isEnabled {
                 startMonitoring()
             } else {
-                stopMonitoring()
+                stopPollingTimer()
             }
         }
     }
@@ -101,7 +102,7 @@ final class ClipboardManagerModel: ObservableObject {
         }
     }
     
-    func stopMonitoring() {
+    private func stopPollingTimer() {
         pollTimer?.invalidate()
         pollTimer = nil
     }
@@ -157,7 +158,7 @@ final class ClipboardManagerModel: ObservableObject {
                     )
                     addItem(item)
                 } catch {
-                    print("Failed to save clipboard image: \(error)")
+                    NSLog("[ClipboardManager] Failed to save clipboard image: %@", String(describing: error))
                 }
             }
         }
@@ -230,15 +231,20 @@ final class ClipboardManagerModel: ObservableObject {
     // MARK: - Persistence
     
     private func saveItems() {
-        if let data = try? JSONEncoder().encode(clipboardItems) {
+        do {
+            let data = try JSONEncoder().encode(clipboardItems)
             UserDefaults.standard.set(data, forKey: itemsKey)
+        } catch {
+            NSLog("[ClipboardManager] Failed to encode clipboard items: %@", String(describing: error))
         }
     }
     
     private func loadItems() {
-        if let data = UserDefaults.standard.data(forKey: itemsKey),
-           let decoded = try? JSONDecoder().decode([ClipboardItem].self, from: data) {
-            self.clipboardItems = decoded
+        guard let data = UserDefaults.standard.data(forKey: itemsKey) else { return }
+        do {
+            self.clipboardItems = try JSONDecoder().decode([ClipboardItem].self, from: data)
+        } catch {
+            NSLog("[ClipboardManager] Failed to decode clipboard items: %@", String(describing: error))
         }
     }
     
@@ -276,12 +282,19 @@ final class ClipboardManagerModel: ObservableObject {
         }
     }
     
+    func stopMonitoring() {
+        stopPollingTimer()
+        removeGlobalHotKey()
+    }
+    
     private func removeGlobalHotKey() {
         if let hotKeyRef = hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
+            self.hotKeyRef = nil
         }
         if let eventHandlerRef = eventHandlerRef {
             RemoveEventHandler(eventHandlerRef)
+            self.eventHandlerRef = nil
         }
     }
 }
