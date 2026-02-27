@@ -2,9 +2,10 @@ import Foundation
 import AppKit
 import WebKit
 import Combine
+import UniformTypeIdentifiers
 
 @MainActor
-final class MarkdownPreviewModel: ObservableObject {
+final class MarkdownPreviewModel: NSObject, ObservableObject {
     @Published var recentFiles: [URL] = []
     @Published var isDarkTheme: Bool = true {
         didSet {
@@ -19,11 +20,14 @@ final class MarkdownPreviewModel: ObservableObject {
     private var webView: WKWebView?
     private var fileWatcherSource: DispatchSourceFileSystemObject?
     private var activeSecurityScope: URL?
+    private var isWebViewLoaded: Bool = false
+    private var toolbarDelegate: ToolbarDelegate?
 
     private let maxRecentFiles = 5
     private let bookmarksKey = "markdownPreview.recentBookmarks"
 
-    init() {
+    override init() {
+        super.init()
         isDarkTheme = UserDefaults.standard.object(forKey: "markdownPreview.isDarkTheme") as? Bool ?? true
         loadRecentFiles()
     }
@@ -41,8 +45,7 @@ final class MarkdownPreviewModel: ObservableObject {
     func openFile() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [
-            .init(filenameExtension: "md")!,
-            .init(filenameExtension: "markdown")!,
+            UTType.init("net.daringfireball.markdown") ?? .plainText,
             .plainText
         ]
         panel.allowsMultipleSelection = false
@@ -151,6 +154,7 @@ final class MarkdownPreviewModel: ObservableObject {
             UserDefaults.standard.set(bookmarks, forKey: bookmarksKey)
         } catch {
             // Bookmark creation failed, file will not be accessible from recent files
+            NSLog("[MarkdownPreview] Failed to save bookmark for %@: %@", url.path, error.localizedDescription)
         }
     }
 
@@ -216,7 +220,9 @@ final class MarkdownPreviewModel: ObservableObject {
 
         let wv = WKWebView(frame: .zero, configuration: config)
         wv.setValue(false, forKey: "drawsBackground")
+        wv.navigationDelegate = self
         self.webView = wv
+        self.isWebViewLoaded = false
 
         let htmlContent = buildHTMLTemplate()
         wv.loadHTMLString(htmlContent, baseURL: nil)
@@ -234,28 +240,27 @@ final class MarkdownPreviewModel: ObservableObject {
         window.minSize = NSSize(width: 400, height: 300)
 
         let toolbar = NSToolbar(identifier: "MarkdownPreviewToolbar")
-        toolbar.delegate = ToolbarDelegate.shared
+        let delegate = ToolbarDelegate()
+        delegate.model = self
+        self.toolbarDelegate = delegate
+        toolbar.delegate = delegate
         toolbar.displayMode = .iconOnly
         window.toolbar = toolbar
-        ToolbarDelegate.shared.model = self
 
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         previewWindow = window
 
-        // Render after a short delay to let WKWebView load the template
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.renderMarkdown()
-        }
+        // renderMarkdown() is called via WKNavigationDelegate when the page finishes loading
     }
 
     private func renderMarkdown() {
-        guard let webView else { return }
-        let escaped = currentMarkdown
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "`", with: "\\`")
-            .replacingOccurrences(of: "$", with: "\\$")
-        let js = "renderMarkdown(`\(escaped)`);"
+        guard let webView, isWebViewLoaded else { return }
+        guard let data = try? JSONEncoder().encode(currentMarkdown),
+              let jsonString = String(data: data, encoding: .utf8) else {
+            return
+        }
+        let js = "renderMarkdown(\(jsonString));"
         webView.evaluateJavaScript(js, completionHandler: nil)
     }
 
@@ -336,6 +341,7 @@ final class MarkdownPreviewModel: ObservableObject {
         \(Self.cssStyles)
         </style>
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
         </head>
         <body>
         <div id="content"><p style="color:var(--text-secondary)">Loading markdown renderer...</p></div>
@@ -346,7 +352,8 @@ final class MarkdownPreviewModel: ObservableObject {
                 return;
             }
             marked.setOptions({ gfm: true, breaks: true });
-            document.getElementById('content').innerHTML = marked.parse(md || '');
+            const rawHtml = marked.parse(md || '');
+            document.getElementById('content').innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
         }
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
@@ -485,10 +492,20 @@ final class MarkdownPreviewModel: ObservableObject {
 
 }
 
+// MARK: - WKNavigationDelegate
+
+extension MarkdownPreviewModel: WKNavigationDelegate {
+    nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        Task { @MainActor in
+            self.isWebViewLoaded = true
+            self.renderMarkdown()
+        }
+    }
+}
+
 // MARK: - Toolbar Delegate
 
 class ToolbarDelegate: NSObject, NSToolbarDelegate {
-    static let shared = ToolbarDelegate()
     weak var model: MarkdownPreviewModel?
 
     private static let openItem = NSToolbarItem.Identifier("openFile")
