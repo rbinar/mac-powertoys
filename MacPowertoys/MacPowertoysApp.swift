@@ -15,6 +15,7 @@ struct MacPowerToysApp: App {
     @StateObject private var clipboardManagerModel = ClipboardManagerModel()
     @StateObject private var markdownPreviewModel = MarkdownPreviewModel()
     @StateObject private var screenAnnotationModel = ScreenAnnotationModel()
+    @StateObject private var videoConverterModel = VideoConverterModel()
 
     init() {
         // Hide color panel at app startup
@@ -22,9 +23,11 @@ struct MacPowerToysApp: App {
             NSColorPanel.shared.orderOut(nil)
         }
 
-        // Request Accessibility permissions for global shortcuts
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        // Request Accessibility permissions for global shortcuts (only prompt if not already granted)
+        if !AXIsProcessTrusted() {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        }
     }
 
     var body: some Scene {
@@ -43,7 +46,8 @@ struct MacPowerToysApp: App {
                 .environmentObject(clipboardManagerModel)
                 .environmentObject(markdownPreviewModel)
                 .environmentObject(screenAnnotationModel)
-                .frame(width: 340)
+                .environmentObject(videoConverterModel)
+                .frame(width: 340, height: 560)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
                     model.closeColorPanel()
@@ -59,6 +63,7 @@ struct MacPowerToysApp: App {
                     clipboardManagerModel.stopMonitoring()
                     markdownPreviewModel.stopMonitoring()
                     screenAnnotationModel.stopMonitoring()
+                    videoConverterModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

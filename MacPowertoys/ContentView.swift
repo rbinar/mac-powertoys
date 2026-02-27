@@ -16,6 +16,7 @@ enum Feature: Hashable {
     case clipboardManager
     case markdownPreview
     case screenAnnotation
+    case videoConverter
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -139,6 +140,7 @@ struct ContentView: View {
     @EnvironmentObject var clipboardManagerModel: ClipboardManagerModel
     @EnvironmentObject var markdownPreviewModel: MarkdownPreviewModel
     @EnvironmentObject var screenAnnotationModel: ScreenAnnotationModel
+    @EnvironmentObject var videoConverterModel: VideoConverterModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -173,6 +175,9 @@ struct ContentView: View {
             }
 
             Divider()
+
+            ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 6) {
 
             // Color Picker module - full width (has special controls)
             FeatureCardView(title: "Color Picker", action: {
@@ -282,7 +287,7 @@ struct ContentView: View {
                 )
                 CompactFeatureCard(
                     title: "Clipboard Manager",
-                    icon: "doc.on.clipboard",
+                    icon: "list.clipboard",
                     statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Disabled",
                     isEnabled: $clipboardManagerModel.isEnabled,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .clipboardManager } }
@@ -305,6 +310,26 @@ struct ContentView: View {
                     isEnabled: $screenAnnotationModel.isEnabled,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenAnnotation } }
                 )
+            }
+
+            // Video Converter - full width
+            FeatureCardView(title: "Video Converter", action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    activeFeature = .videoConverter
+                }
+            }) {
+                Image(systemName: "film")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 7)
+                            .fill(.white.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                    )
             }
 
             // Webhook Notifier - full width
@@ -339,6 +364,9 @@ struct ContentView: View {
                     .labelsHidden()
                     .controlSize(.mini)
             }
+
+            } // VStack inside ScrollView
+            } // ScrollView
 
             Divider()
 
@@ -411,6 +439,9 @@ struct ContentView: View {
         case .screenAnnotation:
             ScreenAnnotationView(onBack: { goBack() })
                 .environmentObject(screenAnnotationModel)
+        case .videoConverter:
+            VideoConverterView(onBack: { goBack() })
+                .environmentObject(videoConverterModel)
         }
     }
 

@@ -62,7 +62,21 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - 🌑 **Dim Background**: Optionally dim the screen for better annotation visibility
 - ↩️ **Undo**: Undo drawings with `⌘Z` or right-click
 - ⌨️ **Text Tool**: Add text annotations directly on screen
-### �🔔 Webhook Notifier
+### 🎬 Video Converter
+- 🔄 **FFmpeg-Powered**: Convert between 16 formats — 9 video (MP4, MOV, M4V, MKV, WEBM, AVI, FLV, WMV, 3GP), 6 audio (MP3, AAC, WAV, FLAC, M4A, OGG), and animated GIF
+- 🎚️ **Quality Presets**: Choose from Low, Medium, High, or Highest quality with automatic codec tuning
+- 📐 **Resolution Options**: Original, 4K, 1440p, 1080p, 720p, 480p, or 360p output
+- 🎞️ **GIF Creation**: High-quality two-pass GIF generation with palette optimization
+- 🎵 **Audio Extraction**: Extract audio tracks from video files into MP3, AAC, FLAC, WAV, M4A, or OGG
+- 📊 **Real-time Progress**: Live progress bar parsed from FFmpeg output with elapsed time display
+- 📂 **Drag & Drop**: Drop files directly onto the converter or browse with a file picker
+- 🔍 **File Analysis**: Automatic metadata extraction (duration, resolution, codec, frame rate, file size)
+- 📜 **Conversion History**: View recent conversions with quick "Show in Finder" access
+- ⏹️ **Cancel Support**: Cancel running conversions at any time
+- 🍺 **One-Click FFmpeg Install**: Detects Homebrew and offers one-click FFmpeg installation with live progress
+- 💾 **Persistent Settings**: Selected format, quality, and resolution preferences are saved between sessions
+
+### 🔔 Webhook Notifier
 - 📡 **Real-time Notifications**: Receive and display macOS notifications instantly via webhooks
 - 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
 - 💬 **ntfy Compatible**: Uses the open-source `ntfy` protocol. Works with any ntfy server (defaults to `https://ntfy.blinkbrosai.com`)
@@ -81,6 +95,7 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 
 - **macOS 15.5 or later** (Note: This is a significant update from the previous 11.0+ requirement)
 - Apple Silicon or Intel Mac
+- **FFmpeg** (optional, required for Video Converter — installable via Homebrew from within the app)
 
 ## 🚀 Installation
 
@@ -143,6 +158,12 @@ open MacPowerToys.xcodeproj
    - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
    - Click on notifications to view details
    - Toggle specific webhooks on or off as needed
+9. **Video Converter**:
+   - Requires FFmpeg (one-click install via Homebrew if available)
+   - Drag & drop or browse for a video/audio file
+   - Select output format (video, audio, or GIF), quality, and resolution
+   - Choose save location and start conversion with real-time progress
+   - View conversion history and reveal output files in Finder
 
 ## 🛠️ Development
 
@@ -151,6 +172,8 @@ This app is built with:
 - **AppKit** for macOS integration
 - **NSColorSampler** for screen color picking
 - **NSColorPanel** for native color selection
+- **AVFoundation** for media file analysis
+- **FFmpeg** (via NSUserUnixTask) for video/audio conversion
 
 ## 🤝 Contributing
 
