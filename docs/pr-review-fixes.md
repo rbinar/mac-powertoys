@@ -103,15 +103,24 @@ Bu doküman, tüm PR'lardaki Gemini Code Assist review yorumlarının durumunu t
 | 2 | **high** | ScreenAnnotationModel.swift | Hem local hem global event monitor — çift çağrı | ✅ Düzeltildi (local monitor'lar kaldırıldı, sadece global) |
 | 3 | **high** | ScreenAnnotationModel.swift | Local monitor cleanup kodu | ✅ Düzeltildi (local monitor referansları ve cleanup kaldırıldı) |
 
+## PR #14 — Video Converter module
+| # | Seviye | Dosya | Sorun | Durum |
+|---|--------|-------|-------|-------|
+| 1 | **critical** | MacPowertoys.entitlements | App Sandbox tekrar devre dışı kalmıştı (`FFmpegBridge` `Process()` kullanıyordu) | ✅ Düzeltildi (sandbox etkin, `NSUserUnixTask` + Application Scripts yaklaşımına geçildi) |
+| 2 | **high** | FFmpegBridge.swift | `Process()` sandbox'ta çalışmıyor | ✅ Düzeltildi (`NSUserUnixTask` ile sandbox dışında script çalıştırma) |
+| 3 | **high** | VideoConverterModel.swift | `detectFFmpeg()` init'te senkron çağrılarak AttributeGraph crash | ✅ Düzeltildi (`Task.detached` + `MainActor.run` ile async) |
+| 4 | medium | FFmpegBridge.swift | Application Scripts'e yazma izni yok | ✅ Düzeltildi (`NSSavePanel` ile kullanıcıdan bir kerelik izin) |
+| 5 | medium | MacPowertoysApp.swift | `AXIsProcessTrustedWithOptions` her açılışta izin prompt gösteriyor | ✅ Düzeltildi (önce `AXIsProcessTrusted()` kontrolü) |
+
 ---
 
 ## Özet
 
 | Durum | Sayı |
 |-------|------|
-| ✅ Düzeltildi | 54 |
+| ✅ Düzeltildi | 59 |
 | ⚠️ Bilinen / Gelecek sürüm | 2 |
-| **Toplam** | **56** |
+| **Toplam** | **61** |
 
 ### Gelecek Sürüm İçin Planlanan
 1. **ClipboardManager**: Clipboard geçmişini Keychain veya şifrelenmiş depolama ile saklamak
