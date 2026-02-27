@@ -33,6 +33,13 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - ➕ **Mouse Crosshairs**: Full-screen crosshairs centered on your cursor (Double-tap `Right Option`)
 - 🔄 **Cursor Wrap**: Teleport your cursor to the opposite screen edge when hitting a boundary
 
+### 📋 Clipboard Manager
+- 📝 **History Tracking**: Keeps a history of your copied text and images
+- 🔍 **Searchable**: Quickly find past clipboard items
+- 📌 **Pin Items**: Pin important items so they are never deleted
+- ⌨️ **Global Shortcut**: Access your clipboard history instantly with `⌃⌥V`
+- ⚙️ **Customizable Limit**: Choose how many items to keep in history (10, 25, 50, or 100)
+
 ### ☕ Awake
 - 🚫 **Prevent Sleep**: Keep your Mac awake indefinitely or for a specific duration
 - 🖥️ **Display Control**: Choose whether to keep the display on or just the system awake
@@ -95,6 +102,7 @@ open MacPowerToys.xcodeproj
    - `⌃⌥R` (Control+Option+R): Toggle Screen Ruler
    - `⌃⌥Z` (Control+Option+Z): Toggle Screen Zoom
    - `⌃⌥L` (Control+Option+L): Toggle Live Zoom
+   - `⌃⌥V` (Control+Option+V): Open Clipboard Manager
    - `Double Left Control`: Find My Mouse
    - `Double Left Option`: Mouse Highlighter
    - `Double Right Option`: Mouse Crosshairs
@@ -102,12 +110,17 @@ open MacPowerToys.xcodeproj
 4. **Awake & Mouse Jiggler**:
    - Enable **Awake** to prevent your Mac from sleeping (choose indefinite or set a timer)
    - Enable **Mouse Jiggler** to simulate mouse movements and stay active in communication apps
-5. **Color Picker**:
+5. **Clipboard Manager**:
+   - Enable to start tracking your clipboard history
+   - Use `⌃⌥V` to quickly access your history from anywhere
+   - Click an item to copy it back to your clipboard
+   - Pin important items to keep them permanently
+6. **Color Picker**:
    - Click the eyedropper button and use it on screen
    - Click the color circle to open native color picker
    - View HEX, RGB, HSL, and HSV representations
    - Access previously picked colors from history
-6. **Webhook Notifier**:
+7. **Webhook Notifier**:
    - Add custom topics to receive real-time notifications
    - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
    - Click on notifications to view details
