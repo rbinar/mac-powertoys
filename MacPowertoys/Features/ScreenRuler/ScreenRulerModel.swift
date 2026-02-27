@@ -166,33 +166,15 @@ final class ScreenRulerModel: ObservableObject {
     private func activate() {
         guard !isActive else { return }
 
-        // Check Screen Recording permissions
-        if !CGPreflightScreenCaptureAccess() {
-            // Only show the custom alert if the system can't prompt the user.
-            if !CGRequestScreenCaptureAccess() {
-                DispatchQueue.main.async {
-                    let alert = NSAlert()
-                    alert.messageText = "Screen Recording Permission Required"
-                    alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
-                    alert.alertStyle = .warning
-                    alert.addButton(withTitle: "Open System Settings")
-                    alert.addButton(withTitle: "Cancel")
-                    if alert.runModal() == .alertFirstButtonReturn {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
-                }
-            }
-            isEnabled = false
-            return
-        }
-
         isActive = true
 
         // Capture screens BEFORE creating overlay windows so they aren't in the screenshot
         Task {
             await captureScreensAsync()
+            
+            // If capture disabled us (permission issue), bail out
+            guard isEnabled else { return }
+            
             createOverlayWindows()
             showToolbar()
             elevateAppWindows()
@@ -252,7 +234,6 @@ final class ScreenRulerModel: ObservableObject {
             for display in content.displays {
                 let filter = SCContentFilter(display: display, excludingWindows: excludedWindows)
                 let config = SCStreamConfiguration()
-                // Let ScreenCaptureKit use the display's native pixel resolution
                 config.width = display.width
                 config.height = display.height
                 config.capturesAudio = false
@@ -260,7 +241,6 @@ final class ScreenRulerModel: ObservableObject {
 
                 let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
 
-                // Find the matching NSScreen to get the point-size frame
                 let screen = NSScreen.screens.first { screenID(for: $0) == display.displayID }
                 let screenFrame = screen?.frame ?? CGRect(x: 0, y: 0, width: CGFloat(display.width), height: CGFloat(display.height))
 
@@ -269,7 +249,23 @@ final class ScreenRulerModel: ObservableObject {
                 }
             }
         } catch {
-            print("Screen capture failed: \(error.localizedDescription)")
+            print("[ScreenRuler] Screen capture failed: \(error.localizedDescription)")
+            if capturedScreens.isEmpty {
+                if !CGPreflightScreenCaptureAccess() {
+                    let alert = NSAlert()
+                    alert.messageText = "Screen Recording Permission Required"
+                    alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording."
+                    alert.alertStyle = .warning
+                    alert.addButton(withTitle: "Open System Settings")
+                    alert.addButton(withTitle: "Cancel")
+                    if alert.runModal() == .alertFirstButtonReturn {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
+                isEnabled = false
+            }
         }
     }
 
@@ -362,8 +358,8 @@ final class ScreenRulerModel: ObservableObject {
     private func showToolbar() {
         guard let mainScreen = NSScreen.main else { return }
 
-        let toolbarWidth: CGFloat = 200
-        let toolbarHeight: CGFloat = 40
+        let toolbarWidth = ScreenRulerToolbarView.computeWidth()
+        let toolbarHeight: CGFloat = 48
         let x = mainScreen.frame.midX - toolbarWidth / 2
         let y = mainScreen.frame.maxY - 80
 
@@ -378,26 +374,31 @@ final class ScreenRulerModel: ObservableObject {
         )
         view.currentMode = measurementMode
 
+        let effectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: toolbarWidth, height: toolbarHeight))
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.appearance = NSAppearance(named: .darkAqua)
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = 14
+        effectView.layer?.masksToBounds = true
+        effectView.addSubview(view)
+
         let window = NSWindow(
             contentRect: NSRect(x: x, y: y, width: toolbarWidth, height: toolbarHeight),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
-        window.contentView = view
+        window.contentView = effectView
         window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 1)
-        window.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.92)
+        window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         window.animationBehavior = .utilityWindow
         window.orderFrontRegardless()
-
-        // Round corners
-        window.contentView?.wantsLayer = true
-        window.contentView?.layer?.cornerRadius = 10
-        window.contentView?.layer?.masksToBounds = true
 
         toolbarWindow = window
         toolbarView = view

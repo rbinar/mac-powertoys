@@ -231,19 +231,24 @@ class ScreenRulerToolbarView: NSView {
     private let onModeChange: (MeasurementMode) -> Void
     private let onClose: () -> Void
     private var customTrackingAreas: [NSTrackingArea] = []
-    private var hoveredButton: Int? = nil
+    private var hoveredItem: Int? = nil  // 0..<modes.count = mode buttons, last = close
 
-    private struct ToolbarButton {
-        let mode: MeasurementMode?
-        let symbol: String
+    private struct ModeItem {
+        let mode: MeasurementMode
+        let sfSymbol: String
     }
 
-    private let buttons: [ToolbarButton] = [
-        ToolbarButton(mode: .bounds, symbol: "⊞"),
-        ToolbarButton(mode: .spacing, symbol: "✛"),
-        ToolbarButton(mode: .horizontal, symbol: "━"),
-        ToolbarButton(mode: .vertical, symbol: "┃"),
+    private let modes: [ModeItem] = [
+        ModeItem(mode: .bounds, sfSymbol: "rectangle.dashed"),
+        ModeItem(mode: .spacing, sfSymbol: "arrow.left.and.right"),
+        ModeItem(mode: .horizontal, sfSymbol: "arrow.left.and.line.vertical.and.arrow.right"),
+        ModeItem(mode: .vertical, sfSymbol: "arrow.up.and.line.horizontal.and.arrow.down"),
     ]
+
+    private let itemSize: CGFloat = 32
+    private let padding: CGFloat = 8
+    private let gap: CGFloat = 2
+    private let separatorGap: CGFloat = 12
 
     init(frame: NSRect, onModeChange: @escaping (MeasurementMode) -> Void, onClose: @escaping () -> Void) {
         self.onModeChange = onModeChange
@@ -257,115 +262,135 @@ class ScreenRulerToolbarView: NSView {
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        for area in customTrackingAreas {
-            removeTrackingArea(area)
-        }
+        for area in customTrackingAreas { removeTrackingArea(area) }
         customTrackingAreas.removeAll()
-
-        let area = NSTrackingArea(
-            rect: bounds,
-            options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways],
-            owner: self,
-            userInfo: nil
-        )
+        let area = NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways], owner: self, userInfo: nil)
         addTrackingArea(area)
         customTrackingAreas.append(area)
     }
 
     override func mouseMoved(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
-        let newHovered = buttonIndex(at: point)
-        if newHovered != hoveredButton {
-            hoveredButton = newHovered
+        let newHovered = hitTestItem(at: point)
+        if newHovered != hoveredItem {
+            hoveredItem = newHovered
             setNeedsDisplay(bounds)
         }
     }
 
     override func mouseExited(with event: NSEvent) {
-        hoveredButton = nil
+        hoveredItem = nil
         setNeedsDisplay(bounds)
     }
 
+    override var mouseDownCanMoveWindow: Bool { false }
+
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
-
-        // Check close button
-        let closeRect = closeButtonRect()
-        if closeRect.contains(point) {
+        guard let idx = hitTestItem(at: point) else { return }
+        if idx < modes.count {
+            onModeChange(modes[idx].mode)
+        } else {
             onClose()
-            return
-        }
-
-        // Check mode buttons
-        if let idx = buttonIndex(at: point), let mode = buttons[idx].mode {
-            onModeChange(mode)
         }
     }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
 
-        let totalButtons = buttons.count + 1 // +1 for close button
-        let buttonWidth = bounds.width / CGFloat(totalButtons)
+        let y = (bounds.height - itemSize) / 2
+        var x = padding
 
-        for (i, btn) in buttons.enumerated() {
-            let rect = CGRect(x: CGFloat(i) * buttonWidth, y: 0, width: buttonWidth, height: bounds.height)
+        // ── Mode buttons ──
+        for (i, item) in modes.enumerated() {
+            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
+            let isSelected = item.mode == currentMode
+            let isHovered = hoveredItem == i
 
-            // Highlight selected mode
-            if let mode = btn.mode, mode == currentMode {
-                ctx.setFillColor(NSColor.controlAccentColor.withAlphaComponent(0.3).cgColor)
-                ctx.fill(rect)
-            } else if hoveredButton == i {
-                ctx.setFillColor(NSColor.white.withAlphaComponent(0.1).cgColor)
-                ctx.fill(rect)
+            if isSelected {
+                drawPill(ctx, rect: rect, color: NSColor.controlAccentColor.withAlphaComponent(0.25))
+            } else if isHovered {
+                drawPill(ctx, rect: rect, color: NSColor.labelColor.withAlphaComponent(0.1))
             }
 
-            // Draw symbol
-            drawCenteredText(btn.symbol, in: rect, font: NSFont.systemFont(ofSize: 16, weight: .medium), color: .labelColor)
+            drawSFSymbol(item.sfSymbol, in: rect, size: 14, color: isSelected ? .controlAccentColor : .labelColor)
+            x += itemSize + gap
         }
 
-        // Separator before close button
-        let sepX = CGFloat(buttons.count) * buttonWidth
+        // ── Separator ──
+        x += separatorGap / 2 - gap
         ctx.setStrokeColor(NSColor.separatorColor.cgColor)
         ctx.setLineWidth(0.5)
-        ctx.move(to: CGPoint(x: sepX, y: 4))
-        ctx.addLine(to: CGPoint(x: sepX, y: bounds.height - 4))
+        ctx.move(to: CGPoint(x: x, y: 10))
+        ctx.addLine(to: CGPoint(x: x, y: bounds.height - 10))
         ctx.strokePath()
+        x += separatorGap / 2
 
-        // Close button
-        let closeRect = CGRect(x: sepX, y: 0, width: buttonWidth, height: bounds.height)
-        if hoveredButton == buttons.count {
-            ctx.setFillColor(NSColor.systemRed.withAlphaComponent(0.2).cgColor)
-            ctx.fill(closeRect)
+        // ── Close button ──
+        let closeRect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
+        let closeIdx = modes.count
+        if hoveredItem == closeIdx {
+            drawPill(ctx, rect: closeRect, color: NSColor.systemRed.withAlphaComponent(0.2))
         }
-        drawCenteredText("✕", in: closeRect, font: NSFont.systemFont(ofSize: 14, weight: .medium), color: .secondaryLabelColor)
+        drawSFSymbol("xmark", in: closeRect, size: 12, color: .secondaryLabelColor)
     }
 
-    private func drawCenteredText(_ text: String, in rect: CGRect, font: NSFont, color: NSColor) {
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: color
-        ]
-        let str = NSAttributedString(string: text, attributes: attrs)
-        let size = str.size()
+    // MARK: - Hit Testing
+
+    private func hitTestItem(at point: CGPoint) -> Int? {
+        let y = (bounds.height - itemSize) / 2
+        var x = padding
+
+        for i in 0..<modes.count {
+            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
+            if rect.contains(point) { return i }
+            x += itemSize + gap
+        }
+        x += separatorGap - gap
+
+        let closeRect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
+        if closeRect.contains(point) { return modes.count }
+
+        return nil
+    }
+
+    // MARK: - Drawing Helpers
+
+    private func drawPill(_ ctx: CGContext, rect: CGRect, color: NSColor) {
+        let path = CGPath(roundedRect: rect.insetBy(dx: 2, dy: 2), cornerWidth: 8, cornerHeight: 8, transform: nil)
+        ctx.setFillColor(color.cgColor)
+        ctx.addPath(path)
+        ctx.fillPath()
+    }
+
+    private func drawSFSymbol(_ name: String, in rect: CGRect, size: CGFloat, color: NSColor) {
+        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return }
+        let config = NSImage.SymbolConfiguration(pointSize: size, weight: .medium)
+        let configured = image.withSymbolConfiguration(config) ?? image
+
+        let tinted = NSImage(size: configured.size, flipped: false) { drawRect in
+            color.setFill()
+            drawRect.fill()
+            configured.draw(in: drawRect, from: .zero, operation: .destinationIn, fraction: 1.0)
+            return true
+        }
+
+        let imgSize = tinted.size
         let origin = CGPoint(
-            x: rect.midX - size.width / 2,
-            y: rect.midY - size.height / 2
+            x: rect.midX - imgSize.width / 2,
+            y: rect.midY - imgSize.height / 2
         )
-        str.draw(at: origin)
+        tinted.draw(at: origin, from: .zero, operation: .sourceOver, fraction: 1.0)
     }
 
-    private func buttonIndex(at point: CGPoint) -> Int? {
-        let totalButtons = buttons.count + 1
-        let buttonWidth = bounds.width / CGFloat(totalButtons)
-        let idx = Int(point.x / buttonWidth)
-        guard idx >= 0, idx < totalButtons else { return nil }
-        return idx
-    }
-
-    private func closeButtonRect() -> CGRect {
-        let totalButtons = buttons.count + 1
-        let buttonWidth = bounds.width / CGFloat(totalButtons)
-        return CGRect(x: CGFloat(buttons.count) * buttonWidth, y: 0, width: buttonWidth, height: bounds.height)
+    /// Calculate required toolbar width
+    static func computeWidth() -> CGFloat {
+        let itemSize: CGFloat = 32
+        let gap: CGFloat = 2
+        let padding: CGFloat = 8
+        let separatorGap: CGFloat = 12
+        let modeCount = 4
+        let closeCount = 1
+        return padding * 2 + CGFloat(modeCount + closeCount) * itemSize + CGFloat(modeCount - 1 + closeCount - 1) * gap + separatorGap
     }
 }

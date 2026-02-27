@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Screen Annotation module with freehand, line, arrow, rectangle, ellipse, and text drawing tools (`⌃⌥D`) 2026-02-27 15:08.
+- Customizable default color, line width, and dim-background option for Screen Annotation 2026-02-27 15:08.
+- Undo support for annotations via `⌘Z` or right-click 2026-02-27 15:08.
+- Troubleshooting guide for Screen Recording permission in `docs/` 2026-02-27 15:08.
 - Added Markdown Preview module with live preview of `.md` files in a resizable window 2026-02-27 05:00.
 - PDF export for Markdown files directly from the preview window toolbar 2026-02-27 05:00.
 - Paste from Clipboard support to preview markdown content without opening a file 2026-02-27 05:00.
@@ -41,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global keyboard shortcuts for all Mouse Utilities features now require Accessibility permission 2026-02-26 03:48.
 
 ### Changed
+- Screen Ruler toolbar redesigned with SF Symbols and vibrancy background for a polished look 2026-02-27 15:08.
+- Screen Ruler permission check moved to post-capture for smoother activation flow 2026-02-27 15:08.
 - Redesigned feature hub as a compact 2-column grid layout for better space utilization 2026-02-27 04:05.
 - Menu bar popover height now adjusts automatically based on content instead of a fixed max height 2026-02-26 03:48.
 - Module cards show a lighter hover effect on mouse-over for better interactivity feedback 2026-02-26 03:48.
@@ -72,30 +78,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Re-enabled App Sandbox and implemented proper Accessibility permission requests for global shortcuts 2026-02-26 03:48.
 
-## [1.0.0] - 2025-09-17
-
-### Added
-- Initial release of Mac PowerToys with Color Picker feature
-- Screen color picker with eyedropper tool
-- Native macOS color panel integration
-- Automatic hex code copying to clipboard
-- Support for multiple color formats (HEX, RGB, HSL, HSV)
-- Color history functionality (up to 8 colors)
-- Color shade variants display
-- Menu bar integration
-- Audio and haptic feedback
-- SwiftUI-based user interface
-
-### Features
-- 🎯 Pick colors from anywhere on screen
-- 🎨 Use native macOS color picker
-- 📋 Auto-copy hex codes to clipboard
-- 🎨 View colors in multiple formats
-- 📚 Remember color history
-- 🌈 See color shades
-- ⚡ Quick menu bar access
-- 🔊 Feedback on color selection
-
-### Requirements
-- macOS 11.0 (Big Sur) or later
+> Older releases archived in [CHANGELOG-2.md](CHANGELOG-2.md).
 - 64-bit Intel or Apple Silicon Mac
