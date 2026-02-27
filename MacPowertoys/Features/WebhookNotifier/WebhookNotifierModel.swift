@@ -48,6 +48,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     @Published private(set) var lastMessage: (label: String, title: String?, body: String, date: Date)? = nil
     
     // MARK: - Private State
+    private var dataBuffers: [UUID: Data] = [:]
     private var streamTasks: [UUID: URLSessionDataTask] = [:]
     private var reconnectTimers: [UUID: Timer] = [:]
     private var retryCounters: [UUID: Int] = [:]
@@ -96,15 +97,20 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     }
     
     private func saveTopics() {
-        if let data = try? JSONEncoder().encode(topics) {
+        do {
+            let data = try JSONEncoder().encode(topics)
             UserDefaults.standard.set(data, forKey: topicsKey)
+        } catch {
+            NSLog("[WebhookNotifier] Failed to encode topics for saving: %@", String(describing: error))
         }
     }
     
     private func loadTopics() {
-        if let data = UserDefaults.standard.data(forKey: topicsKey),
-           let decoded = try? JSONDecoder().decode([WebhookTopic].self, from: data) {
-            topics = decoded
+        guard let data = UserDefaults.standard.data(forKey: topicsKey) else { return }
+        do {
+            topics = try JSONDecoder().decode([WebhookTopic].self, from: data)
+        } catch {
+            NSLog("[WebhookNotifier] Failed to decode topics: %@", String(describing: error))
         }
     }
     
@@ -143,12 +149,13 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         // Optimistically set to true, will be updated if it fails
         connectionStates[topic.id] = true
         retryCounters[topic.id] = 0
-        print("[WebhookNotifier] Subscribed to topic: \(topic.label) (\(topic.topicID))")
+        print("[WebhookNotifier] Subscribed to topic: \(topic.label)")
     }
     
     private func unsubscribe(topicID: UUID) {
         streamTasks[topicID]?.cancel()
         streamTasks.removeValue(forKey: topicID)
+        dataBuffers.removeValue(forKey: topicID)
         
         reconnectTimers[topicID]?.invalidate()
         reconnectTimers.removeValue(forKey: topicID)
@@ -175,32 +182,37 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     nonisolated func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         guard let taskDesc = dataTask.taskDescription, let topicID = UUID(uuidString: taskDesc) else { return }
         
-        let dataString = String(data: data, encoding: .utf8) ?? ""
-        let lines = dataString.components(separatedBy: .newlines).filter { !$0.isEmpty }
-        
-        for line in lines {
-            guard let lineData = line.data(using: .utf8) else { continue }
-            do {
-                if let json = try JSONSerialization.jsonObject(with: lineData, options: []) as? [String: Any],
-                   let event = json["event"] as? String {
-                    
-                    if event == "message" {
-                        let title = json["title"] as? String
-                        let message = json["message"] as? String ?? "New webhook received"
+        // Buffer incoming data to handle partial messages
+        Task { @MainActor in
+            var buffer = self.dataBuffers[topicID] ?? Data()
+            buffer.append(data)
+            
+            // Process complete lines (newline-delimited JSON)
+            while let newlineRange = buffer.range(of: Data("\n".utf8)) {
+                let lineData = buffer.subdata(in: buffer.startIndex..<newlineRange.lowerBound)
+                buffer.removeSubrange(buffer.startIndex...newlineRange.lowerBound)
+                
+                guard !lineData.isEmpty else { continue }
+                
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: lineData, options: []) as? [String: Any],
+                       let event = json["event"] as? String {
                         
-                        Task { @MainActor in
+                        if event == "message" {
+                            let title = json["title"] as? String
+                            let message = json["message"] as? String ?? "New webhook received"
                             self.handleMessage(topicID: topicID, title: title, message: message)
-                        }
-                    } else if event == "open" {
-                        Task { @MainActor in
+                        } else if event == "open" {
                             self.connectionStates[topicID] = true
                             self.retryCounters[topicID] = 0
                         }
                     }
+                } catch {
+                    NSLog("[WebhookNotifier] Failed to parse JSON: %@", String(describing: error))
                 }
-            } catch {
-                print("[WebhookNotifier] Failed to parse JSON: \(error)")
             }
+            
+            self.dataBuffers[topicID] = buffer
         }
     }
     
