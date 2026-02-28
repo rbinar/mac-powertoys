@@ -19,6 +19,7 @@ enum Feature: Hashable {
     case videoConverter
     case pomodoroTimer
     case testDataGenerator
+    case speechToText
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -144,6 +145,7 @@ struct ContentView: View {
     @EnvironmentObject var screenAnnotationModel: ScreenAnnotationModel
     @EnvironmentObject var videoConverterModel: VideoConverterModel
     @EnvironmentObject var pomodoroTimerModel: PomodoroTimerModel
+    @EnvironmentObject var speechToTextModel: SpeechToTextModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -333,7 +335,7 @@ struct ContentView: View {
                 )
             }
             
-            // Row 6: Test Data Generator | (Empty)
+            // Row 6: Test Data Generator | Speech to Text
             HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Test Data Generator",
@@ -342,9 +344,13 @@ struct ContentView: View {
                     isEnabled: nil,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .testDataGenerator } }
                 )
-                
-                Color.clear
-                    .frame(maxWidth: .infinity)
+                CompactFeatureCard(
+                    title: "Speech to Text",
+                    icon: "waveform.badge.mic",
+                    statusText: speechToTextModel.hubStatusText,
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .speechToText } }
+                )
             }
 
             // Webhook Notifier - full width
@@ -462,6 +468,9 @@ struct ContentView: View {
                 .environmentObject(pomodoroTimerModel)
         case .testDataGenerator:
             TestDataGeneratorView(onBack: { goBack() })
+        case .speechToText:
+            SpeechToTextView(onBack: { goBack() })
+                .environmentObject(speechToTextModel)
         }
     }
 

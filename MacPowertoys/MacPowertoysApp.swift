@@ -15,6 +15,7 @@ struct MacPowerToysApp: App {
     @StateObject private var clipboardManagerModel = ClipboardManagerModel()
     @StateObject private var markdownPreviewModel = MarkdownPreviewModel()
     @StateObject private var screenAnnotationModel = ScreenAnnotationModel()
+    @StateObject private var speechToTextModel = SpeechToTextModel()
     @StateObject private var videoConverterModel = VideoConverterModel()
     @StateObject private var pomodoroTimerModel = PomodoroTimerModel()
     @StateObject private var testDataGeneratorModel = TestDataGeneratorModel()
@@ -48,6 +49,7 @@ struct MacPowerToysApp: App {
                 .environmentObject(clipboardManagerModel)
                 .environmentObject(markdownPreviewModel)
                 .environmentObject(screenAnnotationModel)
+                .environmentObject(speechToTextModel)
                 .environmentObject(videoConverterModel)
                 .environmentObject(pomodoroTimerModel)
                 .environmentObject(testDataGeneratorModel)
@@ -67,6 +69,7 @@ struct MacPowerToysApp: App {
                     clipboardManagerModel.stopMonitoring()
                     markdownPreviewModel.stopMonitoring()
                     screenAnnotationModel.stopMonitoring()
+                    speechToTextModel.stopMonitoring()
                     videoConverterModel.stopMonitoring()
                     pomodoroTimerModel.stopMonitoring()
                 }

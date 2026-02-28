@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B52E967B2E7ACB5700DB7440 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = B52E967C2E7ACB5700DB7440 /* WhisperKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		B52E965F2E7ACB5700DB7440 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -35,6 +39,11 @@
 			path = MacPowerToys;
 			sourceTree = "<group>";
 		};
+		B52E967E2E7ACB5800DB7440 /* MacPowerToysTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MacPowerToysTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B52E967B2E7ACB5700DB7440 /* WhisperKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				B52E96522E7ACB5600DB7440 /* MacPowerToys */,
+				B52E967E2E7ACB5800DB7440 /* MacPowerToysTests */,
 				B52E96512E7ACB5600DB7440 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,6 +111,7 @@
 			);
 			name = MacPowerToys;
 			packageProductDependencies = (
+				B52E967C2E7ACB5700DB7440 /* WhisperKit */,
 			);
 			productName = MacPowerToys;
 			productReference = B52E96502E7ACB5600DB7440 /* MacPowerToys.app */;
@@ -117,6 +129,9 @@
 			);
 			dependencies = (
 				B52E96602E7ACB5700DB7440 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B52E967E2E7ACB5800DB7440 /* MacPowerToysTests */,
 			);
 			name = MacPowerToysTests;
 			packageProductDependencies = (
@@ -181,6 +196,9 @@
 			productRefGroup = B52E96512E7ACB5600DB7440 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
+			packageReferences = (
+				B52E967D2E7ACB5700DB7440 /* XCRemoteSwiftPackageReference "WhisperKit" */,
+			);
 			targets = (
 				B52E964F2E7ACB5600DB7440 /* MacPowerToys */,
 				B52E965D2E7ACB5700DB7440 /* MacPowerToysTests */,
@@ -249,6 +267,25 @@
 			targetProxy = B52E96692E7ACB5700DB7440 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B52E967D2E7ACB5700DB7440 /* XCRemoteSwiftPackageReference "WhisperKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/WhisperKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B52E967C2E7ACB5700DB7440 /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B52E967D2E7ACB5700DB7440 /* XCRemoteSwiftPackageReference "WhisperKit" */;
+			productName = WhisperKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B52E96702E7ACB5700DB7440 /* Debug */ = {
