@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 ## [Unreleased]
 
 ### Added
+- Speech-to-Text module powered by WhisperKit for on-device audio transcription with model selection and real-time status. 2026-02-28 23:50
+- Unit tests for Speech-to-Text model status logic. 2026-02-28 23:50
 - Pomodoro Timer module with customizable focus/break sessions, auto-transitions, session tracking, and visual countdown ring. 2026-02-28 18:30
 - Test Data Generator utility for generating sample test data on demand. 2026-02-28 18:30
 - Video Converter module: FFmpeg-powered conversion between 16 formats (MP4, MOV, MKV, WEBM, AVI, MP3, AAC, WAV, FLAC, GIF, etc.) with quality presets, resolution options, and real-time progress. 2026-02-28 14:00
@@ -14,6 +16,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 - PR code review fixes documentation under `docs/pr-review-fixes.md`. 2026-02-27 12:00
 
 ### Changed
+- Feature hub grid updated: Speech-to-Text card replaces empty slot next to Test Data Generator. 2026-02-28 23:50
 - Feature hub grid reorganized into six 2-column rows with Pomodoro Timer and Test Data Generator cards. 2026-02-28 18:30
 - Video Converter card changed from full-width to compact 2-column card. 2026-02-28 18:30
 - "Annotation" label renamed to "Screen Annotation" in the feature hub. 2026-02-28 18:30
@@ -30,6 +33,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 ### Deprecated
 
 ### Removed
+- Removed unused `Combine` import from Markdown Preview and Webhook Notifier models. 2026-02-28 23:50
+- Removed unused `CoreGraphics` import from Mouse Jiggler model. 2026-02-28 23:50
+- Removed dead `convertPixels` method from Screen Ruler model. 2026-02-28 23:50
+- Removed stale `add_files.rb` helper script and typo entitlements file. 2026-02-28 23:50
+- Moved internal troubleshooting docs from `docs/` to `.docs/` (hidden from repo root). 2026-02-28 23:50
 
 ### Fixed
 - Fixed Webhook Notifier to properly buffer streaming data and handle partial messages. 2026-02-27 12:00

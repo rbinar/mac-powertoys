@@ -38,6 +38,9 @@ DerivedData/
 # DMG files
 *.dmg
 
+# Profiling artifacts
+*.profraw
+
 # Security - Never commit credentials
 .env
 .env.local
