@@ -49,13 +49,22 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - 🏃 **Stay Active**: Simulates tiny, invisible mouse movements to prevent "Away" status in apps like Teams, Slack, and Zoom
 - ⚙️ **Adjustable Interval**: Customize how often the mouse jiggles (10s to 120s)
 
-### � Markdown Preview
+### ⌨️ Markdown Preview
 - 👁️ **Live Preview**: Open and preview Markdown files in a resizable window with GitHub-flavored styling
 - 📄 **PDF Export**: Export your Markdown as PDF directly from the preview window toolbar
 - 📋 **Paste from Clipboard**: Preview Markdown content pasted from clipboard without opening a file
 - 🌗 **Theme Toggle**: Switch between light and dark themes for comfortable reading
 - 📂 **Recent Files**: Quick access to recently opened Markdown files
 - 🔄 **Auto-Reload**: Preview updates automatically when the file changes on disk
+
+### 🍅 Pomodoro Timer
+- ⏱️ **Focus Cycles**: Improve productivity with customizable focus and break sessions
+- 🔔 **Smart Notifications**: macOS notifications alert you when a phase completes
+- 🔄 **Auto-Transitions**: Optional automatic starts for breaks and subsequent focus sessions
+- 📊 **Session Tracking**: Track completed focus sessions and total daily progress
+- 🎨 **Visual Progress**: Clean UI with dynamic color-coded countdown ring
+- 🔊 **Sound Alerts**: Optional sound feedback at the end of each session
+
 ### ✍️ Screen Annotation
 - 🖌️ **Draw on Screen**: Annotate your screen with freehand, lines, arrows, rectangles, ellipses, and text (Global Shortcut: `⌃⌥D`)
 - 🎨 **Color & Width**: Choose from preset colors and adjust line width on the fly
@@ -158,7 +167,11 @@ open MacPowerToys.xcodeproj
    - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
    - Click on notifications to view details
    - Toggle specific webhooks on or off as needed
-9. **Video Converter**:
+9. **Pomodoro Timer**:
+   - Enable to start a 25-minute focus session
+   - Automatically transitions to a 5-minute break (customizable)
+   - Tracks your daily completed sessions with visual indicators
+10. **Video Converter**:
    - Requires FFmpeg (one-click install via Homebrew if available)
    - Drag & drop or browse for a video/audio file
    - Select output format (video, audio, or GIF), quality, and resolution
