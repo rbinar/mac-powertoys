@@ -863,21 +863,6 @@ final class ScreenRulerModel: ObservableObject {
         return 72.0 // Default macOS DPI
     }
 
-    func convertPixels(_ pixels: Int, dpi: CGFloat, unit: ExtraUnit) -> String? {
-        guard unit != .none else { return nil }
-        let inches = CGFloat(pixels) / dpi
-        switch unit {
-        case .none:
-            return nil
-        case .inches:
-            return String(format: "%.2f in", inches)
-        case .centimeters:
-            return String(format: "%.2f cm", inches * 2.54)
-        case .millimeters:
-            return String(format: "%.1f mm", inches * 25.4)
-        }
-    }
-
     // MARK: - Cleanup
 
     func stopMonitoring() {

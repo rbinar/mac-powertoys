@@ -1,6 +1,5 @@
 import Foundation
 import AppKit
-import CoreGraphics
 
 @MainActor
 final class MouseJigglerModel: ObservableObject {
