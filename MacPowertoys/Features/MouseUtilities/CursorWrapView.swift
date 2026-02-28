@@ -61,6 +61,8 @@ struct CursorWrapView: View {
                     Slider(value: $model.edgeMargin, in: 0...10, step: 1)
                 }
             }
+            
+            Spacer()
         }
     }
 }

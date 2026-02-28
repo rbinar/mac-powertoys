@@ -17,6 +17,8 @@ enum Feature: Hashable {
     case markdownPreview
     case screenAnnotation
     case videoConverter
+    case pomodoroTimer
+    case testDataGenerator
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -141,6 +143,7 @@ struct ContentView: View {
     @EnvironmentObject var markdownPreviewModel: MarkdownPreviewModel
     @EnvironmentObject var screenAnnotationModel: ScreenAnnotationModel
     @EnvironmentObject var videoConverterModel: VideoConverterModel
+    @EnvironmentObject var pomodoroTimerModel: PomodoroTimerModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -276,7 +279,7 @@ struct ContentView: View {
                 )
             }
 
-            // Row 3: Awake | Clipboard Manager
+            // Row 3: Awake | Pomodoro Timer
             HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Awake",
@@ -286,16 +289,23 @@ struct ContentView: View {
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .awake } }
                 )
                 CompactFeatureCard(
+                    title: "Pomodoro Timer",
+                    icon: "timer",
+                    statusText: pomodoroTimerStatusText,
+                    isEnabled: $pomodoroTimerModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .pomodoroTimer } }
+                )
+            }
+
+            // Row 4: Clipboard Manager | Markdown Preview
+            HStack(spacing: 6) {
+                CompactFeatureCard(
                     title: "Clipboard Manager",
                     icon: "list.clipboard",
                     statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Disabled",
                     isEnabled: $clipboardManagerModel.isEnabled,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .clipboardManager } }
                 )
-            }
-
-            // Row 4: Markdown Preview | Screen Annotation
-            HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Markdown Preview",
                     icon: "doc.richtext",
@@ -303,33 +313,38 @@ struct ContentView: View {
                     isEnabled: nil,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .markdownPreview } }
                 )
+            }
+
+            // Row 5: Screen Annotation | Video Converter
+            HStack(spacing: 6) {
                 CompactFeatureCard(
-                    title: "Annotation",
+                    title: "Screen Annotation",
                     icon: "pencil.tip.crop.circle",
                     statusText: screenAnnotationModel.isEnabled ? "Active" : "Disabled",
                     isEnabled: $screenAnnotationModel.isEnabled,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenAnnotation } }
                 )
+                CompactFeatureCard(
+                    title: "Video Converter",
+                    icon: "film",
+                    statusText: "Ready",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .videoConverter } }
+                )
             }
-
-            // Video Converter - full width
-            FeatureCardView(title: "Video Converter", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .videoConverter
-                }
-            }) {
-                Image(systemName: "film")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        RoundedRectangle(cornerRadius: 7)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 7)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
+            
+            // Row 6: Test Data Generator | (Empty)
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Test Data Generator",
+                    icon: "wand.and.stars",
+                    statusText: "Ready",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .testDataGenerator } }
+                )
+                
+                Color.clear
+                    .frame(maxWidth: .infinity)
             }
 
             // Webhook Notifier - full width
@@ -442,6 +457,11 @@ struct ContentView: View {
         case .videoConverter:
             VideoConverterView(onBack: { goBack() })
                 .environmentObject(videoConverterModel)
+        case .pomodoroTimer:
+            PomodoroTimerView(onBack: { goBack() })
+                .environmentObject(pomodoroTimerModel)
+        case .testDataGenerator:
+            TestDataGeneratorView(onBack: { goBack() })
         }
     }
 
@@ -506,6 +526,8 @@ struct ContentView: View {
                 isEnabled: $cursorWrapModel.isEnabled,
                 feature: .cursorWrap
             )
+            
+            Spacer()
         }
     }
 
@@ -580,5 +602,15 @@ struct ContentView: View {
 
         if count == 0 { return "All disabled" }
         return "\(count) of 4 enabled"
+    }
+
+    private var pomodoroTimerStatusText: String {
+        guard pomodoroTimerModel.isEnabled else { return "Disabled" }
+        switch pomodoroTimerModel.currentPhase {
+        case .idle: return "Ready"
+        case .focus: return "Focus \(pomodoroTimerModel.formattedRemaining)"
+        case .shortBreak: return "Break \(pomodoroTimerModel.formattedRemaining)"
+        case .longBreak: return "Break \(pomodoroTimerModel.formattedRemaining)"
+        }
     }
 }

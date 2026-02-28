@@ -16,6 +16,8 @@ struct MacPowerToysApp: App {
     @StateObject private var markdownPreviewModel = MarkdownPreviewModel()
     @StateObject private var screenAnnotationModel = ScreenAnnotationModel()
     @StateObject private var videoConverterModel = VideoConverterModel()
+    @StateObject private var pomodoroTimerModel = PomodoroTimerModel()
+    @StateObject private var testDataGeneratorModel = TestDataGeneratorModel()
 
     init() {
         // Hide color panel at app startup
@@ -47,6 +49,8 @@ struct MacPowerToysApp: App {
                 .environmentObject(markdownPreviewModel)
                 .environmentObject(screenAnnotationModel)
                 .environmentObject(videoConverterModel)
+                .environmentObject(pomodoroTimerModel)
+                .environmentObject(testDataGeneratorModel)
                 .frame(width: 340, height: 560)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -64,6 +68,7 @@ struct MacPowerToysApp: App {
                     markdownPreviewModel.stopMonitoring()
                     screenAnnotationModel.stopMonitoring()
                     videoConverterModel.stopMonitoring()
+                    pomodoroTimerModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)
