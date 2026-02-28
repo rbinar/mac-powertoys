@@ -144,6 +144,8 @@ struct MarkdownPreviewView: View {
                     }
                     .padding(.vertical, 8)
                 }
+                
+            Spacer()
         }
     }
 }

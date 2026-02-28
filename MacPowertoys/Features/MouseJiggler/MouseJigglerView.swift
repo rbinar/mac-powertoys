@@ -51,6 +51,8 @@ struct MouseJigglerView: View {
                     ), in: 10...120, step: 5)
                 }
             }
+            
+            Spacer()
         }
     }
 }

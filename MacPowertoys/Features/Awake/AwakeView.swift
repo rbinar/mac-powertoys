@@ -105,6 +105,8 @@ struct AwakeView: View {
                     }
                 }
             }
+            
+            Spacer()
         }
     }
 
