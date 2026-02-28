@@ -40,12 +40,11 @@ struct ScreenAnnotationView: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
-            }
 
-            Divider()
+                Divider()
 
-            // Default color
-            HStack {
+                // Default color
+                HStack {
                 Text("Default Color")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -112,6 +111,10 @@ struct ScreenAnnotationView: View {
                     toolRow("textformat", "Text annotation")
                 }
             }
+            } else {
+                Spacer()
+            }
+            
             } // VStack inside ScrollView
             } // ScrollView
         }
