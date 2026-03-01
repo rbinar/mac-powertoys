@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 ## [Unreleased]
 
 ### Added
+- Port Manager module for monitoring active network ports with process info, filtering, and kill-process support. 2026-03-01 00:00
+- System Info module displaying real-time CPU, memory, disk, and network statistics in the menu bar. 2026-03-01 00:00
+- Quick Launch module with customizable keyboard shortcuts for fast app/file/URL launching. 2026-03-01 00:00
 - Speech-to-Text module powered by WhisperKit for on-device audio transcription with model selection and real-time status. 2026-02-28 23:50
 - Unit tests for Speech-to-Text model status logic. 2026-02-28 23:50
 - Pomodoro Timer module with customizable focus/break sessions, auto-transitions, session tracking, and visual countdown ring. 2026-02-28 18:30
@@ -16,6 +19,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 - PR code review fixes documentation under `docs/pr-review-fixes.md`. 2026-02-27 12:00
 
 ### Changed
+- Feature hub grid expanded with Port Manager, System Info, and Quick Launch cards in new rows. 2026-03-01 00:00
+- Project documentation added under `.blink/` and `.github/copilot-instructions.md`. 2026-03-01 00:00
 - Feature hub grid updated: Speech-to-Text card replaces empty slot next to Test Data Generator. 2026-02-28 23:50
 - Feature hub grid reorganized into six 2-column rows with Pomodoro Timer and Test Data Generator cards. 2026-02-28 18:30
 - Video Converter card changed from full-width to compact 2-column card. 2026-02-28 18:30
