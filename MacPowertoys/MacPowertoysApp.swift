@@ -19,6 +19,9 @@ struct MacPowerToysApp: App {
     @StateObject private var videoConverterModel = VideoConverterModel()
     @StateObject private var pomodoroTimerModel = PomodoroTimerModel()
     @StateObject private var testDataGeneratorModel = TestDataGeneratorModel()
+    @StateObject private var portManagerModel = PortManagerModel()
+    @StateObject private var systemInfoModel = SystemInfoModel()
+    @StateObject private var quickLaunchModel = QuickLaunchModel()
 
     init() {
         // Hide color panel at app startup
@@ -53,6 +56,9 @@ struct MacPowerToysApp: App {
                 .environmentObject(videoConverterModel)
                 .environmentObject(pomodoroTimerModel)
                 .environmentObject(testDataGeneratorModel)
+                .environmentObject(portManagerModel)
+                .environmentObject(systemInfoModel)
+                .environmentObject(quickLaunchModel)
                 .frame(width: 340, height: 560)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -72,6 +78,9 @@ struct MacPowerToysApp: App {
                     speechToTextModel.stopMonitoring()
                     videoConverterModel.stopMonitoring()
                     pomodoroTimerModel.stopMonitoring()
+                    portManagerModel.stopMonitoring()
+                    systemInfoModel.stopMonitoring()
+                    quickLaunchModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

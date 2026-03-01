@@ -20,6 +20,9 @@ enum Feature: Hashable {
     case pomodoroTimer
     case testDataGenerator
     case speechToText
+    case portManager
+    case systemInfo
+    case quickLaunch
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -146,6 +149,9 @@ struct ContentView: View {
     @EnvironmentObject var videoConverterModel: VideoConverterModel
     @EnvironmentObject var pomodoroTimerModel: PomodoroTimerModel
     @EnvironmentObject var speechToTextModel: SpeechToTextModel
+    @EnvironmentObject var portManagerModel: PortManagerModel
+    @EnvironmentObject var systemInfoModel: SystemInfoModel
+    @EnvironmentObject var quickLaunchModel: QuickLaunchModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -352,6 +358,35 @@ struct ContentView: View {
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .speechToText } }
                 )
             }
+            
+            // Row 7: Port Manager | System Info
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Port Manager",
+                    icon: "network",
+                    statusText: portManagerModel.isEnabled ? "\(portManagerModel.ports.count) ports" : "Disabled",
+                    isEnabled: $portManagerModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .portManager } }
+                )
+                CompactFeatureCard(
+                    title: "System Info",
+                    icon: "gauge.with.dots.needle.33percent",
+                    statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Disabled",
+                    isEnabled: $systemInfoModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .systemInfo } }
+                )
+            }
+
+            // Row 8: Quick Launch
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Quick Launch",
+                    icon: "bolt.fill",
+                    statusText: "\(quickLaunchModel.customEntries.count) shortcuts",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .quickLaunch } }
+                )
+            }
 
             // Webhook Notifier - full width
             FeatureCardView(title: "Webhook Notifier", action: {
@@ -471,6 +506,15 @@ struct ContentView: View {
         case .speechToText:
             SpeechToTextView(onBack: { goBack() })
                 .environmentObject(speechToTextModel)
+        case .portManager:
+            PortManagerView(onBack: { goBack() })
+                .environmentObject(portManagerModel)
+        case .systemInfo:
+            SystemInfoView(onBack: { goBack() })
+                .environmentObject(systemInfoModel)
+        case .quickLaunch:
+            QuickLaunchView(onBack: { goBack() })
+                .environmentObject(quickLaunchModel)
         }
     }
 
