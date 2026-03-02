@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 ## [Unreleased]
 
 ### Added
+- Favicon support for URL entries in Quick Launch — website icons are fetched and displayed automatically. 2026-03-02 14:00
+- Hover actions (edit/delete) and delete confirmation dialog on Quick Launch entry rows. 2026-03-02 14:00
+- Input validation in Quick Launch entry form for file paths and URL format. 2026-03-02 14:00
 - PDF Tools module for splitting, merging, and extracting PDF files. 2026-03-02 04:00
 - Port Manager module for monitoring active network ports with process info, filtering, and kill-process support. 2026-03-01 00:00
 - System Info module displaying real-time CPU, memory, disk, and network statistics in the menu bar. 2026-03-01 00:00
@@ -20,6 +23,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 - PR code review fixes documentation under `docs/pr-review-fixes.md`. 2026-02-27 12:00
 
 ### Changed
+- Quick Launch search now includes indexed applications alongside custom entries. 2026-03-02 14:00
+- Quick Launch entry rows extracted into standalone `CustomEntryRow` view with app icons from NSWorkspace. 2026-03-02 14:00
 - Added `.github/copilot-instructions.md` macOS Permissions and Async documentation to prevent code generation issues. 2026-03-02 04:00
 - Updated main UI hub grid to position PDF Tools alongside Quick Launch. 2026-03-02 04:00
 - Feature hub grid expanded with Port Manager, System Info, and Quick Launch cards in new rows. 2026-03-01 00:00
@@ -48,6 +53,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 - Moved internal troubleshooting docs from `docs/` to `.docs/` (hidden from repo root). 2026-02-28 23:50
 
 ### Fixed
+- Fixed Screen Ruler disabling itself on transient capture failures even when screen recording permission is granted. 2026-03-02 14:00
 - Fixed Quick Launch failing to auto-focus search field upon activation. 2026-03-02 04:00
 - Fixed Screen Ruler UI bouncing back by checking for Screen Recording permission before activating. 2026-03-02 04:00
 - Fixed ZoomIt occasionally leaving the Escape key globally bound after being disabled. 2026-03-02 04:00
