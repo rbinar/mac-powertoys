@@ -121,7 +121,7 @@ struct QuickLaunchView: View {
                 ScrollView {
                     VStack(spacing: 4) {
                         ForEach(model.customEntries) { entry in
-                            customEntryRow(entry)
+                            CustomEntryRow(entry: entry)
                         }
                     }
                 }
@@ -130,11 +130,19 @@ struct QuickLaunchView: View {
         }
     }
 
-    // MARK: - Entry Row
+}
 
-    private func customEntryRow(_ entry: LaunchEntry) -> some View {
+// MARK: - Custom Entry Row
+
+struct CustomEntryRow: View {
+    @EnvironmentObject var model: QuickLaunchModel
+    let entry: LaunchEntry
+    @State private var isHovered = false
+    @State private var showDeleteConfirm = false
+
+    var body: some View {
         HStack(spacing: 10) {
-            actionIcon(for: entry.action)
+            actionIcon(for: entry)
                 .frame(width: 24, height: 24)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -150,31 +158,62 @@ struct QuickLaunchView: View {
 
             Spacer()
 
+            if isHovered {
+                HStack(spacing: 6) {
+                    Button { model.editingEntry = entry } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Edit")
+
+                    Button { showDeleteConfirm = true } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.red.opacity(0.8))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Delete")
+                }
+                .transition(.opacity)
+            }
+
             actionTypeBadge(for: entry.action)
         }
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(.white.opacity(0.07))
+                .fill(isHovered ? .white.opacity(0.12) : .white.opacity(0.07))
         )
+        .onHover { hovering in isHovered = hovering }
         .contextMenu {
             Button("Edit") {
                 model.editingEntry = entry
             }
             Button("Delete", role: .destructive) {
+                showDeleteConfirm = true
+            }
+        }
+        .alert("Delete Shortcut", isPresented: $showDeleteConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
                 model.deleteEntry(entry)
             }
+        } message: {
+            Text("Are you sure you want to delete \"\(entry.name)\"?")
         }
     }
 
     // MARK: - Helpers
 
     @ViewBuilder
-    private func actionIcon(for action: LaunchAction) -> some View {
-        switch action {
-        case .app:
-            Image(systemName: "app.fill")
-                .foregroundStyle(.blue)
+    private func actionIcon(for entry: LaunchEntry) -> some View {
+        switch entry.action {
+        case .app(let path):
+            Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+                .resizable()
+                .aspectRatio(contentMode: .fit)
         case .file:
             Image(systemName: "doc.fill")
                 .foregroundStyle(.blue)
@@ -182,8 +221,14 @@ struct QuickLaunchView: View {
             Image(systemName: "folder.fill")
                 .foregroundStyle(.orange)
         case .url:
-            Image(systemName: "globe")
-                .foregroundStyle(.blue)
+            if let faviconData = entry.faviconData, let nsImage = NSImage(data: faviconData) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "globe")
+                    .foregroundStyle(.blue)
+            }
         case .shellCommand:
             Image(systemName: "terminal.fill")
                 .foregroundStyle(.green)
@@ -221,6 +266,7 @@ struct EntryFormView: View {
     @State private var actionType: ActionTypeOption = .app
     @State private var pathOrValue: String = ""
     @State private var keywordsText: String = ""
+    @State private var validationError: String?
 
     enum ActionTypeOption: String, CaseIterable {
         case app = "App"
@@ -267,6 +313,12 @@ struct EntryFormView: View {
             TextField("Keywords (comma separated)", text: $keywordsText)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.caption, design: .rounded))
+
+            if let validationError {
+                Text(validationError)
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(.red)
+            }
 
             HStack {
                 Spacer()
@@ -342,6 +394,22 @@ struct EntryFormView: View {
     }
 
     private func save() {
+        switch actionType {
+        case .app, .file, .folder:
+            if !FileManager.default.fileExists(atPath: pathOrValue) {
+                validationError = "File or folder not found at this path."
+                return
+            }
+        case .url:
+            if URL(string: pathOrValue) == nil || (!pathOrValue.hasPrefix("http://") && !pathOrValue.hasPrefix("https://")) {
+                validationError = "Please enter a valid URL starting with http:// or https://"
+                return
+            }
+        case .shellCommand:
+            break
+        }
+        validationError = nil
+
         let action: LaunchAction
         switch actionType {
         case .app: action = .app(path: pathOrValue)
