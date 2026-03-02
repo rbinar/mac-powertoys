@@ -20,7 +20,6 @@ class QuickLaunchPanelController {
         positionPanel()
         NSApp.activate(ignoringOtherApps: true)
         panel?.makeKeyAndOrderFront(nil)
-        panel?.makeFirstResponder(panel?.contentView)
         installMonitors()
     }
 
@@ -45,8 +44,12 @@ class QuickLaunchPanelController {
 
     // MARK: - Private
 
+    private class KeyablePanel: NSPanel {
+        override var canBecomeKey: Bool { true }
+    }
+
     private func createPanel() {
-        let panel = NSPanel(
+        let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 680, height: 56),
             styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless],
             backing: .buffered,
@@ -126,6 +129,7 @@ class QuickLaunchPanelController {
 
 struct QuickLaunchPanelContent: View {
     @ObservedObject var model: QuickLaunchModel
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -145,6 +149,10 @@ struct QuickLaunchPanelContent: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
+        .onAppear { isSearchFocused = true }
+        .onChange(of: model.isPanelVisible) { visible in
+            if visible { isSearchFocused = true }
+        }
     }
 
     private var searchBar: some View {
@@ -156,6 +164,7 @@ struct QuickLaunchPanelContent: View {
             TextField("Search apps, files, commands...", text: $model.searchText)
                 .font(.system(size: 20, weight: .light, design: .rounded))
                 .textFieldStyle(.plain)
+                .focused($isSearchFocused)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)

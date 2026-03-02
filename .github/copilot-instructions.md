@@ -33,6 +33,10 @@ macOS menu bar utility app (SwiftUI + AppKit) with 16 independent feature module
 - Use `try?` for non-critical file operations
 - Redirect process stderr to `FileHandle.nullDevice`
 
+### macOS Permissions (CRITICAL)
+- **Screen Recording**: Always check `CGPreflightScreenCaptureAccess()` BEFORE calling `SCShareableContent` or `SCScreenshotManager`. If not granted, call `CGRequestScreenCaptureAccess()`, show an alert directing the user to System Settings, and return early. Never attempt screen capture first and handle permission failure in a catch block — this causes the toggle to bounce back to disabled. See `ZoomItModel.checkScreenRecordingPermission()` as the reference pattern.
+- **Accessibility**: Check `AXIsProcessTrusted()` before setting up global event monitors. Prompt with `kAXTrustedCheckOptionPrompt` only if not already granted.
+
 ### Async
 - Annotate all model classes `@MainActor`
 - Use `Timer.scheduledTimer` with `[weak self]` + `Task { @MainActor in }` inside callbacks
