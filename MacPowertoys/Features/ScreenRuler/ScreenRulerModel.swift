@@ -275,7 +275,9 @@ final class ScreenRulerModel: ObservableObject {
         } catch {
             NSLog("[ScreenRuler] Screen capture failed: %@", error.localizedDescription)
             if capturedScreens.isEmpty {
-                isEnabled = false
+                if !CGPreflightScreenCaptureAccess() {
+                    isEnabled = false
+                }
             }
         }
     }

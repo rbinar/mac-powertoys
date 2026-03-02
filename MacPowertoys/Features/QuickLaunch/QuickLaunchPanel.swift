@@ -232,9 +232,15 @@ struct QuickLaunchPanelContent: View {
                 .font(.title2)
                 .foregroundStyle(.blue)
         case .url:
-            Image(systemName: "globe")
-                .font(.title2)
-                .foregroundStyle(.blue)
+            if let faviconData = entry.faviconData, let nsImage = NSImage(data: faviconData) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "globe")
+                    .font(.title2)
+                    .foregroundStyle(.blue)
+            }
         case .shellCommand:
             Image(systemName: "terminal.fill")
                 .font(.title2)

@@ -77,6 +77,7 @@ struct LaunchEntry: Identifiable, Codable, Equatable {
     let createdAt: Date
     var lastUsedAt: Date?
     var useCount: Int
+    var faviconData: Data?
 }
 
 private struct QuickLaunchHotKey {
@@ -295,7 +296,7 @@ final class QuickLaunchModel: ObservableObject {
             let sortedCustom = customEntries.sorted { frecencyScore(for: $0) > frecencyScore(for: $1) }
             searchResults = Array(sortedCustom.prefix(Self.maxVisibleResults))
         } else {
-            let allEntries = customEntries
+            let allEntries = customEntries + indexedApps
             let query = searchText
 
             var scored: [(entry: LaunchEntry, score: Int)] = []
@@ -471,6 +472,35 @@ final class QuickLaunchModel: ObservableObject {
         UNUserNotificationCenter.current().add(request) { _ in }
     }
 
+    // MARK: - Favicon
+
+    private func fetchFavicon(for entryId: UUID, urlString: String) {
+        guard let url = URL(string: urlString), let host = url.host else { return }
+        guard let faviconURL = URL(string: "https://www.google.com/s2/favicons?domain=\(host)&sz=64") else { return }
+
+        Task.detached { [weak self] in
+            do {
+                let (data, response) = try await URLSession.shared.data(from: faviconURL)
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200,
+                      !data.isEmpty,
+                      NSImage(data: data) != nil else { return }
+
+                await MainActor.run {
+                    self?.updateFavicon(data, for: entryId)
+                }
+            } catch {
+                NSLog("[QuickLaunch] Failed to fetch favicon: %@", error.localizedDescription)
+            }
+        }
+    }
+
+    private func updateFavicon(_ data: Data, for entryId: UUID) {
+        guard let index = customEntries.firstIndex(where: { $0.id == entryId }) else { return }
+        customEntries[index].faviconData = data
+        saveEntries()
+    }
+
     // MARK: - Entry Management
 
     func addEntry(name: String, action: LaunchAction, keywords: [String]) {
@@ -487,12 +517,20 @@ final class QuickLaunchModel: ObservableObject {
         )
         customEntries.insert(entry, at: 0)
         saveEntries()
+
+        if case .url(let urlString) = action {
+            fetchFavicon(for: entry.id, urlString: urlString)
+        }
     }
 
     func updateEntry(_ entry: LaunchEntry) {
         if let index = customEntries.firstIndex(where: { $0.id == entry.id }) {
             customEntries[index] = entry
             saveEntries()
+
+            if case .url(let urlString) = entry.action, entry.faviconData == nil {
+                fetchFavicon(for: entry.id, urlString: urlString)
+            }
         }
     }
 
@@ -542,6 +580,11 @@ final class QuickLaunchModel: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: "quickLaunch.customEntries") else { return }
         do {
             customEntries = try JSONDecoder().decode([LaunchEntry].self, from: data)
+            for entry in customEntries {
+                if case .url(let urlString) = entry.action, entry.faviconData == nil {
+                    fetchFavicon(for: entry.id, urlString: urlString)
+                }
+            }
         } catch {
             NSLog("[QuickLaunch] Failed to decode entries: %@", String(describing: error))
         }
