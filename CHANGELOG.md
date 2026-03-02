@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-02
+
 ### Added
 - Favicon support for URL entries in Quick Launch — website icons are fetched and displayed automatically. 2026-03-02 14:00
 - Hover actions (edit/delete) and delete confirmation dialog on Quick Launch entry rows. 2026-03-02 14:00
