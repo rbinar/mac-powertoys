@@ -22,6 +22,7 @@ struct MacPowerToysApp: App {
     @StateObject private var portManagerModel = PortManagerModel()
     @StateObject private var systemInfoModel = SystemInfoModel()
     @StateObject private var quickLaunchModel = QuickLaunchModel()
+    @StateObject private var pdfToolsModel = PdfToolsModel()
 
     init() {
         // Hide color panel at app startup
@@ -59,6 +60,7 @@ struct MacPowerToysApp: App {
                 .environmentObject(portManagerModel)
                 .environmentObject(systemInfoModel)
                 .environmentObject(quickLaunchModel)
+                .environmentObject(pdfToolsModel)
                 .frame(width: 340, height: 560)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -81,6 +83,7 @@ struct MacPowerToysApp: App {
                     portManagerModel.stopMonitoring()
                     systemInfoModel.stopMonitoring()
                     quickLaunchModel.stopMonitoring()
+                    pdfToolsModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

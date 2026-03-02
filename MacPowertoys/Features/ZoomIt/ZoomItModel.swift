@@ -154,12 +154,21 @@ final class ZoomItModel: ObservableObject {
         // ⌃⌥L (keyCode kVK_ANSI_L = 37)
         var liveZoomHotKeyID = EventHotKeyID(signature: ZoomItHotKey.signature, id: ZoomItHotKey.toggleLiveZoom)
         RegisterEventHotKey(UInt32(kVK_ANSI_L), modifiers, liveZoomHotKeyID, GetApplicationEventTarget(), 0, &liveZoomHotKeyRef)
-        
-        // ESC (no modifiers) to close
+    }
+
+    private func registerEscHotKey() {
+        guard escHotKeyRef == nil else { return }
         var escHotKeyID = EventHotKeyID(signature: ZoomItHotKey.signature, id: ZoomItHotKey.close)
         RegisterEventHotKey(UInt32(kVK_Escape), 0, escHotKeyID, GetApplicationEventTarget(), 0, &escHotKeyRef)
     }
-    
+
+    private func unregisterEscHotKey() {
+        if let ref = escHotKeyRef {
+            UnregisterEventHotKey(ref)
+            escHotKeyRef = nil
+        }
+    }
+
     // MARK: - Activation
     
     func activateScreenZoom() {
@@ -183,6 +192,7 @@ final class ZoomItModel: ObservableObject {
             print("[ZoomIt] Screen capture finished. Creating overlay windows...")
             createOverlayWindows(isLive: false)
             registerActiveMonitors()
+            registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
             print("[ZoomIt] Overlay windows created and monitors registered.")
         }
@@ -208,6 +218,7 @@ final class ZoomItModel: ObservableObject {
             createOverlayWindows(isLive: true)
             await startLiveStreams()
             registerActiveMonitors()
+            registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
             print("[ZoomIt] Live zoom overlay windows created and streams started.")
         }
@@ -221,6 +232,7 @@ final class ZoomItModel: ObservableObject {
         isEnabled = false
         liveZoomEnabled = false
         
+        unregisterEscHotKey()
         removeActiveMonitors()
         removeOverlayWindows(wasZooming: wasZooming)
         stopLiveStreams()

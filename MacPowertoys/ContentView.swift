@@ -23,6 +23,7 @@ enum Feature: Hashable {
     case portManager
     case systemInfo
     case quickLaunch
+    case pdfTools
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -152,6 +153,7 @@ struct ContentView: View {
     @EnvironmentObject var portManagerModel: PortManagerModel
     @EnvironmentObject var systemInfoModel: SystemInfoModel
     @EnvironmentObject var quickLaunchModel: QuickLaunchModel
+    @EnvironmentObject var pdfToolsModel: PdfToolsModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -341,7 +343,25 @@ struct ContentView: View {
                 )
             }
             
-            // Row 6: Test Data Generator | Speech to Text
+            // Row 6: PDF Tools | Quick Launch
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "PDF Tools",
+                    icon: "doc.badge.gearshape",
+                    statusText: "Ready",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .pdfTools } }
+                )
+                CompactFeatureCard(
+                    title: "Quick Launch",
+                    icon: "bolt.fill",
+                    statusText: "\(quickLaunchModel.customEntries.count) shortcuts",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .quickLaunch } }
+                )
+            }
+
+            // Row 7: Test Data Generator | Speech to Text
             HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Test Data Generator",
@@ -359,7 +379,7 @@ struct ContentView: View {
                 )
             }
             
-            // Row 7: Port Manager | System Info
+            // Row 8: Port Manager | System Info
             HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Port Manager",
@@ -374,17 +394,6 @@ struct ContentView: View {
                     statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Disabled",
                     isEnabled: $systemInfoModel.isEnabled,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .systemInfo } }
-                )
-            }
-
-            // Row 8: Quick Launch
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Quick Launch",
-                    icon: "bolt.fill",
-                    statusText: "\(quickLaunchModel.customEntries.count) shortcuts",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .quickLaunch } }
                 )
             }
 
@@ -515,6 +524,9 @@ struct ContentView: View {
         case .quickLaunch:
             QuickLaunchView(onBack: { goBack() })
                 .environmentObject(quickLaunchModel)
+        case .pdfTools:
+            PdfToolsView(onBack: { goBack() })
+                .environmentObject(pdfToolsModel)
         }
     }
 

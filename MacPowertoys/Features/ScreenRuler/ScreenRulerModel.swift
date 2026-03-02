@@ -166,6 +166,11 @@ final class ScreenRulerModel: ObservableObject {
     private func activate() {
         guard !isActive else { return }
 
+        if !checkScreenRecordingPermission() {
+            isEnabled = false
+            return
+        }
+
         isActive = true
 
         // Capture screens BEFORE creating overlay windows so they aren't in the screenshot
@@ -182,6 +187,25 @@ final class ScreenRulerModel: ObservableObject {
             registerActiveMonitors()
             registerEscHotKey()
         }
+    }
+
+    private func checkScreenRecordingPermission() -> Bool {
+        if !CGPreflightScreenCaptureAccess() {
+            CGRequestScreenCaptureAccess()
+            let alert = NSAlert()
+            alert.messageText = "Screen Recording Permission Required"
+            alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Cancel")
+            if alert.runModal() == .alertFirstButtonReturn {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            return false
+        }
+        return true
     }
 
     private func deactivate() {
@@ -249,21 +273,8 @@ final class ScreenRulerModel: ObservableObject {
                 }
             }
         } catch {
-            print("[ScreenRuler] Screen capture failed: \(error.localizedDescription)")
+            NSLog("[ScreenRuler] Screen capture failed: %@", error.localizedDescription)
             if capturedScreens.isEmpty {
-                if !CGPreflightScreenCaptureAccess() {
-                    let alert = NSAlert()
-                    alert.messageText = "Screen Recording Permission Required"
-                    alert.informativeText = "MacPowerToys needs Screen Recording permission to measure elements on the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording."
-                    alert.alertStyle = .warning
-                    alert.addButton(withTitle: "Open System Settings")
-                    alert.addButton(withTitle: "Cancel")
-                    if alert.runModal() == .alertFirstButtonReturn {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
-                }
                 isEnabled = false
             }
         }
