@@ -23,6 +23,7 @@ struct MacPowerToysApp: App {
     @StateObject private var systemInfoModel = SystemInfoModel()
     @StateObject private var quickLaunchModel = QuickLaunchModel()
     @StateObject private var pdfToolsModel = PdfToolsModel()
+    @StateObject private var screenCaptureModel = ScreenCaptureModel()
 
     init() {
         // Hide color panel at app startup
@@ -61,6 +62,7 @@ struct MacPowerToysApp: App {
                 .environmentObject(systemInfoModel)
                 .environmentObject(quickLaunchModel)
                 .environmentObject(pdfToolsModel)
+                .environmentObject(screenCaptureModel)
                 .frame(width: 340, height: 560)
                 .padding(.vertical, 8)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
@@ -84,6 +86,7 @@ struct MacPowerToysApp: App {
                     systemInfoModel.stopMonitoring()
                     quickLaunchModel.stopMonitoring()
                     pdfToolsModel.stopMonitoring()
+                    screenCaptureModel.stopMonitoring()
                 }
         }
         .menuBarExtraStyle(.window)

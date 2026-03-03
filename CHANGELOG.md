@@ -4,6 +4,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 
 ## [Unreleased]
 
+### Added
+- Screen Capture module: press ⌃⌥4 to select a screen region and copy it directly to the clipboard — no file saved to desktop. 2026-03-03 00:00
+
 ## [2.0.0] - 2026-03-02
 
 ### Added

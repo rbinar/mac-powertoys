@@ -24,6 +24,7 @@ enum Feature: Hashable {
     case systemInfo
     case quickLaunch
     case pdfTools
+    case screenCapture
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -154,6 +155,7 @@ struct ContentView: View {
     @EnvironmentObject var systemInfoModel: SystemInfoModel
     @EnvironmentObject var quickLaunchModel: QuickLaunchModel
     @EnvironmentObject var pdfToolsModel: PdfToolsModel
+    @EnvironmentObject var screenCaptureModel: ScreenCaptureModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -397,6 +399,19 @@ struct ContentView: View {
                 )
             }
 
+            // Row 9: Screen Capture
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Screen Capture",
+                    icon: "camera.viewfinder",
+                    statusText: screenCaptureModel.isEnabled ? "⌃⌥4 Active" : "Disabled",
+                    isEnabled: $screenCaptureModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenCapture } }
+                )
+                Spacer()
+                    .frame(maxWidth: .infinity)
+            }
+
             // Webhook Notifier - full width
             FeatureCardView(title: "Webhook Notifier", action: {
                 withAnimation(.easeInOut(duration: 0.15)) {
@@ -527,6 +542,9 @@ struct ContentView: View {
         case .pdfTools:
             PdfToolsView(onBack: { goBack() })
                 .environmentObject(pdfToolsModel)
+        case .screenCapture:
+            ScreenCaptureView(onBack: { goBack() })
+                .environmentObject(screenCaptureModel)
         }
     }
 
