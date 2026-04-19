@@ -53,6 +53,7 @@ xcodebuild -project MacPowerToys.xcodeproj \
            DEVELOPMENT_TEAM="$TEAM_ID" \
            CODE_SIGN_IDENTITY="Developer ID Application" \
            CODE_SIGN_STYLE=Manual \
+           OTHER_CODE_SIGN_FLAGS="--timestamp" \
            clean build
 
 # ── Step 4: Verify code signature ────────────────────────────────────────────
