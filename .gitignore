@@ -88,3 +88,17 @@ fastlane/test_output
 
 # Code coverage profiling data
 *.profraw
+
+# Internal dev tooling — not for source control
+.blink/
+.blink-dev-version
+.docs/
+
+# GitHub Copilot local customizations (agents, prompts, instructions)
+.github/
+
+# Playwright MCP artifacts — may contain signing certificates and session data
+.playwright-mcp/
+
+# Build logs
+build_output.log

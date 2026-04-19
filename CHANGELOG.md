@@ -5,7 +5,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 ## [Unreleased]
 
 ### Added
+- GitHub Notifier module: monitor GitHub repos and organizations for events (push, pull request, issues, stars, forks, releases) and receive native macOS notifications. Supports GitHub OAuth device-flow authentication for private repos. 2026-04-19 00:00
+- Image Optimizer module: batch-compress and convert images to JPEG, PNG, or WebP with optional pixel/percent resize. Drag-and-drop input, per-file size savings, and direct Finder reveal. 2026-04-19 00:00
 - Screen Capture module: press ⌃⌥4 to select a screen region and copy it directly to the clipboard — no file saved to desktop. 2026-03-03 00:00
+
+### Changed
+- App initialization refactored into a separate `AppRootView` so all `@StateObject` models are not created during unit test runs, eliminating test-time side-effects such as permission prompts and background timers. 2026-04-19 00:00
+- Hub grid: Webhook Notifier converted to a compact card matching the rest of the grid; new rows added for Image Optimizer and GitHub Notifier. 2026-04-19 00:00
+- Markdown Preview: PDF export upgraded from callback-based `createPDF` to native async/await `WKWebView.pdf()`. 2026-04-19 00:00
+- Speech-to-Text: transcription tasks are now cancellable; switching files mid-transcription cancels the previous task cleanly. 2026-04-19 00:00
+- `release.sh` rewritten with Developer ID certificate pre-check, notarization via `notarytool`, and Gatekeeper stapling. 2026-04-19 00:00
+- Entitlements updated: replaced sandbox/network-client/files entitlements with `cs.disable-library-validation` and `device.audio-input`. 2026-04-19 00:00
+- `.gitignore` updated to exclude `.blink/`, `.docs/`, `.github/`, `.playwright-mcp/`, and build log files. 2026-04-19 00:00
+
+### Removed
+- `.blink/` developer documentation files removed from the repository (architecture, conventions, stack, testing). 2026-04-19 00:00
+- `.docs/` internal troubleshooting docs removed from the repository. 2026-04-19 00:00
+- `.github/copilot-instructions.md` removed from the repository; moved to user-level VS Code prompts. 2026-04-19 00:00
+
+### Fixed
+- Video Converter: removed duplicate debug log line that printed FFmpeg path twice on detection. 2026-04-19 00:00
 
 ## [2.0.0] - 2026-03-02
 
