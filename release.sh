@@ -20,7 +20,9 @@ fi
 set -e
 
 TEAM_ID="6M52F3942H"
-APP_PATH="./build/Build/Products/Release/MacPowerToys.app"
+ARCHIVE_PATH="./build/MacPowerToys.xcarchive"
+EXPORT_PATH="./build/export"
+APP_PATH="${EXPORT_PATH}/MacPowerToys.app"
 DMG_NAME="MacPowerToys-v${VERSION}.dmg"
 NOTARIZE_PROFILE="MacPowerToys"
 
@@ -44,17 +46,24 @@ if ! xcrun notarytool history --keychain-profile "$NOTARIZE_PROFILE" &>/dev/null
 fi
 echo "✅ Notarization credentials configured"
 
-# ── Step 3: Clean build ──────────────────────────────────────────────────────
-echo "🏗️  Building release version $VERSION..."
+# ── Step 3: Archive ─────────────────────────────────────────────────────────
+echo "🏗️  Archiving release version $VERSION..."
+rm -rf "$ARCHIVE_PATH" "$EXPORT_PATH"
 xcodebuild -project MacPowerToys.xcodeproj \
            -scheme MacPowerToys \
            -configuration Release \
            -derivedDataPath ./build \
+           -archivePath "$ARCHIVE_PATH" \
            DEVELOPMENT_TEAM="$TEAM_ID" \
            CODE_SIGN_IDENTITY="Developer ID Application" \
            CODE_SIGN_STYLE=Manual \
-           OTHER_CODE_SIGN_FLAGS="--timestamp" \
-           clean build
+           clean archive
+
+echo "📤 Exporting archive..."
+xcodebuild -exportArchive \
+           -archivePath "$ARCHIVE_PATH" \
+           -exportPath "$EXPORT_PATH" \
+           -exportOptionsPlist ExportOptions.plist
 
 # ── Step 4: Verify code signature ────────────────────────────────────────────
 echo "🔐 Verifying code signature..."
@@ -79,12 +88,11 @@ create-dmg \
     --icon "MacPowerToys.app" 200 190 \
     --hide-extension "MacPowerToys.app" \
     --app-drop-link 600 190 \
-    --background-color "#F5F5F7" \
     "$DMG_NAME" \
-    "./build/Build/Products/Release/" || {
+    "$EXPORT_PATH/" || {
     echo "⚠️  create-dmg styling failed, using basic DMG..."
     mkdir -p dmg-temp
-    cp -R "$APP_PATH" dmg-temp/
+    cp -R "$APP_PATH" dmg-temp/MacPowerToys.app
     ln -s /Applications dmg-temp/Applications
     hdiutil create -volname "Mac PowerToys" \
                    -srcfolder dmg-temp \
