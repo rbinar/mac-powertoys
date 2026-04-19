@@ -25,6 +25,8 @@ enum Feature: Hashable {
     case quickLaunch
     case pdfTools
     case screenCapture
+    case gitHubNotifier
+    case imageOptimizer
 }
 
 struct FeatureCardView<Content: View>: View {
@@ -156,6 +158,8 @@ struct ContentView: View {
     @EnvironmentObject var quickLaunchModel: QuickLaunchModel
     @EnvironmentObject var pdfToolsModel: PdfToolsModel
     @EnvironmentObject var screenCaptureModel: ScreenCaptureModel
+    @EnvironmentObject var gitHubNotifierModel: GitHubNotifierModel
+    @EnvironmentObject var imageOptimizerModel: ImageOptimizerModel
     @State private var activeFeature: Feature? = nil
     @State private var showingQuitAlert = false
 
@@ -171,6 +175,12 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowClipboardManager"))) { _ in
             withAnimation(.easeInOut(duration: 0.15)) {
                 activeFeature = .clipboardManager
+            }
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowImageOptimizer"))) { _ in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                activeFeature = .imageOptimizer
             }
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -191,7 +201,7 @@ struct ContentView: View {
 
             Divider()
 
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 6) {
 
             // Color Picker module - full width (has special controls)
@@ -381,6 +391,7 @@ struct ContentView: View {
                 )
             }
             
+            VStack(spacing: 6) {
             // Row 8: Port Manager | System Info
             HStack(spacing: 6) {
                 CompactFeatureCard(
@@ -399,7 +410,7 @@ struct ContentView: View {
                 )
             }
 
-            // Row 9: Screen Capture
+            // Row 9: Screen Capture | Image Optimizer
             HStack(spacing: 6) {
                 CompactFeatureCard(
                     title: "Screen Capture",
@@ -408,41 +419,32 @@ struct ContentView: View {
                     isEnabled: $screenCaptureModel.isEnabled,
                     action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenCapture } }
                 )
-                Spacer()
-                    .frame(maxWidth: .infinity)
+                CompactFeatureCard(
+                    title: "Image Optimizer",
+                    icon: "photo.badge.arrow.down",
+                    statusText: imageOptimizerModel.items.isEmpty ? "Ready" : "\(imageOptimizerModel.items.count) images",
+                    isEnabled: nil,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .imageOptimizer } }
+                )
             }
+            } // VStack(Row 8-9)
 
-            // Webhook Notifier - full width
-            FeatureCardView(title: "Webhook Notifier", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    activeFeature = .webhookNotifier
-                }
-            }) {
-                Image(systemName: "bell.badge")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        RoundedRectangle(cornerRadius: 7)
-                            .fill(.white.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 7)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
-                    )
-
-                let activeCount = webhookNotifierModel.topics.filter { $0.isActive }.count
-                Text(webhookNotifierModel.isEnabled ? "\(activeCount) active webhooks" : "Disabled")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                Toggle("", isOn: $webhookNotifierModel.isEnabled)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .controlSize(.mini)
+            // Row 10: Webhook Notifier | GitHub Notifier
+            HStack(spacing: 6) {
+                CompactFeatureCard(
+                    title: "Webhook Notifier",
+                    icon: "bell.badge",
+                    statusText: webhookNotifierModel.isEnabled ? "\(webhookNotifierModel.topics.filter { $0.isActive }.count) active" : "Disabled",
+                    isEnabled: $webhookNotifierModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .webhookNotifier } }
+                )
+                CompactFeatureCard(
+                    title: "GitHub Notifier",
+                    icon: "bell.badge.circle",
+                    statusText: gitHubNotifierModel.hubStatusText,
+                    isEnabled: $gitHubNotifierModel.isEnabled,
+                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .gitHubNotifier } }
+                )
             }
 
             } // VStack inside ScrollView
@@ -545,6 +547,12 @@ struct ContentView: View {
         case .screenCapture:
             ScreenCaptureView(onBack: { goBack() })
                 .environmentObject(screenCaptureModel)
+        case .gitHubNotifier:
+            GitHubNotifierView(onBack: { goBack() })
+                .environmentObject(gitHubNotifierModel)
+        case .imageOptimizer:
+            ImageOptimizerView(onBack: { goBack() })
+                .environmentObject(imageOptimizerModel)
         }
     }
 

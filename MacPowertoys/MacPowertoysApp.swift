@@ -2,6 +2,36 @@ import SwiftUI
 
 @main
 struct MacPowerToysApp: App {
+    private let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+
+    init() {
+        guard !isRunningTests else { return }
+
+        // Hide color panel at app startup
+        DispatchQueue.main.async {
+            NSColorPanel.shared.orderOut(nil)
+        }
+
+        // Request Accessibility permissions for global shortcuts (only prompt if not already granted)
+        if !AXIsProcessTrusted() {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        }
+    }
+
+    var body: some Scene {
+        MenuBarExtra("Mac PowerToys", systemImage: "wrench.and.screwdriver") {
+            if isRunningTests {
+                EmptyView()
+            } else {
+                AppRootView()
+            }
+        }
+        .menuBarExtraStyle(.window)
+    }
+}
+
+private struct AppRootView: View {
     @StateObject private var model = ColorModel()
     @StateObject private var findMyMouseModel = FindMyMouseModel()
     @StateObject private var mouseHighlighterModel = MouseHighlighterModel()
@@ -24,71 +54,61 @@ struct MacPowerToysApp: App {
     @StateObject private var quickLaunchModel = QuickLaunchModel()
     @StateObject private var pdfToolsModel = PdfToolsModel()
     @StateObject private var screenCaptureModel = ScreenCaptureModel()
+    @StateObject private var gitHubNotifierModel = GitHubNotifierModel()
+    @StateObject private var imageOptimizerModel = ImageOptimizerModel()
 
-    init() {
-        // Hide color panel at app startup
-        DispatchQueue.main.async {
-            NSColorPanel.shared.orderOut(nil)
-        }
-
-        // Request Accessibility permissions for global shortcuts (only prompt if not already granted)
-        if !AXIsProcessTrusted() {
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-        }
-    }
-
-    var body: some Scene {
-        MenuBarExtra("Mac PowerToys", systemImage: "wrench.and.screwdriver") {
-            ContentView()
-                .environmentObject(model)
-                .environmentObject(findMyMouseModel)
-                .environmentObject(mouseHighlighterModel)
-                .environmentObject(crosshairsModel)
-                .environmentObject(cursorWrapModel)
-                .environmentObject(screenRulerModel)
-                .environmentObject(zoomItModel)
-                .environmentObject(webhookNotifierModel)
-                .environmentObject(awakeModel)
-                .environmentObject(mouseJigglerModel)
-                .environmentObject(clipboardManagerModel)
-                .environmentObject(markdownPreviewModel)
-                .environmentObject(screenAnnotationModel)
-                .environmentObject(speechToTextModel)
-                .environmentObject(videoConverterModel)
-                .environmentObject(pomodoroTimerModel)
-                .environmentObject(testDataGeneratorModel)
-                .environmentObject(portManagerModel)
-                .environmentObject(systemInfoModel)
-                .environmentObject(quickLaunchModel)
-                .environmentObject(pdfToolsModel)
-                .environmentObject(screenCaptureModel)
-                .frame(width: 340, height: 560)
-                .padding(.vertical, 8)
-                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-                    model.closeColorPanel()
-                    findMyMouseModel.stopMonitoring()
-                    mouseHighlighterModel.stopMonitoring()
-                    crosshairsModel.stopMonitoring()
-                    cursorWrapModel.stopMonitoring()
-                    screenRulerModel.stopMonitoring()
-                    zoomItModel.stopMonitoring()
-                    webhookNotifierModel.stopMonitoring()
-                    awakeModel.stopMonitoring()
-                    mouseJigglerModel.stopMonitoring()
-                    clipboardManagerModel.stopMonitoring()
-                    markdownPreviewModel.stopMonitoring()
-                    screenAnnotationModel.stopMonitoring()
-                    speechToTextModel.stopMonitoring()
-                    videoConverterModel.stopMonitoring()
-                    pomodoroTimerModel.stopMonitoring()
-                    portManagerModel.stopMonitoring()
-                    systemInfoModel.stopMonitoring()
-                    quickLaunchModel.stopMonitoring()
-                    pdfToolsModel.stopMonitoring()
-                    screenCaptureModel.stopMonitoring()
-                }
-        }
-        .menuBarExtraStyle(.window)
+    var body: some View {
+        ContentView()
+            .environmentObject(model)
+            .environmentObject(findMyMouseModel)
+            .environmentObject(mouseHighlighterModel)
+            .environmentObject(crosshairsModel)
+            .environmentObject(cursorWrapModel)
+            .environmentObject(screenRulerModel)
+            .environmentObject(zoomItModel)
+            .environmentObject(webhookNotifierModel)
+            .environmentObject(awakeModel)
+            .environmentObject(mouseJigglerModel)
+            .environmentObject(clipboardManagerModel)
+            .environmentObject(markdownPreviewModel)
+            .environmentObject(screenAnnotationModel)
+            .environmentObject(speechToTextModel)
+            .environmentObject(videoConverterModel)
+            .environmentObject(pomodoroTimerModel)
+            .environmentObject(testDataGeneratorModel)
+            .environmentObject(portManagerModel)
+            .environmentObject(systemInfoModel)
+            .environmentObject(quickLaunchModel)
+            .environmentObject(pdfToolsModel)
+            .environmentObject(screenCaptureModel)
+            .environmentObject(gitHubNotifierModel)
+            .environmentObject(imageOptimizerModel)
+            .frame(width: 340, height: 640)
+            .padding(.vertical, 8)
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                model.closeColorPanel()
+                findMyMouseModel.stopMonitoring()
+                mouseHighlighterModel.stopMonitoring()
+                crosshairsModel.stopMonitoring()
+                cursorWrapModel.stopMonitoring()
+                screenRulerModel.stopMonitoring()
+                zoomItModel.stopMonitoring()
+                webhookNotifierModel.stopMonitoring()
+                awakeModel.stopMonitoring()
+                mouseJigglerModel.stopMonitoring()
+                clipboardManagerModel.stopMonitoring()
+                markdownPreviewModel.stopMonitoring()
+                screenAnnotationModel.stopMonitoring()
+                speechToTextModel.stopMonitoring()
+                videoConverterModel.stopMonitoring()
+                pomodoroTimerModel.stopMonitoring()
+                portManagerModel.stopMonitoring()
+                systemInfoModel.stopMonitoring()
+                quickLaunchModel.stopMonitoring()
+                pdfToolsModel.stopMonitoring()
+                screenCaptureModel.stopMonitoring()
+                gitHubNotifierModel.stopMonitoring()
+                imageOptimizerModel.stopMonitoring()
+            }
     }
 }
