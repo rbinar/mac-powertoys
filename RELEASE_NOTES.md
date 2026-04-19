@@ -1,33 +1,18 @@
-# ⚙️ Mac PowerToys v2.0.0
+# ⚙️ Mac PowerToys v2.1.0
 
-A collection of powerful utilities for macOS, accessible from your menu bar. 16 feature modules and counting.
+A collection of powerful utilities for macOS, accessible from your menu bar. 21 feature modules and counting.
 
-## ✨ What's New in v2.0.0
+## ✨ What's New in v2.1.0
 
 ### New Modules
-- **PDF Tools** — Split, merge, and extract PDF files
-- **Port Manager** — Monitor active network ports with process info, filtering, and kill-process support
-- **System Info** — Real-time CPU, memory, disk, and network statistics in the menu bar
-- **Quick Launch** — Customizable keyboard shortcuts for fast app/file/URL launching with favicon support
-- **Speech-to-Text** — On-device audio transcription powered by WhisperKit
-- **Pomodoro Timer** — Focus/break sessions with auto-transitions, session tracking, and visual countdown
-- **Test Data Generator** — Generate sample test data on demand
-- **Video Converter** — FFmpeg-powered conversion between 16 formats with quality presets and progress tracking
-- **Screen Annotation** — Draw on screen with screenshot capture across all displays
-- **Markdown Preview** — Live preview for Markdown files with syntax highlighting
-- **Clipboard Manager** — Clipboard history with global hotkey access
-- **Webhook Notifier** — HTTP webhook listener with streaming support
-- **Awake** — Keep your Mac awake on demand
-- **Mouse Jiggler** — Simulate mouse movement to prevent sleep
-- **ZoomIt** — Screen zoom and live zoom for presentations
-- **Mouse Utilities** — Find My Mouse, Cursor Crosshairs, Mouse Highlighter, Cursor Wrap
+- **GitHub Notifier** — Monitor GitHub repos and organizations for events (push, pull request, issues, stars, forks, releases) and receive native macOS notifications. Supports GitHub OAuth device-flow authentication for private repos.
+- **Image Optimizer** — Batch-compress and convert images to JPEG, PNG, or WebP with optional pixel/percent resize. Drag-and-drop input, per-file size savings, and direct Finder reveal.
+- **Screen Capture** — Press ⌃⌥4 to select a screen region and copy it directly to the clipboard — no file saved to desktop.
 
 ### Improvements
-- Scrollable content areas across all feature views
-- Menu bar popover with fixed height (340×560) for consistent layout
-- Accessibility permission prompt only appears when needed
-- Improved error logging with proper do-catch blocks
-- DOMPurify sanitization in Markdown Preview for XSS prevention
+- **Speech-to-Text**: Transcription tasks are now cancellable; switching files mid-transcription cancels the previous task cleanly.
+- **Markdown Preview**: PDF export upgraded to native async/await for more reliable generation.
+- App initialization refactored to eliminate side-effects (permission prompts, background timers) during non-app contexts.
 
 ### Bug Fixes
 - Screen Ruler no longer disables itself on transient capture failures

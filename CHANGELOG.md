@@ -2,7 +2,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](https://semver.org/)
 
-## [Unreleased]
+## [2.1.0] - 2026-04-20
 
 ### Added
 - GitHub Notifier module: monitor GitHub repos and organizations for events (push, pull request, issues, stars, forks, releases) and receive native macOS notifications. Supports GitHub OAuth device-flow authentication for private repos. 2026-04-19 00:00

@@ -114,9 +114,13 @@ echo "✅ Release artifact ready"
 
 # ── Step 10: Git tag & push ──────────────────────────────────────────────────
 echo "🏷️  Creating git tag v${VERSION}..."
-git tag "v${VERSION}"
+if git tag "v${VERSION}" 2>/dev/null; then
+    echo "✅ Tag v${VERSION} created"
+else
+    echo "ℹ️  Tag v${VERSION} already exists, skipping creation"
+fi
 git push origin main
-git push origin "v${VERSION}"
+git push origin "v${VERSION}" 2>/dev/null || echo "ℹ️  Tag already on remote, skipping push"
 
 # ── Step 11: GitHub Release ──────────────────────────────────────────────────
 echo "🚀 Release files ready!"
