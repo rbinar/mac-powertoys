@@ -137,9 +137,9 @@ final class ScreenCaptureModel: ObservableObject {
             &captureHotKeyRef
         )
         if status == noErr {
-            print("[ScreenCapture] Carbon HotKey ⌘⌥4 registered")
+            NSLog("%@", "[ScreenCapture] Carbon HotKey ⌘⌥4 registered")
         } else {
-            print("[ScreenCapture] Failed to register ⌘⌥4: \(status)")
+            NSLog("%@", "[ScreenCapture] Failed to register ⌘⌥4: \(status)")
         }
     }
 
@@ -155,7 +155,7 @@ final class ScreenCaptureModel: ObservableObject {
             &escHotKeyRef
         )
         if escStatus == noErr {
-            print("[ScreenCapture] Carbon ESC HotKey registered")
+            NSLog("%@", "[ScreenCapture] Carbon ESC HotKey registered")
         }
     }
 
@@ -180,14 +180,14 @@ final class ScreenCaptureModel: ObservableObject {
         registerMouseMonitors()
         registerEscHotKey()
         NSCursor.crosshair.set()
-        print("[ScreenCapture] Selection mode started")
+        NSLog("%@", "[ScreenCapture] Selection mode started")
     }
 
     func cancelCapture() {
         guard isCapturing else { return }
         finishCapture()
         NSCursor.arrow.set()
-        print("[ScreenCapture] Capture cancelled")
+        NSLog("%@", "[ScreenCapture] Capture cancelled")
     }
 
     private func finishCapture() {
@@ -377,7 +377,7 @@ final class ScreenCaptureModel: ObservableObject {
             let pb = NSPasteboard.general
             pb.clearContents()
             pb.setData(pngData, forType: .png)
-            print("[ScreenCapture] Image copied: \(croppedImage.width)×\(croppedImage.height)px")
+            NSLog("%@", "[ScreenCapture] Image copied: \(croppedImage.width)×\(croppedImage.height)px")
 
         } catch {
             NSLog("[ScreenCapture] Capture failed: \(error.localizedDescription)")

@@ -150,9 +150,6 @@ final class FFmpegBridge: Sendable {
         
         // Ensure quarantine attribute is removed so NSUserUnixTask can execute it
         removexattr(url.path, "com.apple.quarantine", 0)
-        
-        // Ensure quarantine attribute is removed so NSUserUnixTask can execute it
-        removexattr(url.path, "com.apple.quarantine", 0)
             try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
             NSLog("[FFmpegBridge] Script installed via panel to: %@", url.path)
             return true

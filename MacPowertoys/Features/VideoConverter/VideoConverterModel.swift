@@ -537,7 +537,6 @@ final class VideoConverterModel: ObservableObject {
         Task.detached { [weak self] in
             let path = await FFmpegBridge.detect()
             NSLog("[VideoConverterModel] FFmpegBridge.detect() returned path: %@", path ?? "nil")
-            NSLog("[VideoConverterModel] FFmpegBridge.detect() returned path: %@", path ?? "nil")
             var version: String?
             if let path {
                 version = await FFmpegBridge(path: path).version()

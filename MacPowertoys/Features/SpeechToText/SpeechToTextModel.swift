@@ -118,6 +118,8 @@ final class SpeechToTextModel: ObservableObject {
 
     private static let selectedModelKey = "speechToText.selectedModel"
     private static let selectedLanguageKey = "speechToText.selectedLanguage"
+    private var transcriptionTask: Task<Void, Never>?
+    private var activeTranscriptionTaskID: UUID?
 
 #if canImport(WhisperKit)
     private var whisperKit: WhisperKit?
@@ -212,6 +214,8 @@ final class SpeechToTextModel: ObservableObject {
             isModelReady = true
             progress = 1
             statusMessage = "Model ready: \(selectedModel.displayName)"
+        } catch is CancellationError {
+            return
         } catch {
             isModelReady = false
             whisperKit = nil
@@ -232,6 +236,52 @@ final class SpeechToTextModel: ObservableObject {
             return
         }
 
+        transcriptionTask?.cancel()
+
+        let taskID = UUID()
+        activeTranscriptionTaskID = taskID
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performTranscription(for: fileURL, taskID: taskID)
+        }
+
+        transcriptionTask = task
+        await task.value
+
+        if activeTranscriptionTaskID == taskID {
+            transcriptionTask = nil
+            activeTranscriptionTaskID = nil
+        }
+    }
+
+    func stopMonitoring() {
+        transcriptionTask?.cancel()
+        transcriptionTask = nil
+        activeTranscriptionTaskID = nil
+
+        isBusy = false
+        progress = 0
+        isDragTargeted = false
+        viewState = .idle
+        statusMessage = "Pick an audio or video file to start."
+
+#if canImport(WhisperKit)
+        whisperKit = nil
+        loadedModel = nil
+#endif
+        isModelReady = false
+    }
+
+    private func isCurrentTranscriptionTask(_ taskID: UUID) -> Bool {
+        activeTranscriptionTaskID == taskID && !Task.isCancelled
+    }
+
+    private func performTranscription(for fileURL: URL, taskID: UUID) async {
+        guard isCurrentTranscriptionTask(taskID) else {
+            return
+        }
+
         viewState = .processing("Preparing model...")
 
         if !isModelReady {
@@ -239,6 +289,10 @@ final class SpeechToTextModel: ObservableObject {
         }
 
 #if canImport(WhisperKit)
+        guard isCurrentTranscriptionTask(taskID) else {
+            return
+        }
+
         guard isModelReady, let whisperKit else {
             if statusMessage.isEmpty {
                 statusMessage = "Model is not ready."
@@ -252,12 +306,19 @@ final class SpeechToTextModel: ObservableObject {
         viewState = .processing("Transcribing \(fileURL.lastPathComponent)...")
 
         defer {
-            isBusy = false
+            if self.activeTranscriptionTaskID == taskID {
+                self.isBusy = false
+            }
         }
 
         do {
             let decodeOptions = DecodingOptions(language: selectedLanguage.whisperLanguageCode)
             let results = try await whisperKit.transcribe(audioPath: fileURL.path, decodeOptions: decodeOptions)
+
+            guard isCurrentTranscriptionTask(taskID) else {
+                return
+            }
+
             progress = 0.85
 
             let plainText = buildPlainTranscript(from: results)
@@ -268,7 +329,13 @@ final class SpeechToTextModel: ObservableObject {
             progress = 1
             statusMessage = "Transcription completed."
             viewState = .completed
+        } catch is CancellationError {
+            return
         } catch {
+            guard isCurrentTranscriptionTask(taskID) else {
+                return
+            }
+
             transcriptText = ""
             timestampedTranscriptText = ""
             detectedLanguage = "Unknown"
@@ -335,9 +402,6 @@ final class SpeechToTextModel: ObservableObject {
                 }
             }
         }
-    }
-
-    func stopMonitoring() {
     }
 
 #if canImport(WhisperKit)

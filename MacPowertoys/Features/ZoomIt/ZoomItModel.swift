@@ -21,28 +21,28 @@ private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: Event
     var hotKeyID = EventHotKeyID()
     GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
     
-    print("[ZoomIt] Hotkey pressed with ID: \(hotKeyID.id)")
+    NSLog("%@", "[ZoomIt] Hotkey pressed with ID: \(hotKeyID.id)")
     
     switch hotKeyID.id {
     case ZoomItHotKey.toggleScreenZoom, ZoomItHotKey.toggleLiveZoom, ZoomItHotKey.close, 3:
         Task { @MainActor in
             switch hotKeyID.id {
             case ZoomItHotKey.toggleScreenZoom: // ⌃⌥Z toggle Screen Zoom
-                print("[ZoomIt] Toggle Screen Zoom")
+                NSLog("%@", "[ZoomIt] Toggle Screen Zoom")
                 if model.isZooming {
                     model.isEnabled = false
                 } else {
                     model.isEnabled = true
                 }
             case ZoomItHotKey.toggleLiveZoom: // ⌃⌥L toggle Live Zoom
-                print("[ZoomIt] Toggle Live Zoom")
+                NSLog("%@", "[ZoomIt] Toggle Live Zoom")
                 if model.isLiveZooming {
                     model.liveZoomEnabled = false
                 } else {
                     model.liveZoomEnabled = true
                 }
             case ZoomItHotKey.close, 3: // ESC close (3 is ScreenRuler's ESC ID, we catch it too just in case)
-                print("[ZoomIt] ESC pressed")
+                NSLog("%@", "[ZoomIt] ESC pressed")
                 if model.isZooming || model.isLiveZooming {
                     model.isEnabled = false
                     model.liveZoomEnabled = false
@@ -124,7 +124,7 @@ final class ZoomItModel: ObservableObject {
     private var streamOutputs: [UInt32: StreamOutput] = [:]
     
     init() {
-        print("[ZoomIt] ZoomItModel initialized")
+        NSLog("%@", "[ZoomIt] ZoomItModel initialized")
         registerCarbonHotKeys()
     }
     
@@ -172,12 +172,12 @@ final class ZoomItModel: ObservableObject {
     // MARK: - Activation
     
     func activateScreenZoom() {
-        print("[ZoomIt] activateScreenZoom called. isEnabled: \(isEnabled), isZooming: \(isZooming), isLiveZooming: \(isLiveZooming)")
+        NSLog("%@", "[ZoomIt] activateScreenZoom called. isEnabled: \(isEnabled), isZooming: \(isZooming), isLiveZooming: \(isLiveZooming)")
         if isLiveZooming { deactivate() }
         guard !isZooming else { return }
         
         if !checkScreenRecordingPermission() { 
-            print("[ZoomIt] Screen recording permission denied")
+            NSLog("%@", "[ZoomIt] Screen recording permission denied")
             isEnabled = false
             return 
         }
@@ -185,26 +185,26 @@ final class ZoomItModel: ObservableObject {
         isZooming = true
         isEnabled = true
         liveZoomEnabled = false
-        print("[ZoomIt] Starting screen capture...")
+        NSLog("%@", "[ZoomIt] Starting screen capture...")
         
         Task {
             await captureScreensAsync()
-            print("[ZoomIt] Screen capture finished. Creating overlay windows...")
+            NSLog("%@", "[ZoomIt] Screen capture finished. Creating overlay windows...")
             createOverlayWindows(isLive: false)
             registerActiveMonitors()
             registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
-            print("[ZoomIt] Overlay windows created and monitors registered.")
+            NSLog("%@", "[ZoomIt] Overlay windows created and monitors registered.")
         }
     }
     
     func activateLiveZoom() {
-        print("[ZoomIt] activateLiveZoom called. isEnabled: \(isEnabled), liveZoomEnabled: \(liveZoomEnabled), isZooming: \(isZooming), isLiveZooming: \(isLiveZooming)")
+        NSLog("%@", "[ZoomIt] activateLiveZoom called. isEnabled: \(isEnabled), liveZoomEnabled: \(liveZoomEnabled), isZooming: \(isZooming), isLiveZooming: \(isLiveZooming)")
         if isZooming { deactivate() }
         guard !isLiveZooming else { return }
         
         if !checkScreenRecordingPermission() { 
-            print("[ZoomIt] Screen recording permission denied")
+            NSLog("%@", "[ZoomIt] Screen recording permission denied")
             liveZoomEnabled = false
             return 
         }
@@ -212,7 +212,7 @@ final class ZoomItModel: ObservableObject {
         isLiveZooming = true
         isEnabled = true
         liveZoomEnabled = true
-        print("[ZoomIt] Starting live streams...")
+        NSLog("%@", "[ZoomIt] Starting live streams...")
         
         Task {
             createOverlayWindows(isLive: true)
@@ -220,7 +220,7 @@ final class ZoomItModel: ObservableObject {
             registerActiveMonitors()
             registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
-            print("[ZoomIt] Live zoom overlay windows created and streams started.")
+            NSLog("%@", "[ZoomIt] Live zoom overlay windows created and streams started.")
         }
     }
     
@@ -267,7 +267,7 @@ final class ZoomItModel: ObservableObject {
         capturedScreens.removeAll()
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            print("[ZoomIt] Found \(content.displays.count) displays")
+            NSLog("%@", "[ZoomIt] Found \(content.displays.count) displays")
             
             for display in content.displays {
                 let filter = SCContentFilter(display: display, excludingWindows: [])
@@ -277,13 +277,13 @@ final class ZoomItModel: ObservableObject {
                 config.capturesAudio = false
                 config.showsCursor = false
                 
-                print("[ZoomIt] Capturing display \(display.displayID) (\(display.width)x\(display.height))...")
+                NSLog("%@", "[ZoomIt] Capturing display \(display.displayID) (\(display.width)x\(display.height))...")
                 let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
                 capturedScreens[display.displayID] = image
-                print("[ZoomIt] Captured image for display \(display.displayID): \(image.width)x\(image.height)")
+                NSLog("%@", "[ZoomIt] Captured image for display \(display.displayID): \(image.width)x\(image.height)")
             }
         } catch {
-            print("[ZoomIt] Screen capture failed: \(error.localizedDescription)")
+            NSLog("%@", "[ZoomIt] Screen capture failed: \(error.localizedDescription)")
         }
     }
     
@@ -292,7 +292,7 @@ final class ZoomItModel: ObservableObject {
     private func startLiveStreams() async {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            print("[ZoomIt] Live stream found \(content.displays.count) displays")
+            NSLog("%@", "[ZoomIt] Live stream found \(content.displays.count) displays")
             
             // Exclude our own overlay windows
             let ownWindowIDs = Set(overlayWindows.map { $0.window.windowNumber })
@@ -308,7 +308,7 @@ final class ZoomItModel: ObservableObject {
                 config.minimumFrameInterval = CMTime(value: 1, timescale: 60) // ~60 fps for smoother live zoom
                 config.queueDepth = 3 // Reduce latency
                 
-                print("[ZoomIt] Starting stream for display \(display.displayID)...")
+                NSLog("%@", "[ZoomIt] Starting stream for display \(display.displayID)...")
                 let stream = SCStream(filter: filter, configuration: config, delegate: nil)
                 let output = StreamOutput(displayID: display.displayID, model: self)
                 
@@ -317,10 +317,10 @@ final class ZoomItModel: ObservableObject {
                 
                 streams[display.displayID] = stream
                 streamOutputs[display.displayID] = output
-                print("[ZoomIt] Stream started for display \(display.displayID)")
+                NSLog("%@", "[ZoomIt] Stream started for display \(display.displayID)")
             }
         } catch {
-            print("[ZoomIt] Live stream failed: \(error.localizedDescription)")
+            NSLog("%@", "[ZoomIt] Live stream failed: \(error.localizedDescription)")
         }
     }
     
