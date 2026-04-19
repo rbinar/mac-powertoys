@@ -172,20 +172,16 @@ final class PomodoroTimerModel: ObservableObject {
     }
 
     private func startShortBreak() {
-        currentPhase = .shortBreak
-        totalSecondsForCurrentPhase = shortBreakMinutes * 60
-        remainingSeconds = totalSecondsForCurrentPhase
-        if autoStartBreaks {
-            isRunning = true
-            startTimer()
-        } else {
-            isRunning = false
-        }
+        startBreak(phase: .shortBreak, minutes: shortBreakMinutes)
     }
 
     private func startLongBreak() {
-        currentPhase = .longBreak
-        totalSecondsForCurrentPhase = longBreakMinutes * 60
+        startBreak(phase: .longBreak, minutes: longBreakMinutes)
+    }
+
+    private func startBreak(phase: Phase, minutes: Int) {
+        currentPhase = phase
+        totalSecondsForCurrentPhase = minutes * 60
         remainingSeconds = totalSecondsForCurrentPhase
         if autoStartBreaks {
             isRunning = true

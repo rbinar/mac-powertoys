@@ -271,7 +271,7 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
 
     // MARK: - Export PDF
 
-    func exportPDF() {
+    func exportPDF() async {
         guard let webView else {
             let alert = NSAlert()
             alert.messageText = "No Preview Open"
@@ -289,30 +289,18 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
         guard savePanel.runModal() == .OK, let saveURL = savePanel.url else { return }
 
         let pdfConfig = WKPDFConfiguration()
-        pdfConfig.rect = .zero // Full page
 
-        webView.createPDF(configuration: pdfConfig) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let data):
-                    do {
-                        try data.write(to: saveURL)
-                        NSWorkspace.shared.activateFileViewerSelecting([saveURL])
-                    } catch {
-                        let alert = NSAlert()
-                        alert.messageText = "Export Failed"
-                        alert.informativeText = error.localizedDescription
-                        alert.alertStyle = .warning
-                        alert.runModal()
-                    }
-                case .failure(let error):
-                    let alert = NSAlert()
-                    alert.messageText = "PDF Generation Failed"
-                    alert.informativeText = error.localizedDescription
-                    alert.alertStyle = .warning
-                    alert.runModal()
-                }
-            }
+        do {
+            let data = try await webView.pdf(configuration: pdfConfig)
+            try data.write(to: saveURL)
+            NSWorkspace.shared.activateFileViewerSelecting([saveURL])
+        } catch {
+            NSLog("[MarkdownPreview] PDF export failed: %@", error.localizedDescription)
+            let alert = NSAlert()
+            alert.messageText = "Export Failed"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
         }
     }
 
@@ -330,29 +318,221 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
 
     private func buildHTMLTemplate() -> String {
         let theme = isDarkTheme ? "dark" : "light"
-        return """
+        return #"""
         <!DOCTYPE html>
-        <html data-theme="\(theme)">
+        <html data-theme="\#(theme)">
         <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-        \(Self.cssStyles)
+        \#(Self.cssStyles)
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
         </head>
         <body>
         <div id="content"><p style="color:var(--text-secondary)">Loading markdown renderer...</p></div>
         <script>
-        function renderMarkdown(md) {
-            if (typeof marked === 'undefined') {
-                document.getElementById('content').innerHTML = '<p style="color:red">Failed to load markdown renderer. Check your internet connection.</p>';
-                return;
+        function escapeHtml(input) {
+            return (input || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function sanitizeUrl(url) {
+            const normalized = (url || '').trim().replace(/^<|>$/g, '');
+            if (/^(https?:\/\/|mailto:|#|\/)/i.test(normalized)) {
+                return normalized;
             }
-            marked.setOptions({ gfm: true, breaks: true });
-            const rawHtml = marked.parse(md || '');
-            document.getElementById('content').innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
+            return '#';
+        }
+
+        function parseInline(text) {
+            const codeSpans = [];
+            let output = escapeHtml(text || '').replace(/`([^`]+)`/g, function(_, code) {
+                const index = codeSpans.push(code) - 1;
+                return '\u0000' + index + '\u0000';
+            });
+
+            output = output.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function(_, label, url) {
+                const safeUrl = sanitizeUrl(url);
+                return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+            });
+
+            output = output
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+                .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+                .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
+
+            output = output.replace(/\u0000(\d+)\u0000/g, function(_, idx) {
+                return '<code>' + codeSpans[Number(idx)] + '</code>';
+            });
+
+            return output;
+        }
+
+        function markdownToHtml(source) {
+            const lines = (source || '').replace(/\r\n?/g, '\n').split('\n');
+            const html = [];
+            let paragraphBuffer = [];
+            let listType = null;
+            let listItems = [];
+            let quoteLines = [];
+            let i = 0;
+
+            function flushParagraph() {
+                if (paragraphBuffer.length === 0) {
+                    return;
+                }
+                const text = paragraphBuffer.join(' ').trim();
+                if (text.length > 0) {
+                    html.push('<p>' + parseInline(text) + '</p>');
+                }
+                paragraphBuffer = [];
+            }
+
+            function flushList() {
+                if (!listType || listItems.length === 0) {
+                    listType = null;
+                    listItems = [];
+                    return;
+                }
+                const items = listItems.map(function(item) {
+                    return '<li>' + parseInline(item.trim()) + '</li>';
+                }).join('');
+                html.push('<' + listType + '>' + items + '</' + listType + '>');
+                listType = null;
+                listItems = [];
+            }
+
+            function flushQuote() {
+                if (quoteLines.length === 0) {
+                    return;
+                }
+                html.push('<blockquote>' + markdownToHtml(quoteLines.join('\n')) + '</blockquote>');
+                quoteLines = [];
+            }
+
+            while (i < lines.length) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                if (/^```/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+                    flushQuote();
+
+                    const langMatch = trimmed.match(/^```([A-Za-z0-9_-]+)?/);
+                    const language = langMatch && langMatch[1] ? langMatch[1] : '';
+                    const codeLines = [];
+                    i += 1;
+
+                    while (i < lines.length && !/^```/.test(lines[i].trim())) {
+                        codeLines.push(lines[i]);
+                        i += 1;
+                    }
+
+                    const classAttr = language ? ' class="language-' + language + '"' : '';
+                    html.push('<pre><code' + classAttr + '>' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+
+                    if (i < lines.length && /^```/.test(lines[i].trim())) {
+                        i += 1;
+                    }
+                    continue;
+                }
+
+                if (trimmed.length === 0) {
+                    flushParagraph();
+                    flushList();
+                    flushQuote();
+                    i += 1;
+                    continue;
+                }
+
+                const quoteMatch = line.match(/^\s*>\s?(.*)$/);
+                if (quoteMatch) {
+                    flushParagraph();
+                    flushList();
+                    quoteLines.push(quoteMatch[1]);
+                    i += 1;
+                    continue;
+                }
+                if (quoteLines.length > 0) {
+                    flushQuote();
+                }
+
+                if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+                    html.push('<hr>');
+                    i += 1;
+                    continue;
+                }
+
+                const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+                if (headingMatch) {
+                    flushParagraph();
+                    flushList();
+                    const level = headingMatch[1].length;
+                    html.push('<h' + level + '>' + parseInline(headingMatch[2].trim()) + '</h' + level + '>');
+                    i += 1;
+                    continue;
+                }
+
+                const unorderedMatch = line.match(/^\s*[-*+]\s+(.*)$/);
+                if (unorderedMatch) {
+                    flushParagraph();
+                    if (listType && listType !== 'ul') {
+                        flushList();
+                    }
+                    listType = 'ul';
+                    listItems.push(unorderedMatch[1]);
+                    i += 1;
+                    continue;
+                }
+
+                const orderedMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+                if (orderedMatch) {
+                    flushParagraph();
+                    if (listType && listType !== 'ol') {
+                        flushList();
+                    }
+                    listType = 'ol';
+                    listItems.push(orderedMatch[1]);
+                    i += 1;
+                    continue;
+                }
+
+                if (listType) {
+                    const continuationMatch = line.match(/^\s{2,}(.*)$/);
+                    if (continuationMatch && listItems.length > 0) {
+                        listItems[listItems.length - 1] += ' ' + continuationMatch[1].trim();
+                        i += 1;
+                        continue;
+                    }
+                    flushList();
+                }
+
+                paragraphBuffer.push(trimmed);
+                i += 1;
+            }
+
+            flushParagraph();
+            flushList();
+            flushQuote();
+
+            return html.join('\n');
+        }
+
+        function renderMarkdown(md) {
+            try {
+                document.getElementById('content').innerHTML = markdownToHtml(md || '');
+            } catch (error) {
+                document.getElementById('content').innerHTML = '<p style="color:red">Failed to render markdown preview.</p>';
+                console.error('Markdown render error:', error);
+            }
         }
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
@@ -360,7 +540,7 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
         </script>
         </body>
         </html>
-        """
+        """#
     }
 
     // MARK: - Embedded CSS
@@ -500,6 +680,15 @@ extension MarkdownPreviewModel: WKNavigationDelegate {
             self.renderMarkdown()
         }
     }
+
+    nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        Task { @MainActor in
+            NSLog("[MarkdownPreview] Web content process terminated, reloading...")
+            self.isWebViewLoaded = false
+            let htmlContent = self.buildHTMLTemplate()
+            webView.loadHTMLString(htmlContent, baseURL: nil)
+        }
+    }
 }
 
 // MARK: - Toolbar Delegate
@@ -556,7 +745,7 @@ class ToolbarDelegate: NSObject, NSToolbarDelegate {
 
     @objc private func exportPDF() {
         Task { @MainActor in
-            model?.exportPDF()
+            await model?.exportPDF()
         }
     }
 

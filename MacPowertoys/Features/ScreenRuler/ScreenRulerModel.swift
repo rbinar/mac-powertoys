@@ -135,9 +135,9 @@ final class ScreenRulerModel: ObservableObject {
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
         let status = RegisterEventHotKey(UInt32(kVK_ANSI_R), modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
         if status == noErr {
-            print("[ScreenRuler] Carbon HotKey ⌃⌥R registered successfully")
+            NSLog("%@", "[ScreenRuler] Carbon HotKey ⌃⌥R registered successfully")
         } else {
-            print("[ScreenRuler] Failed to register Carbon HotKey: \(status)")
+            NSLog("%@", "[ScreenRuler] Failed to register Carbon HotKey: \(status)")
         }
     }
 
@@ -147,9 +147,9 @@ final class ScreenRulerModel: ObservableObject {
         var escHotKeyID = EventHotKeyID(signature: OSType(0x52554C52), id: 3) // "RULR" id:3
         let escStatus = RegisterEventHotKey(UInt32(kVK_Escape), 0, escHotKeyID, GetApplicationEventTarget(), 0, &escHotKeyRef)
         if escStatus == noErr {
-            print("[ScreenRuler] Carbon HotKey ESC registered successfully")
+            NSLog("%@", "[ScreenRuler] Carbon HotKey ESC registered successfully")
         } else {
-            print("[ScreenRuler] Failed to register ESC HotKey: \(escStatus)")
+            NSLog("%@", "[ScreenRuler] Failed to register ESC HotKey: \(escStatus)")
         }
     }
 
@@ -157,7 +157,7 @@ final class ScreenRulerModel: ObservableObject {
         if let ref = escHotKeyRef {
             UnregisterEventHotKey(ref)
             escHotKeyRef = nil
-            print("[ScreenRuler] Carbon HotKey ESC unregistered")
+            NSLog("%@", "[ScreenRuler] Carbon HotKey ESC unregistered")
         }
     }
 

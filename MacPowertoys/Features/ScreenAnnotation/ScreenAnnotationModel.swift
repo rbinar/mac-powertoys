@@ -138,9 +138,9 @@ final class ScreenAnnotationModel: ObservableObject {
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
         let status = RegisterEventHotKey(UInt32(kVK_ANSI_D), modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
         if status == noErr {
-            print("[ScreenAnnotation] Carbon HotKey ⌃⌥D registered successfully")
+            NSLog("%@", "[ScreenAnnotation] Carbon HotKey ⌃⌥D registered successfully")
         } else {
-            print("[ScreenAnnotation] Failed to register Carbon HotKey: \(status)")
+            NSLog("%@", "[ScreenAnnotation] Failed to register Carbon HotKey: \(status)")
         }
     }
 
@@ -149,9 +149,9 @@ final class ScreenAnnotationModel: ObservableObject {
         let escHotKeyID = EventHotKeyID(signature: AnnotationHotKey.signature, id: AnnotationHotKey.escID)
         let escStatus = RegisterEventHotKey(UInt32(kVK_Escape), 0, escHotKeyID, GetApplicationEventTarget(), 0, &escHotKeyRef)
         if escStatus == noErr {
-            print("[ScreenAnnotation] Carbon HotKey ESC registered successfully")
+            NSLog("%@", "[ScreenAnnotation] Carbon HotKey ESC registered successfully")
         } else {
-            print("[ScreenAnnotation] Failed to register ESC HotKey: \(escStatus)")
+            NSLog("%@", "[ScreenAnnotation] Failed to register ESC HotKey: \(escStatus)")
         }
     }
 
@@ -738,10 +738,10 @@ final class ScreenAnnotationModel: ObservableObject {
 
         do {
             try pngData.write(to: fileURL)
-            print("[ScreenAnnotation] Screenshot saved to \(fileURL.path)")
+            NSLog("%@", "[ScreenAnnotation] Screenshot saved to \(fileURL.path)")
             NSSound(named: "Tink")?.play()
         } catch {
-            print("[ScreenAnnotation] Failed to save screenshot: \(error)")
+            NSLog("%@", "[ScreenAnnotation] Failed to save screenshot: \(error)")
         }
     }
 

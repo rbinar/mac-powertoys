@@ -26,6 +26,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     @Published var notificationSound: Bool = true
     @Published var serverURL: String = "https://ntfy.blinkbrosai.com" {
         didSet {
+            UserDefaults.standard.set(serverURL, forKey: serverURLKey)
             if isEnabled {
                 // Reconnect all active topics if server URL changes
                 deactivate()
@@ -40,6 +41,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
             saveTopics()
         }
     }
+    private let serverURLKey = "webhookNotifier.serverURL"
     private let topicsKey = "webhookNotifier.topics"
     
     // MARK: - Runtime State
@@ -60,6 +62,9 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     
     override init() {
         super.init()
+        if let persistedServerURL = UserDefaults.standard.string(forKey: serverURLKey) {
+            serverURL = persistedServerURL
+        }
         loadTopics()
     }
     
@@ -148,7 +153,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         // Optimistically set to true, will be updated if it fails
         connectionStates[topic.id] = true
         retryCounters[topic.id] = 0
-        print("[WebhookNotifier] Subscribed to topic: \(topic.label)")
+        NSLog("[WebhookNotifier] Subscribed to topic: %@", topic.label)
     }
     
     private func unsubscribe(topicID: UUID) {
@@ -167,7 +172,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         let backoffSeconds = min(pow(2.0, Double(retryCount)) * 5.0, 60.0) // 5, 10, 20, 40, 60...
         retryCounters[topicID] = retryCount + 1
         
-        print("[WebhookNotifier] Scheduling reconnect for \(topic.label) in \(backoffSeconds) seconds")
+        NSLog("[WebhookNotifier] Scheduling reconnect for %@ in %@ seconds", topic.label, String(backoffSeconds))
         
         reconnectTimers[topicID]?.invalidate()
         reconnectTimers[topicID] = Timer.scheduledTimer(withTimeInterval: backoffSeconds, repeats: false) { [weak self] _ in
@@ -221,7 +226,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         Task { @MainActor in
             self.connectionStates[topicID] = false
             if let error = error as NSError?, error.code != NSURLErrorCancelled {
-                print("[WebhookNotifier] Stream disconnected with error: \(error.localizedDescription)")
+                NSLog("[WebhookNotifier] Stream disconnected with error: %@", error.localizedDescription)
                 self.scheduleReconnect(for: topicID)
             }
         }
@@ -231,7 +236,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             if let error = error {
-                print("[WebhookNotifier] Notification permission error: \(error)")
+                NSLog("[WebhookNotifier] Notification permission error: %@", String(describing: error))
             }
         }
     }
@@ -253,7 +258,7 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("[WebhookNotifier] Failed to show notification: \(error)")
+                NSLog("[WebhookNotifier] Failed to show notification: %@", String(describing: error))
             }
         }
     }

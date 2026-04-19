@@ -59,9 +59,9 @@ final class ColorModel: ObservableObject {
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
         let status = RegisterEventHotKey(UInt32(kVK_ANSI_C), modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
         if status == noErr {
-            print("[ColorPicker] Carbon HotKey ⌃⌥C registered successfully")
+            NSLog("%@", "[ColorPicker] Carbon HotKey ⌃⌥C registered successfully")
         } else {
-            print("[ColorPicker] Failed to register Carbon HotKey: \(status)")
+            NSLog("%@", "[ColorPicker] Failed to register Carbon HotKey: \(status)")
         }
     }
 
@@ -121,13 +121,7 @@ final class ColorModel: ObservableObject {
     
     // Automatically copies hex code to clipboard
     private func copyHexToClipboard() {
-        let pb = NSPasteboard.general
-        pb.clearContents()
-        pb.setString(hexString, forType: .string)
-        
-        // Visual and audio feedback
-        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-        NSSound.beep() // System sound effect
+        copy(hexString)
     }
     
     // Adds to color history
