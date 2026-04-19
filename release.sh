@@ -51,6 +51,8 @@ xcodebuild -project MacPowerToys.xcodeproj \
            -configuration Release \
            -derivedDataPath ./build \
            DEVELOPMENT_TEAM="$TEAM_ID" \
+           CODE_SIGN_IDENTITY="Developer ID Application" \
+           CODE_SIGN_STYLE=Manual \
            clean build
 
 # ── Step 4: Verify code signature ────────────────────────────────────────────
