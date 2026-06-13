@@ -6,7 +6,7 @@ final class MouseHighlighterModel: ObservableObject {
     // MARK: - Settings
     @Published var isEnabled: Bool = false {
         didSet {
-            if isEnabled { startMonitoring() } else { stopMonitoring() }
+            if isEnabled { startMonitoring() } else { deactivate() }
         }
     }
     @Published var primaryButtonColor: NSColor = NSColor.systemYellow
@@ -58,7 +58,7 @@ final class MouseHighlighterModel: ObservableObject {
 
     func startMonitoring() {
         guard isEnabled else { return }
-        stopMonitoring()
+        deactivate()
         setupOverlayWindow()
 
         globalLeftMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
@@ -77,14 +77,18 @@ final class MouseHighlighterModel: ObservableObject {
         }
     }
 
-    func stopMonitoring() {
+    private func deactivate() {
         if let m = globalLeftMonitor { NSEvent.removeMonitor(m); globalLeftMonitor = nil }
         if let m = globalRightMonitor { NSEvent.removeMonitor(m); globalRightMonitor = nil }
         if let m = localLeftMonitor { NSEvent.removeMonitor(m); localLeftMonitor = nil }
         if let m = localRightMonitor { NSEvent.removeMonitor(m); localRightMonitor = nil }
+        removeOverlayWindows()
+    }
+
+    func stopMonitoring() {
+        deactivate()
         if let m = shortcutGlobalMonitor { NSEvent.removeMonitor(m); shortcutGlobalMonitor = nil }
         if let m = shortcutLocalMonitor { NSEvent.removeMonitor(m); shortcutLocalMonitor = nil }
-        removeOverlayWindows()
     }
 
     // MARK: - Overlay Windows (per screen)

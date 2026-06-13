@@ -20,6 +20,10 @@ final class GitHubEventProcessor {
     // MARK: - Dedup State
 
     private var seenEventIDs: Set<String> = []
+    /// Parallel ordered log of every ID in `seenEventIDs`, oldest-first.
+    /// Used to implement FIFO eviction so the cap always removes the oldest
+    /// entries rather than an arbitrary hash-ordered subset.
+    private var seenEventIDOrder: [String] = []
 
     private static let iso8601Formatter = ISO8601DateFormatter()
 
@@ -27,7 +31,13 @@ final class GitHubEventProcessor {
 
     /// Re-seed the seen set from already-persisted events on launch so visible events are never re-notified.
     func seed(with events: [GitHubEventItem]) {
-        seenEventIDs = Set(events.map { $0.id })
+        seenEventIDs = []
+        seenEventIDOrder = []
+        for event in events {
+            if seenEventIDs.insert(event.id).inserted {
+                seenEventIDOrder.append(event.id)
+            }
+        }
     }
 
     // MARK: - Processing
@@ -97,7 +107,9 @@ final class GitHubEventProcessor {
 
         for item in newEvents {
             sendNotification(for: item, notificationSound: notificationSound)
-            seenEventIDs.insert(item.id)
+            if seenEventIDs.insert(item.id).inserted {
+                seenEventIDOrder.append(item.id)
+            }
         }
 
         // Aynı URL'ye sahip (aynı issue/PR) olayları grupla ve sadece en güncel olanı tut
@@ -124,10 +136,29 @@ final class GitHubEventProcessor {
         // given the 1000-ID ceiling far exceeds practical polling rates.
         // We always retain IDs for the events currently displayed (at most 25) so that
         // visible events are never re-notified.
+        //
+        // FIFO eviction: walk `seenEventIDOrder` from the front (oldest) and remove
+        // entries that are not pinned until the set is within the cap. Pinned entries
+        // are skipped (left in both structures) so currently-displayed events are never
+        // evicted regardless of their age.
         if seenEventIDs.count > GitHubEventProcessor.seenCap {
             let pinnedIDs = Set(result.map { $0.id })
-            let overflow = seenEventIDs.subtracting(pinnedIDs)
-            seenEventIDs = pinnedIDs.union(overflow.prefix(GitHubEventProcessor.seenCap - pinnedIDs.count))
+            var writeIndex = 0
+            for id in seenEventIDOrder {
+                if seenEventIDs.count <= GitHubEventProcessor.seenCap {
+                    // Within cap — keep this entry and all remaining entries as-is.
+                    seenEventIDOrder[writeIndex] = id
+                    writeIndex += 1
+                } else if pinnedIDs.contains(id) {
+                    // Pinned: must keep even though we are still over cap.
+                    seenEventIDOrder[writeIndex] = id
+                    writeIndex += 1
+                } else {
+                    // Oldest unpinned entry — evict it.
+                    seenEventIDs.remove(id)
+                }
+            }
+            seenEventIDOrder.removeSubrange(writeIndex...)
         }
 
         return result

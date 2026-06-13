@@ -210,11 +210,11 @@ final class GitHubAuthManager {
                   let deviceCode = json["device_code"] as? String,
                   let userCode = json["user_code"] as? String,
                   let verificationURI = json["verification_uri"] as? String,
-                  let expiresIn = json["expires_in"] as? Int,
-                  let pollInterval = json["interval"] as? Int else {
+                  let expiresIn = json["expires_in"] as? Int else {
                 deviceFlowStatus = .error("Failed to get authorization code from GitHub")
                 return
             }
+            let pollInterval = json["interval"] as? Int ?? 5
 
             let expiresAt = Date().addingTimeInterval(TimeInterval(expiresIn))
             deviceFlowStatus = .awaitingVerification(userCode: userCode, expiresAt: expiresAt)
