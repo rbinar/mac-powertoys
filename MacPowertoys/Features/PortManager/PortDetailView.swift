@@ -477,8 +477,7 @@ struct PortDetailView: View {
             // The MenuBarExtra window is an NSPanel; find the one containing this view
             for window in NSApp.windows {
                 let className = String(describing: type(of: window))
-                NSLog("%@", "[PortDetail] window: \(className) visible=\(window.isVisible) title='\(window.title)'")
-                
+
                 // Match the MenuBarExtra panel by class name patterns
                 if window is NSPanel,
                    (className.contains("MenuBarExtra") ||
@@ -490,7 +489,6 @@ struct PortDetailView: View {
                     } else {
                         window.level = .normal
                     }
-                    NSLog("%@", "[PortDetail] Panel pinned=\(pinned) for \(className)")
                     return
                 }
             }
@@ -505,8 +503,6 @@ struct PortDetailView: View {
                 } else {
                     panel.level = .normal
                 }
-                let className = String(describing: type(of: panel))
-                NSLog("%@", "[PortDetail] Fallback panel pinned=\(pinned) for \(className)")
             }
         }
     }

@@ -408,6 +408,52 @@ final class PdfToolsModel: ObservableObject {
     }
 
     // MARK: - Operations
+    //
+    // The model still owns trigger entry points, validation, panel presentation,
+    // and state/history orchestration. The per-operation heavy lifting now lives
+    // in dedicated types in `PdfOperations.swift`; `runOperation` is the shared
+    // bridge that runs them in a detached task and applies the outcome exactly as
+    // the previous inline `Task.detached` bodies did.
+
+    /// Spawns the detached worker, forwards a progress reporter that hops onto the
+    /// main actor, and applies the outcome (idle on cancel, failed on failure,
+    /// completed + history on success) — preserving the original semantics.
+    private func runOperation(
+        historyOperation: String,
+        historyInput: String,
+        work: @escaping @Sendable (_ reportProgress: @escaping PdfProgressReporter) async -> PdfOperationOutcome
+    ) {
+        currentTask = Task.detached { [weak self] in
+            let reportProgress: PdfProgressReporter = { progress, description in
+                await MainActor.run {
+                    self?.state = .processing(progress: progress, description: description)
+                }
+            }
+
+            let outcome = await work(reportProgress)
+
+            await MainActor.run {
+                guard let self else { return }
+                switch outcome {
+                case .cancelled:
+                    self.state = .idle
+                case .failure(let message):
+                    self.state = .failed(message: message)
+                case .success(let result):
+                    self.state = .completed(result: result)
+                    self.addToHistory(
+                        operation: historyOperation,
+                        input: historyInput,
+                        outputPath: result.outputPath,
+                        outputDirectory: result.outputDirectory,
+                        inputSize: result.inputSize,
+                        outputSize: result.outputSize,
+                        fileCount: result.fileCount
+                    )
+                }
+            }
+        }
+    }
 
     func performMerge() {
         guard mergeFiles.count >= 2 else {
@@ -425,58 +471,13 @@ final class PdfToolsModel: ObservableObject {
         let totalInputSize = files.reduce(Int64(0)) { $0 + $1.fileSize }
 
         state = .processing(progress: 0, description: "Merging PDFs...")
-        currentTask = Task.detached { [weak self] in
-            do {
-                let outputDoc = PDFDocument()
-                var pageIndex = 0
-                let totalPages = files.reduce(0) { $0 + $1.pageCount }
-
-                for file in files {
-                    guard !Task.isCancelled else {
-                        await MainActor.run { self?.state = .idle }
-                        return
-                    }
-                    guard let doc = PDFDocument(url: file.url) else {
-                        await MainActor.run { self?.state = .failed(message: "Failed to open \(file.name)") }
-                        return
-                    }
-                    if doc.isEncrypted && doc.isLocked {
-                        await MainActor.run { self?.state = .failed(message: "\(file.name) is password protected. Open it individually first.") }
-                        return
-                    }
-                    for i in 0..<doc.pageCount {
-                        guard !Task.isCancelled else {
-                            await MainActor.run { self?.state = .idle }
-                            return
-                        }
-                        if let page = doc.page(at: i) {
-                            outputDoc.insert(page, at: pageIndex)
-                            pageIndex += 1
-                        }
-                        let progress = Double(pageIndex) / Double(totalPages)
-                        await MainActor.run { self?.state = .processing(progress: progress, description: "Merging page \(pageIndex) of \(totalPages)...") }
-                    }
-                }
-
-                guard outputDoc.write(to: outputURL) else {
-                    await MainActor.run { self?.state = .failed(message: "Failed to write merged PDF.") }
-                    return
-                }
-
-                let outputSize = (try? FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
-                let result = OperationResult(
-                    message: "Merged \(files.count) files (\(totalPages) pages)",
-                    outputPath: outputURL.path,
-                    outputDirectory: nil,
-                    inputSize: totalInputSize,
-                    outputSize: outputSize,
-                    fileCount: files.count
-                )
-                await MainActor.run {
-                    self?.state = .completed(result: result)
-                    self?.addToHistory(operation: "Merge", input: "\(files.count) files", outputPath: outputURL.path, outputDirectory: nil, inputSize: totalInputSize, outputSize: outputSize, fileCount: files.count)
-                }
-            }
+        runOperation(historyOperation: "Merge", historyInput: "\(files.count) files") { reportProgress in
+            await PdfMergeOperation.run(
+                files: files,
+                outputURL: outputURL,
+                totalInputSize: totalInputSize,
+                reportProgress: reportProgress
+            )
         }
     }
 
@@ -536,62 +537,16 @@ final class PdfToolsModel: ObservableObject {
         let mode = splitMode
 
         state = .processing(progress: 0, description: "Splitting PDF...")
-        currentTask = Task.detached { [weak self] in
-            let total = splitRanges.count
-            var filesWritten = 0
-
-            for (index, pageIndices) in splitRanges.enumerated() {
-                guard !Task.isCancelled else {
-                    await MainActor.run { self?.state = .idle }
-                    return
-                }
-
-                let newDoc = PDFDocument()
-                for (insertIndex, pageIdx) in pageIndices.enumerated() {
-                    if let page = doc.page(at: pageIdx) {
-                        newDoc.insert(page, at: insertIndex)
-                    }
-                }
-
-                let fileName: String
-                switch mode {
-                case .ranges:
-                    let first = pageIndices.first.map { $0 + 1 } ?? 0
-                    let last = pageIndices.last.map { $0 + 1 } ?? 0
-                    fileName = first == last ? "\(baseName)_page_\(first).pdf" : "\(baseName)_pages_\(first)-\(last).pdf"
-                case .everyN:
-                    let first = pageIndices.first.map { $0 + 1 } ?? 0
-                    let last = pageIndices.last.map { $0 + 1 } ?? 0
-                    fileName = "\(baseName)_pages_\(first)-\(last).pdf"
-                case .burst:
-                    let pageNum = (pageIndices.first ?? 0) + 1
-                    fileName = "\(baseName)_page_\(pageNum).pdf"
-                }
-
-                let fileURL = outputDir.appendingPathComponent(fileName)
-                guard newDoc.write(to: fileURL) else {
-                    NSLog("[PdfTools] Failed to write split file: %@", fileName)
-                    await MainActor.run { self?.state = .failed(message: "Failed to write \(fileName)") }
-                    return
-                }
-                filesWritten += 1
-
-                let progress = Double(index + 1) / Double(total)
-                await MainActor.run { self?.state = .processing(progress: progress, description: "Writing file \(index + 1) of \(total)...") }
-            }
-
-            let result = OperationResult(
-                message: "Split into \(filesWritten) files",
-                outputPath: nil,
-                outputDirectory: outputDir.path,
+        runOperation(historyOperation: "Split", historyInput: baseName) { reportProgress in
+            await PdfSplitOperation.run(
+                doc: doc,
+                splitRanges: splitRanges,
+                mode: mode,
+                baseName: baseName,
+                outputDir: outputDir,
                 inputSize: inputSize,
-                outputSize: nil,
-                fileCount: filesWritten
+                reportProgress: reportProgress
             )
-            await MainActor.run {
-                self?.state = .completed(result: result)
-                self?.addToHistory(operation: "Split", input: baseName, outputPath: nil, outputDirectory: outputDir.path, inputSize: inputSize, outputSize: nil, fileCount: filesWritten)
-            }
         }
     }
 
@@ -616,78 +571,15 @@ final class PdfToolsModel: ObservableObject {
         let pageCount = doc.pageCount
 
         state = .processing(progress: 0, description: "Compressing PDF...")
-        currentTask = Task.detached { [weak self] in
-            let outputDoc = PDFDocument()
-
-            for i in 0..<pageCount {
-                guard !Task.isCancelled else {
-                    await MainActor.run { self?.state = .idle }
-                    return
-                }
-
-                guard let page = doc.page(at: i) else { continue }
-                let bounds = page.bounds(for: .mediaBox)
-                let newWidth = bounds.width * quality.scaleFactor
-                let newHeight = bounds.height * quality.scaleFactor
-
-                let colorSpace = CGColorSpaceCreateDeviceRGB()
-                guard let context = CGContext(
-                    data: nil,
-                    width: Int(newWidth),
-                    height: Int(newHeight),
-                    bitsPerComponent: 8,
-                    bytesPerRow: 0,
-                    space: colorSpace,
-                    bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                ) else { continue }
-
-                context.scaleBy(x: quality.scaleFactor, y: quality.scaleFactor)
-
-                NSGraphicsContext.saveGraphicsState()
-                let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
-                NSGraphicsContext.current = nsContext
-                page.draw(with: .mediaBox, to: context)
-                NSGraphicsContext.restoreGraphicsState()
-
-                guard let cgImage = context.makeImage() else { continue }
-                let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
-                guard let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: quality.jpegQuality]) else { continue }
-
-                let nsImage = NSImage(data: jpegData)
-                if let nsImage, let compressedPage = PDFPage(image: nsImage) {
-                    outputDoc.insert(compressedPage, at: i)
-                }
-
-                let progress = Double(i + 1) / Double(pageCount)
-                await MainActor.run { self?.state = .processing(progress: progress, description: "Compressing page \(i + 1) of \(pageCount)...") }
-            }
-
-            guard outputDoc.write(to: outputURL) else {
-                await MainActor.run { self?.state = .failed(message: "Failed to write compressed PDF.") }
-                return
-            }
-
-            let outputSize = (try? FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
-            let savedPercent = inputSize > 0 ? Int((1.0 - Double(outputSize) / Double(inputSize)) * 100) : 0
-            let message: String
-            if outputSize >= inputSize {
-                message = "Compressed PDF is not smaller than original (\(ByteCountFormatter.string(fromByteCount: inputSize, countStyle: .file)) → \(ByteCountFormatter.string(fromByteCount: outputSize, countStyle: .file))). The original may already be well-optimized."
-            } else {
-                message = "Compressed: \(ByteCountFormatter.string(fromByteCount: inputSize, countStyle: .file)) → \(ByteCountFormatter.string(fromByteCount: outputSize, countStyle: .file)) (\(savedPercent)% reduction)"
-            }
-
-            let result = OperationResult(
-                message: message,
-                outputPath: outputURL.path,
-                outputDirectory: nil,
+        runOperation(historyOperation: "Compress", historyInput: fileURL.lastPathComponent) { reportProgress in
+            await PdfCompressOperation.run(
+                doc: doc,
+                pageCount: pageCount,
+                quality: quality,
+                outputURL: outputURL,
                 inputSize: inputSize,
-                outputSize: outputSize,
-                fileCount: 1
+                reportProgress: reportProgress
             )
-            await MainActor.run {
-                self?.state = .completed(result: result)
-                self?.addToHistory(operation: "Compress", input: fileURL.lastPathComponent, outputPath: outputURL.path, outputDirectory: nil, inputSize: inputSize, outputSize: outputSize, fileCount: 1)
-            }
         }
     }
 
@@ -725,46 +617,16 @@ final class PdfToolsModel: ObservableObject {
         let targetSet = Set(targetPageIndices)
 
         state = .processing(progress: 0, description: "Rotating pages...")
-        currentTask = Task.detached { [weak self] in
-            for i in 0..<pageCount {
-                guard !Task.isCancelled else {
-                    await MainActor.run { self?.state = .idle }
-                    return
-                }
-
-                if targetSet.contains(i), let page = doc.page(at: i) {
-                    let current = page.rotation
-                    let delta: Int
-                    switch angle {
-                    case .cw90: delta = 90
-                    case .ccw90: delta = 270
-                    case .flip180: delta = 180
-                    }
-                    page.rotation = (current + delta) % 360
-                }
-
-                let progress = Double(i + 1) / Double(pageCount)
-                await MainActor.run { self?.state = .processing(progress: progress, description: "Rotating page \(i + 1) of \(pageCount)...") }
-            }
-
-            guard doc.write(to: outputURL) else {
-                await MainActor.run { self?.state = .failed(message: "Failed to write rotated PDF.") }
-                return
-            }
-
-            let outputSize = (try? FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
-            let result = OperationResult(
-                message: "Rotated \(targetSet.count) page(s) by \(angle.displayName)",
-                outputPath: outputURL.path,
-                outputDirectory: nil,
+        runOperation(historyOperation: "Rotate", historyInput: fileURL.lastPathComponent) { reportProgress in
+            await PdfRotateOperation.run(
+                doc: doc,
+                pageCount: pageCount,
+                targetSet: targetSet,
+                angle: angle,
+                outputURL: outputURL,
                 inputSize: inputSize,
-                outputSize: outputSize,
-                fileCount: 1
+                reportProgress: reportProgress
             )
-            await MainActor.run {
-                self?.state = .completed(result: result)
-                self?.addToHistory(operation: "Rotate", input: fileURL.lastPathComponent, outputPath: outputURL.path, outputDirectory: nil, inputSize: inputSize, outputSize: outputSize, fileCount: 1)
-            }
         }
     }
 
@@ -792,80 +654,17 @@ final class PdfToolsModel: ObservableObject {
         let inputSize = metadata.fileSize
 
         state = .processing(progress: 0, description: "Exporting pages as images...")
-        currentTask = Task.detached { [weak self] in
-            let scale = CGFloat(dpi) / 72.0
-
-            for i in 0..<pageCount {
-                guard !Task.isCancelled else {
-                    await MainActor.run { self?.state = .idle }
-                    return
-                }
-
-                guard let page = doc.page(at: i) else { continue }
-                let bounds = page.bounds(for: .mediaBox)
-                let pixelWidth = Int(bounds.width * scale)
-                let pixelHeight = Int(bounds.height * scale)
-
-                let colorSpace = CGColorSpaceCreateDeviceRGB()
-                guard let context = CGContext(
-                    data: nil,
-                    width: pixelWidth,
-                    height: pixelHeight,
-                    bitsPerComponent: 8,
-                    bytesPerRow: 0,
-                    space: colorSpace,
-                    bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                ) else { continue }
-
-                context.setFillColor(CGColor.white)
-                context.fill(CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight))
-                context.scaleBy(x: scale, y: scale)
-
-                NSGraphicsContext.saveGraphicsState()
-                let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
-                NSGraphicsContext.current = nsContext
-                page.draw(with: .mediaBox, to: context)
-                NSGraphicsContext.restoreGraphicsState()
-
-                guard let cgImage = context.makeImage() else { continue }
-                let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
-
-                let imageData: Data?
-                switch format {
-                case .png:
-                    imageData = bitmapRep.representation(using: .png, properties: [:])
-                case .jpeg:
-                    imageData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.9])
-                case .tiff:
-                    imageData = bitmapRep.representation(using: .tiff, properties: [:])
-                }
-
-                guard let data = imageData else { continue }
-
-                let fileName = "\(baseName)_page_\(i + 1).\(format.fileExtension)"
-                let fileURL = outputDir.appendingPathComponent(fileName)
-                do {
-                    try data.write(to: fileURL)
-                } catch {
-                    NSLog("[PdfTools] Failed to write image %@: %@", fileName, error.localizedDescription)
-                }
-
-                let progress = Double(i + 1) / Double(pageCount)
-                await MainActor.run { self?.state = .processing(progress: progress, description: "Exporting page \(i + 1) of \(pageCount)...") }
-            }
-
-            let result = OperationResult(
-                message: "Exported \(pageCount) pages as \(format.displayName) images at \(dpi) DPI",
-                outputPath: nil,
-                outputDirectory: outputDir.path,
+        runOperation(historyOperation: "PDF to Image", historyInput: baseName) { reportProgress in
+            await PdfToImageOperation.run(
+                doc: doc,
+                pageCount: pageCount,
+                format: format,
+                dpi: dpi,
+                baseName: baseName,
+                outputDir: outputDir,
                 inputSize: inputSize,
-                outputSize: nil,
-                fileCount: pageCount
+                reportProgress: reportProgress
             )
-            await MainActor.run {
-                self?.state = .completed(result: result)
-                self?.addToHistory(operation: "PDF to Image", input: baseName, outputPath: nil, outputDirectory: outputDir.path, inputSize: inputSize, outputSize: nil, fileCount: pageCount)
-            }
         }
     }
 
@@ -885,60 +684,20 @@ final class PdfToolsModel: ObservableObject {
         let totalInputSize = files.reduce(Int64(0)) { $0 + $1.fileSize }
 
         state = .processing(progress: 0, description: "Converting images to PDF...")
-        currentTask = Task.detached { [weak self] in
-            let outputDoc = PDFDocument()
-            let total = files.count
-
-            for (index, file) in files.enumerated() {
-                guard !Task.isCancelled else {
-                    await MainActor.run { self?.state = .idle }
-                    return
-                }
-
-                guard let image = NSImage(contentsOf: file.url),
-                      let page = PDFPage(image: image) else {
-                    NSLog("[PdfTools] Failed to create PDF page from image: %@", file.name)
-                    continue
-                }
-
-                outputDoc.insert(page, at: index)
-
-                let progress = Double(index + 1) / Double(total)
-                await MainActor.run { self?.state = .processing(progress: progress, description: "Converting image \(index + 1) of \(total)...") }
-            }
-
-            guard outputDoc.pageCount > 0 else {
-                await MainActor.run { self?.state = .failed(message: "No images could be converted.") }
-                return
-            }
-
-            guard outputDoc.write(to: outputURL) else {
-                await MainActor.run { self?.state = .failed(message: "Failed to write PDF.") }
-                return
-            }
-
-            let outputSize = (try? FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
-            let result = OperationResult(
-                message: "Created PDF with \(outputDoc.pageCount) page(s) from \(total) image(s)",
-                outputPath: outputURL.path,
-                outputDirectory: nil,
-                inputSize: totalInputSize,
-                outputSize: outputSize,
-                fileCount: total
+        runOperation(historyOperation: "Image to PDF", historyInput: "\(files.count) images") { reportProgress in
+            await PdfImageToPdfOperation.run(
+                files: files,
+                outputURL: outputURL,
+                totalInputSize: totalInputSize,
+                reportProgress: reportProgress
             )
-            await MainActor.run {
-                self?.state = .completed(result: result)
-                self?.addToHistory(operation: "Image to PDF", input: "\(total) images", outputPath: outputURL.path, outputDirectory: nil, inputSize: totalInputSize, outputSize: outputSize, fileCount: total)
-            }
         }
     }
 
     // MARK: - Cancel & Reset
 
     func cancelOperation() {
-        currentTask?.cancel()
-        currentTask = nil
-        state = .idle
+        resetState()
     }
 
     func resetState() {

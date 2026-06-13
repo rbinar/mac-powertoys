@@ -136,6 +136,14 @@ struct CompactFeatureCard: View {
     }
 }
 
+private struct FeatureCardSpec {
+    let title: String
+    let icon: String
+    let statusText: String
+    let isEnabled: Binding<Bool>?
+    let feature: Feature
+}
+
 struct ContentView: View {
     @EnvironmentObject var model: ColorModel
     @EnvironmentObject var findMyMouseModel: FindMyMouseModel
@@ -184,6 +192,44 @@ struct ContentView: View {
             }
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+
+    // MARK: - Feature Grid Data
+
+    private var featureCards: [FeatureCardSpec] {
+        [
+            FeatureCardSpec(title: "Screen Ruler", icon: "ruler", statusText: screenRulerModel.isEnabled ? "Active" : "Disabled", isEnabled: $screenRulerModel.isEnabled, feature: .screenRuler),
+            FeatureCardSpec(title: "ZoomIt", icon: "magnifyingglass", statusText: zoomItModel.isEnabled ? "Active" : "Disabled", isEnabled: $zoomItModel.isEnabled, feature: .zoomIt),
+            FeatureCardSpec(title: "Mouse Utilities", icon: "cursorarrow", statusText: mouseUtilitiesStatusText, isEnabled: nil, feature: .mouseUtilitiesHub),
+            FeatureCardSpec(title: "Mouse Jiggler", icon: "computermouse.fill", statusText: mouseJigglerModel.isEnabled ? "Active" : "Disabled", isEnabled: $mouseJigglerModel.isEnabled, feature: .mouseJiggler),
+            FeatureCardSpec(title: "Awake", icon: "cup.and.saucer.fill", statusText: awakeModel.isEnabled ? (awakeModel.isIndefinite ? "Indefinite" : awakeModel.formattedRemaining) : "Disabled", isEnabled: $awakeModel.isEnabled, feature: .awake),
+            FeatureCardSpec(title: "Pomodoro Timer", icon: "timer", statusText: pomodoroTimerStatusText, isEnabled: $pomodoroTimerModel.isEnabled, feature: .pomodoroTimer),
+            FeatureCardSpec(title: "Clipboard Manager", icon: "list.clipboard", statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Disabled", isEnabled: $clipboardManagerModel.isEnabled, feature: .clipboardManager),
+            FeatureCardSpec(title: "Markdown Preview", icon: "doc.richtext", statusText: "\(markdownPreviewModel.recentFiles.count) recent", isEnabled: nil, feature: .markdownPreview),
+            FeatureCardSpec(title: "Screen Annotation", icon: "pencil.tip.crop.circle", statusText: screenAnnotationModel.isEnabled ? "Active" : "Disabled", isEnabled: $screenAnnotationModel.isEnabled, feature: .screenAnnotation),
+            FeatureCardSpec(title: "Video Converter", icon: "film", statusText: "Ready", isEnabled: nil, feature: .videoConverter),
+            FeatureCardSpec(title: "PDF Tools", icon: "doc.badge.gearshape", statusText: "Ready", isEnabled: nil, feature: .pdfTools),
+            FeatureCardSpec(title: "Quick Launch", icon: "bolt.fill", statusText: "\(quickLaunchModel.customEntries.count) shortcuts", isEnabled: nil, feature: .quickLaunch),
+            FeatureCardSpec(title: "Test Data Generator", icon: "wand.and.stars", statusText: "Ready", isEnabled: nil, feature: .testDataGenerator),
+            FeatureCardSpec(title: "Speech to Text", icon: "waveform.badge.mic", statusText: speechToTextModel.hubStatusText, isEnabled: nil, feature: .speechToText),
+            FeatureCardSpec(title: "Port Manager", icon: "network", statusText: portManagerModel.isEnabled ? "\(portManagerModel.ports.count) ports" : "Disabled", isEnabled: $portManagerModel.isEnabled, feature: .portManager),
+            FeatureCardSpec(title: "System Info", icon: "gauge.with.dots.needle.33percent", statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Disabled", isEnabled: $systemInfoModel.isEnabled, feature: .systemInfo),
+            FeatureCardSpec(title: "Screen Capture", icon: "camera.viewfinder", statusText: screenCaptureModel.isEnabled ? "⌃⌥4 Active" : "Disabled", isEnabled: $screenCaptureModel.isEnabled, feature: .screenCapture),
+            FeatureCardSpec(title: "Image Optimizer", icon: "photo.badge.arrow.down", statusText: imageOptimizerModel.items.isEmpty ? "Ready" : "\(imageOptimizerModel.items.count) images", isEnabled: nil, feature: .imageOptimizer),
+            FeatureCardSpec(title: "Webhook Notifier", icon: "bell.badge", statusText: webhookNotifierModel.isEnabled ? "\(webhookNotifierModel.topics.filter { $0.isActive }.count) active" : "Disabled", isEnabled: $webhookNotifierModel.isEnabled, feature: .webhookNotifier),
+            FeatureCardSpec(title: "GitHub Notifier", icon: "bell.badge.circle", statusText: gitHubNotifierModel.hubStatusText, isEnabled: $gitHubNotifierModel.isEnabled, feature: .gitHubNotifier),
+        ]
+    }
+
+    @ViewBuilder
+    private func cardView(_ spec: FeatureCardSpec) -> some View {
+        CompactFeatureCard(
+            title: spec.title,
+            icon: spec.icon,
+            statusText: spec.statusText,
+            isEnabled: spec.isEnabled,
+            action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = spec.feature } }
+        )
     }
 
     // MARK: - Feature Hub (main menu)
@@ -265,186 +311,14 @@ struct ContentView: View {
                     .help(model.hexString)
             }
 
-            // Row 1: Screen Ruler | ZoomIt
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Screen Ruler",
-                    icon: "ruler",
-                    statusText: screenRulerModel.isEnabled ? "Active" : "Disabled",
-                    isEnabled: $screenRulerModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenRuler } }
-                )
-                CompactFeatureCard(
-                    title: "ZoomIt",
-                    icon: "magnifyingglass",
-                    statusText: zoomItModel.isEnabled ? "Active" : "Disabled",
-                    isEnabled: $zoomItModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .zoomIt } }
-                )
-            }
-
-            // Row 2: Mouse Utilities | Mouse Jiggler
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Mouse Utilities",
-                    icon: "cursorarrow",
-                    statusText: mouseUtilitiesStatusText,
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .mouseUtilitiesHub } }
-                )
-                CompactFeatureCard(
-                    title: "Mouse Jiggler",
-                    icon: "computermouse.fill",
-                    statusText: mouseJigglerModel.isEnabled ? "Active" : "Disabled",
-                    isEnabled: $mouseJigglerModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .mouseJiggler } }
-                )
-            }
-
-            // Row 3: Awake | Pomodoro Timer
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Awake",
-                    icon: "cup.and.saucer.fill",
-                    statusText: awakeModel.isEnabled ? (awakeModel.isIndefinite ? "Indefinite" : awakeModel.formattedRemaining) : "Disabled",
-                    isEnabled: $awakeModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .awake } }
-                )
-                CompactFeatureCard(
-                    title: "Pomodoro Timer",
-                    icon: "timer",
-                    statusText: pomodoroTimerStatusText,
-                    isEnabled: $pomodoroTimerModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .pomodoroTimer } }
-                )
-            }
-
-            // Row 4: Clipboard Manager | Markdown Preview
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Clipboard Manager",
-                    icon: "list.clipboard",
-                    statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Disabled",
-                    isEnabled: $clipboardManagerModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .clipboardManager } }
-                )
-                CompactFeatureCard(
-                    title: "Markdown Preview",
-                    icon: "doc.richtext",
-                    statusText: "\(markdownPreviewModel.recentFiles.count) recent",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .markdownPreview } }
-                )
-            }
-
-            // Row 5: Screen Annotation | Video Converter
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Screen Annotation",
-                    icon: "pencil.tip.crop.circle",
-                    statusText: screenAnnotationModel.isEnabled ? "Active" : "Disabled",
-                    isEnabled: $screenAnnotationModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenAnnotation } }
-                )
-                CompactFeatureCard(
-                    title: "Video Converter",
-                    icon: "film",
-                    statusText: "Ready",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .videoConverter } }
-                )
-            }
-            
-            // Row 6: PDF Tools | Quick Launch
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "PDF Tools",
-                    icon: "doc.badge.gearshape",
-                    statusText: "Ready",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .pdfTools } }
-                )
-                CompactFeatureCard(
-                    title: "Quick Launch",
-                    icon: "bolt.fill",
-                    statusText: "\(quickLaunchModel.customEntries.count) shortcuts",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .quickLaunch } }
-                )
-            }
-
-            // Row 7: Test Data Generator | Speech to Text
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Test Data Generator",
-                    icon: "wand.and.stars",
-                    statusText: "Ready",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .testDataGenerator } }
-                )
-                CompactFeatureCard(
-                    title: "Speech to Text",
-                    icon: "waveform.badge.mic",
-                    statusText: speechToTextModel.hubStatusText,
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .speechToText } }
-                )
-            }
-            
-            VStack(spacing: 6) {
-            // Row 8: Port Manager | System Info
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Port Manager",
-                    icon: "network",
-                    statusText: portManagerModel.isEnabled ? "\(portManagerModel.ports.count) ports" : "Disabled",
-                    isEnabled: $portManagerModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .portManager } }
-                )
-                CompactFeatureCard(
-                    title: "System Info",
-                    icon: "gauge.with.dots.needle.33percent",
-                    statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Disabled",
-                    isEnabled: $systemInfoModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .systemInfo } }
-                )
-            }
-
-            // Row 9: Screen Capture | Image Optimizer
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Screen Capture",
-                    icon: "camera.viewfinder",
-                    statusText: screenCaptureModel.isEnabled ? "⌃⌥4 Active" : "Disabled",
-                    isEnabled: $screenCaptureModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .screenCapture } }
-                )
-                CompactFeatureCard(
-                    title: "Image Optimizer",
-                    icon: "photo.badge.arrow.down",
-                    statusText: imageOptimizerModel.items.isEmpty ? "Ready" : "\(imageOptimizerModel.items.count) images",
-                    isEnabled: nil,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .imageOptimizer } }
-                )
-            }
-            } // VStack(Row 8-9)
-
-            // Row 10: Webhook Notifier | GitHub Notifier
-            HStack(spacing: 6) {
-                CompactFeatureCard(
-                    title: "Webhook Notifier",
-                    icon: "bell.badge",
-                    statusText: webhookNotifierModel.isEnabled ? "\(webhookNotifierModel.topics.filter { $0.isActive }.count) active" : "Disabled",
-                    isEnabled: $webhookNotifierModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .webhookNotifier } }
-                )
-                CompactFeatureCard(
-                    title: "GitHub Notifier",
-                    icon: "bell.badge.circle",
-                    statusText: gitHubNotifierModel.hubStatusText,
-                    isEnabled: $gitHubNotifierModel.isEnabled,
-                    action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = .gitHubNotifier } }
-                )
+            // Feature grid — two cards per row, order defined by `featureCards`
+            ForEach(Array(stride(from: 0, to: featureCards.count, by: 2)), id: \.self) { rowStart in
+                HStack(spacing: 6) {
+                    cardView(featureCards[rowStart])
+                    if rowStart + 1 < featureCards.count {
+                        cardView(featureCards[rowStart + 1])
+                    }
+                }
             }
 
             } // VStack inside ScrollView
@@ -482,77 +356,54 @@ struct ContentView: View {
         switch feature {
         case .colorPicker:
             ColorPickerView(onBack: { goBack() })
-                .environmentObject(model)
         case .mouseUtilitiesHub:
             mouseUtilitiesHubView
         case .findMyMouse:
             FindMyMouseView(onBack: { goBack(to: .mouseUtilitiesHub) })
-                .environmentObject(findMyMouseModel)
         case .mouseHighlighter:
             MouseHighlighterView(onBack: { goBack(to: .mouseUtilitiesHub) })
-                .environmentObject(mouseHighlighterModel)
         case .crosshairs:
             CrosshairsView(onBack: { goBack(to: .mouseUtilitiesHub) })
-                .environmentObject(crosshairsModel)
         case .cursorWrap:
             CursorWrapView(onBack: { goBack(to: .mouseUtilitiesHub) })
-                .environmentObject(cursorWrapModel)
         case .screenRuler:
             ScreenRulerView(onBack: { goBack() })
-                .environmentObject(screenRulerModel)
         case .zoomIt:
             ZoomItView(onBack: { goBack() })
-                .environmentObject(zoomItModel)
         case .webhookNotifier:
             WebhookNotifierView(onBack: { goBack() })
-                .environmentObject(webhookNotifierModel)
         case .awake:
             AwakeView(onBack: { goBack() })
-                .environmentObject(awakeModel)
         case .mouseJiggler:
             MouseJigglerView(onBack: { goBack() })
-                .environmentObject(mouseJigglerModel)
         case .clipboardManager:
             ClipboardManagerView(onBack: { goBack() })
-                .environmentObject(clipboardManagerModel)
         case .markdownPreview:
             MarkdownPreviewView(onBack: { goBack() })
-                .environmentObject(markdownPreviewModel)
         case .screenAnnotation:
             ScreenAnnotationView(onBack: { goBack() })
-                .environmentObject(screenAnnotationModel)
         case .videoConverter:
             VideoConverterView(onBack: { goBack() })
-                .environmentObject(videoConverterModel)
         case .pomodoroTimer:
             PomodoroTimerView(onBack: { goBack() })
-                .environmentObject(pomodoroTimerModel)
         case .testDataGenerator:
             TestDataGeneratorView(onBack: { goBack() })
         case .speechToText:
             SpeechToTextView(onBack: { goBack() })
-                .environmentObject(speechToTextModel)
         case .portManager:
             PortManagerView(onBack: { goBack() })
-                .environmentObject(portManagerModel)
         case .systemInfo:
             SystemInfoView(onBack: { goBack() })
-                .environmentObject(systemInfoModel)
         case .quickLaunch:
             QuickLaunchView(onBack: { goBack() })
-                .environmentObject(quickLaunchModel)
         case .pdfTools:
             PdfToolsView(onBack: { goBack() })
-                .environmentObject(pdfToolsModel)
         case .screenCapture:
             ScreenCaptureView(onBack: { goBack() })
-                .environmentObject(screenCaptureModel)
         case .gitHubNotifier:
             GitHubNotifierView(onBack: { goBack() })
-                .environmentObject(gitHubNotifierModel)
         case .imageOptimizer:
             ImageOptimizerView(onBack: { goBack() })
-                .environmentObject(imageOptimizerModel)
         }
     }
 

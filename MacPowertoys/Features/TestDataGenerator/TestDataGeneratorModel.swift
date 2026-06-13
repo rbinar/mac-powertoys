@@ -24,7 +24,7 @@ final class TestDataGeneratorModel: ObservableObject {
         
         var words: [String] = []
         for _ in 0..<lengthCount {
-            words.append(loremWords.randomElement()!)
+            words.append(loremWords.randomElement() ?? "")
         }
         
         let text = capitalizeFirstLetter(words.joined(separator: " ")) + "."
@@ -32,7 +32,7 @@ final class TestDataGeneratorModel: ObservableObject {
     }
     
     func generateName() {
-        let name = "\(firstNames.randomElement()!) \(lastNames.randomElement()!)"
+        let name = "\(firstNames.randomElement() ?? "") \(lastNames.randomElement() ?? "")"
         copyToClipboard(name)
     }
     
@@ -60,6 +60,8 @@ final class TestDataGeneratorModel: ObservableObject {
         return firstCharacter.uppercased() + text.dropFirst()
     }
     
+    func stopMonitoring() {}
+
     enum LoremLength {
         case short, medium, long
     }
