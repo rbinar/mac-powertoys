@@ -733,7 +733,7 @@ final class ScreenAnnotationModel: ObservableObject {
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         let filename = "Annotation_\(formatter.string(from: Date())).png"
 
-        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
+        guard let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first else { NSLog("[ScreenAnnotation] Cannot resolve Desktop directory"); return }
         let fileURL = desktopURL.appendingPathComponent(filename)
 
         do {

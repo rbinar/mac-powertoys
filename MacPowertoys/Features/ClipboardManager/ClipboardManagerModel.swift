@@ -64,15 +64,15 @@ final class ClipboardManagerModel: ObservableObject {
         historyDir = appSupport.appendingPathComponent("ClipboardHistory", isDirectory: true)
         try? FileManager.default.createDirectory(at: historyDir, withIntermediateDirectories: true)
         
-        // Load settings
-        self.isEnabled = UserDefaults.standard.bool(forKey: "clipboardManager.isEnabled")
+        // Load settings — assign via backing store to avoid triggering didSet before loadItems()
+        _isEnabled = Published(initialValue: UserDefaults.standard.bool(forKey: "clipboardManager.isEnabled"))
         if UserDefaults.standard.object(forKey: "clipboardManager.maxHistoryCount") != nil {
             self.maxHistoryCount = UserDefaults.standard.integer(forKey: "clipboardManager.maxHistoryCount")
         }
-        
+
         loadItems()
         setupGlobalHotKey()
-        
+
         if isEnabled {
             startMonitoring()
         }
@@ -185,16 +185,23 @@ final class ClipboardManagerModel: ObservableObject {
     // MARK: - Actions
     
     func copyItemToPasteboard(_ item: ClipboardItem) {
-        isInternalCopy = true
         let pb = NSPasteboard.general
-        pb.clearContents()
-        
+
         if item.type == .text, let text = item.textContent {
+            isInternalCopy = true
+            pb.clearContents()
             pb.setString(text, forType: .string)
-        } else if item.type == .image, let url = item.imageURL, let image = NSImage(contentsOf: url) {
+        } else if item.type == .image, let url = item.imageURL {
+            // Load the image BEFORE clearing the clipboard; bail out if the file is missing.
+            guard let image = NSImage(contentsOf: url) else {
+                NSLog("[ClipboardManager] copyItemToPasteboard: image file missing at %@", url.path)
+                return
+            }
+            isInternalCopy = true
+            pb.clearContents()
             pb.writeObjects([image])
         }
-        
+
         lastChangeCount = pb.changeCount
     }
     

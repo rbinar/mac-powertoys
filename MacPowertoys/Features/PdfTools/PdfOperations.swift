@@ -156,6 +156,7 @@ enum PdfCompressOperation {
         reportProgress: PdfProgressReporter
     ) async -> PdfOperationOutcome {
         let outputDoc = PDFDocument()
+        var outIndex = 0
 
         for i in 0..<pageCount {
             guard !Task.isCancelled else { return .cancelled }
@@ -190,7 +191,8 @@ enum PdfCompressOperation {
 
             let nsImage = NSImage(data: jpegData)
             if let nsImage, let compressedPage = PDFPage(image: nsImage) {
-                outputDoc.insert(compressedPage, at: i)
+                outputDoc.insert(compressedPage, at: outIndex)
+                outIndex += 1
             }
 
             let progress = Double(i + 1) / Double(pageCount)
@@ -366,6 +368,7 @@ enum PdfImageToPdfOperation {
     ) async -> PdfOperationOutcome {
         let outputDoc = PDFDocument()
         let total = files.count
+        var outIndex = 0
 
         for (index, file) in files.enumerated() {
             guard !Task.isCancelled else { return .cancelled }
@@ -376,7 +379,8 @@ enum PdfImageToPdfOperation {
                 continue
             }
 
-            outputDoc.insert(page, at: index)
+            outputDoc.insert(page, at: outIndex)
+            outIndex += 1
 
             let progress = Double(index + 1) / Double(total)
             await reportProgress(progress, "Converting image \(index + 1) of \(total)...")

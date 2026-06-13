@@ -52,6 +52,7 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
         panel.message = "Select a Markdown file to preview"
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        stopSecurityScope()
         loadFile(url)
     }
 
@@ -64,12 +65,12 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
         var isStale = false
         do {
             let resolvedURL = try URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+            stopSecurityScope()
             guard resolvedURL.startAccessingSecurityScopedResource() else {
                 recentFiles.removeAll { $0 == url }
                 saveRecentFiles()
                 return
             }
-            stopSecurityScope()
             activeSecurityScope = resolvedURL
             if isStale {
                 saveBookmark(for: resolvedURL)
@@ -90,6 +91,7 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
             alert.runModal()
             return
         }
+        stopSecurityScope()
         currentFileURL = nil
         currentMarkdown = content
         stopFileWatcher()

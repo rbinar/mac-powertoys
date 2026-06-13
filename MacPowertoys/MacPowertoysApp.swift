@@ -87,6 +87,7 @@ private struct AppRootView: View {
             .padding(.vertical, 8)
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
                 model.closeColorPanel()
+                model.stopMonitoring()
                 findMyMouseModel.stopMonitoring()
                 mouseHighlighterModel.stopMonitoring()
                 crosshairsModel.stopMonitoring()

@@ -23,7 +23,11 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         }
     }
     
-    @Published var notificationSound: Bool = true
+    @Published var notificationSound: Bool = true {
+        didSet {
+            UserDefaults.standard.set(notificationSound, forKey: "webhookNotifier.notificationSound")
+        }
+    }
     @Published var serverURL: String = "https://ntfy.blinkbrosai.com" {
         didSet {
             UserDefaults.standard.set(serverURL, forKey: serverURLKey)
@@ -62,6 +66,9 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     
     override init() {
         super.init()
+        if UserDefaults.standard.object(forKey: "webhookNotifier.notificationSound") != nil {
+            notificationSound = UserDefaults.standard.bool(forKey: "webhookNotifier.notificationSound")
+        }
         if let persistedServerURL = UserDefaults.standard.string(forKey: serverURLKey) {
             serverURL = persistedServerURL
         }

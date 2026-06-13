@@ -10,6 +10,7 @@ struct PortDetailView: View {
     @State private var connectionTraffics: [ConnectionTraffic] = []
     @State private var isLoading = true
     @State private var refreshTimer: Timer?
+    @State private var isLoadingData = false
     @State private var showKillConfirm = false
     @State private var showForceKillConfirm = false
     @State private var showKillError = false
@@ -439,7 +440,8 @@ struct PortDetailView: View {
     
     private func startRefreshing() {
         Task { await loadData() }
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+        refreshTimer?.invalidate()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: model.refreshInterval, repeats: true) { _ in
             Task { @MainActor in
                 await loadData()
             }
@@ -452,9 +454,13 @@ struct PortDetailView: View {
     }
     
     private func loadData() async {
+        guard !isLoadingData else { return }
+        isLoadingData = true
+        defer { isLoadingData = false }
+
         async let conns = model.fetchConnections(for: portInfo.pid)
         async let stats = model.fetchTrafficStats(for: portInfo.pid, previous: trafficStats)
-        
+
         let (c, (s, ct)) = await (conns, stats)
         connections = c
         trafficStats = s

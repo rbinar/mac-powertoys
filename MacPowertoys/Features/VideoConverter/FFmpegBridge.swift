@@ -329,15 +329,14 @@ final class FFmpegBridge: Sendable {
     
     // MARK: - GIF Conversion (Two-Pass)
     
-    func buildGIFArguments(input: URL, output: URL, resolution: ResolutionPreset) -> [[String]] {
-        let palettePath = NSTemporaryDirectory() + "palette_\(UUID().uuidString).png"
+    func buildGIFArguments(input: URL, output: URL, resolution: ResolutionPreset, palettePath: String) -> [[String]] {
         let scaleFilter: String
         if let dims = resolution.dimensions {
             scaleFilter = "scale=\(dims.width):-1:flags=lanczos"
         } else {
             scaleFilter = "scale=480:-1:flags=lanczos"
         }
-        
+
         let pass1 = ["-i", input.path, "-vf", "\(scaleFilter),palettegen", "-y", palettePath]
         let pass2 = ["-i", input.path, "-i", palettePath, "-lavfi", "\(scaleFilter) [x]; [x][1:v] paletteuse", "-y", output.path]
         return [pass1, pass2]
@@ -380,7 +379,7 @@ final class FFmpegBridge: Sendable {
                     }
                 }
                 
-                var taskArgs = ["convert", path] + arguments
+                let taskArgs = ["convert", path] + arguments
                 
                 task.execute(withArguments: taskArgs) { error in
                     stderrPipe.fileHandleForWriting.closeFile()
@@ -405,8 +404,11 @@ final class FFmpegBridge: Sendable {
         duration: TimeInterval,
         progressHandler: @escaping @Sendable (Double) -> Void
     ) async throws {
-        let passes = buildGIFArguments(input: input, output: output, resolution: resolution)
-        
+        let palettePath = NSTemporaryDirectory() + "palette_\(UUID().uuidString).png"
+        defer { try? FileManager.default.removeItem(atPath: palettePath) }
+
+        let passes = buildGIFArguments(input: input, output: output, resolution: resolution, palettePath: palettePath)
+
         // Pass 1: Generate palette (0–30%)
         try await convert(
             input: input,
@@ -415,7 +417,7 @@ final class FFmpegBridge: Sendable {
             duration: duration,
             progressHandler: { p in progressHandler(p * 0.3) }
         )
-        
+
         // Pass 2: Apply palette (30–100%)
         try await convert(
             input: input,

@@ -220,6 +220,8 @@ final class ScreenRulerModel: ObservableObject {
         capturedScreens.removeAll()
         boundsStart = nil
         boundsEnd = nil
+        currentEdges = EdgeDistances()
+        captureTickCounter = 0
     }
 
     private func elevateAppWindows() {

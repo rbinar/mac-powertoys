@@ -132,8 +132,6 @@ final class QuickLaunchModel: ObservableObject {
     static let maxVisibleResults = 8
 
     private var scanTimer: Timer?
-    private var clickMonitor: Any?
-    private var appDeactivationObserver: Any?
     private(set) var panelController: QuickLaunchPanelController?
 
     // MARK: - Lifecycle
@@ -152,14 +150,6 @@ final class QuickLaunchModel: ObservableObject {
         stopScanTimer()
         panelController?.cleanup()
 
-        if let clickMonitor {
-            NSEvent.removeMonitor(clickMonitor)
-            self.clickMonitor = nil
-        }
-        if let appDeactivationObserver {
-            NotificationCenter.default.removeObserver(appDeactivationObserver)
-            self.appDeactivationObserver = nil
-        }
     }
 
     // MARK: - Hotkey Registration
