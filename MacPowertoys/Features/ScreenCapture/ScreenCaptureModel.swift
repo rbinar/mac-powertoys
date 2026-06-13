@@ -107,6 +107,8 @@ final class ScreenCaptureModel: ObservableObject {
         if let ref = eventHandlerRef { RemoveEventHandler(ref) }
         if let ref = captureHotKeyRef { UnregisterEventHotKey(ref) }
         if let ref = escHotKeyRef { UnregisterEventHotKey(ref) }
+        hudWindow?.orderOut(nil)
+        hudWindow = nil
     }
 
     // MARK: - Global Shortcut (⌘⌥4)
@@ -437,11 +439,14 @@ final class ScreenCaptureModel: ObservableObject {
         window.animationBehavior = .utilityWindow
         window.orderFrontRegardless()
 
+        hudWindow?.orderOut(nil)
         hudWindow = window
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            self?.hudWindow?.orderOut(nil)
-            self?.hudWindow = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak window] in
+            window?.orderOut(nil)
+            if self?.hudWindow === window {
+                self?.hudWindow = nil
+            }
         }
     }
 

@@ -95,7 +95,7 @@ final class SystemInfoModel: ObservableObject {
                 self?.refresh()
             }
         }
-        refresh()
+        Task { @MainActor [weak self] in self?.refresh() }
     }
 
     func stopMonitoring() {

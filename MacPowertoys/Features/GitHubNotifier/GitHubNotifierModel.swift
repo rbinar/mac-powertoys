@@ -350,8 +350,9 @@ final class GitHubNotifierModel: NSObject, ObservableObject, UNUserNotificationC
         guard isEnabled, !isPolling, tokenStatus == .valid || tokenStatus == .validating else { return }
         guard let token = auth.loadToken(), !token.isEmpty else { return }
 
-        if let remaining = rateLimitRemaining, remaining < 10 {
-            NSLog("[GitHubNotifier] Rate limit critically low (%d remaining), pausing polling", remaining)
+        if let remaining = rateLimitRemaining, remaining < 10,
+           let reset = rateLimitReset, Date() < reset {
+            NSLog("[GitHubNotifier] Rate limit critically low (%d remaining), pausing polling until %@", remaining, reset.description)
             return
         }
 

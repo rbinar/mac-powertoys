@@ -35,6 +35,17 @@ final class ColorModel: ObservableObject {
         registerCarbonHotKey()
     }
 
+    func stopMonitoring() {
+        if let ref = hotKeyRef {
+            UnregisterEventHotKey(ref)
+            hotKeyRef = nil
+        }
+        if let ref = eventHandlerRef {
+            RemoveEventHandler(ref)
+            eventHandlerRef = nil
+        }
+    }
+
     deinit {
         if let ref = hotKeyRef {
             UnregisterEventHotKey(ref)

@@ -74,7 +74,7 @@ final class CursorWrapModel: ObservableObject {
 
         if shouldWarp {
             // CGWarpMouseCursorPosition uses top-left coordinate system
-            let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
+            let primaryHeight = NSScreen.main?.frame.height ?? 0
             let cgPoint = CGPoint(x: newX, y: primaryHeight - newY)
             CGWarpMouseCursorPosition(cgPoint)
             lastCursorPosition = NSPoint(x: newX, y: newY)

@@ -392,8 +392,20 @@ final class ImageOptimizerModel: ObservableObject {
         case .png: ext = "png"
         case .webp: ext = "webp"
         }
-        let filename = "\(stem)_optimized.\(ext)"
-        return inputURL.deletingLastPathComponent().appendingPathComponent(filename)
+        let dir = inputURL.deletingLastPathComponent()
+        let inputStandard = inputURL.standardizedFileURL
+
+        // Start with the plain `<stem>_optimized.<ext>` name, then bump a
+        // numeric counter until the candidate neither exists on disk nor
+        // collides with the source file itself.
+        var candidate = dir.appendingPathComponent("\(stem)_optimized.\(ext)")
+        var counter = 1
+        while FileManager.default.fileExists(atPath: candidate.path)
+                || candidate.standardizedFileURL == inputStandard {
+            candidate = dir.appendingPathComponent("\(stem)_optimized-\(counter).\(ext)")
+            counter += 1
+        }
+        return candidate
     }
 
     nonisolated private static func resolveUTType(for inputURL: URL, outputFormat: ImageOutputFormat) -> UTType {
