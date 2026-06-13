@@ -63,9 +63,10 @@ final class FindMyMouseModel: ObservableObject {
     func stopMonitoring() {
         if let m = globalFlagMonitor { NSEvent.removeMonitor(m); globalFlagMonitor = nil }
         if let m = localFlagMonitor { NSEvent.removeMonitor(m); localFlagMonitor = nil }
-        if isEnabled {
-            isEnabled = false
-        }
+        // Tear down the spotlight explicitly without mutating isEnabled. The
+        // double-Ctrl toggle and the terminate handler own isEnabled; coupling
+        // teardown to it here caused re-entrancy through the didSet.
+        dismissSpotlight()
     }
 
     // MARK: - Ctrl Detection
@@ -93,6 +94,10 @@ final class FindMyMouseModel: ObservableObject {
     // MARK: - Spotlight Activation
 
     func activateSpotlight() {
+        // Idempotency guard FIRST: two rapid double-Ctrl taps each hop onto the
+        // main actor via Task { @MainActor }; flipping isSpotlightActive before
+        // any window is created ensures a second entrant returns early instead
+        // of appending a duplicate set of overlay windows that would leak.
         guard !isSpotlightActive else { return }
         isSpotlightActive = true
 

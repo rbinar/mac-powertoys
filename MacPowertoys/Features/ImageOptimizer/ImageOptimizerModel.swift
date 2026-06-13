@@ -230,6 +230,7 @@ final class ImageOptimizerModel: ObservableObject {
 
         currentTask = Task.detached(priority: .userInitiated) { [weak self] in
             var totalSaved: Int64 = 0
+            var successCount: Int = 0
 
             for (idx, item) in snapshot.enumerated() {
                 guard !Task.isCancelled else {
@@ -258,6 +259,7 @@ final class ImageOptimizerModel: ObservableObject {
                     )
                     let saved = item.originalSize - outputSize
                     totalSaved += max(0, saved)
+                    successCount += 1
                     await MainActor.run {
                         if let i = self?.items.firstIndex(where: { $0.id == item.id }) {
                             self?.items[i].outputURL = outputURL
@@ -274,7 +276,7 @@ final class ImageOptimizerModel: ObservableObject {
             }
 
             await MainActor.run {
-                self?.state = .completed(totalSaved: totalSaved, fileCount: snapshot.count)
+                self?.state = .completed(totalSaved: totalSaved, fileCount: successCount)
             }
         }
     }
@@ -302,14 +304,15 @@ final class ImageOptimizerModel: ObservableObject {
             resizeWidth: resizeWidth,
             resizeHeight: resizeHeight,
             resizePercent: resizePercent,
-            maintainAspectRatio: maintainAspectRatio
+            maintainAspectRatio: maintainAspectRatio,
+            outputFormat: outputFormat
         )
 
         let outputURL = buildOutputURL(for: item.url, outputFormat: outputFormat)
         let destType = resolveUTType(for: item.url, outputFormat: outputFormat)
 
         guard let dest = CGImageDestinationCreateWithURL(outputURL as CFURL, destType.identifier as CFString, 1, nil) else {
-            throw ImageOptimizerError.cannotCreateDestination
+            throw ImageOptimizerError.cannotCreateDestination(format: destType.localizedDescription ?? outputFormat.rawValue)
         }
 
         let options: [CFString: Any] = [
@@ -334,7 +337,8 @@ final class ImageOptimizerModel: ObservableObject {
         resizeWidth: Int,
         resizeHeight: Int,
         resizePercent: Int,
-        maintainAspectRatio: Bool
+        maintainAspectRatio: Bool,
+        outputFormat: ImageOutputFormat
     ) -> CGImage {
         guard doResize else { return image }
 
@@ -364,7 +368,9 @@ final class ImageOptimizerModel: ObservableObject {
 
         if targetW == srcWidth && targetH == srcHeight { return image }
 
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        // Preserve the source color space so wide-gamut images stay wide-gamut.
+        // Fall back to DeviceRGB only when the source has no color space attached.
+        let colorSpace = image.colorSpace ?? CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
 
         guard let context = CGContext(
@@ -378,6 +384,21 @@ final class ImageOptimizerModel: ObservableObject {
         ) else { return image }
 
         context.interpolationQuality = .high
+
+        // For formats that don't support alpha (JPEG, HEIC), fill the background
+        // with white before compositing so transparent pixels become white instead
+        // of black.
+        let outputSupportsAlpha: Bool
+        switch outputFormat {
+        case .jpeg: outputSupportsAlpha = false
+        case .original, .png, .webp: outputSupportsAlpha = true
+        }
+        if !outputSupportsAlpha {
+            context.setFillColor(CGColor(colorSpace: colorSpace, components: [1, 1, 1, 1])
+                ?? CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+            context.fill(CGRect(x: 0, y: 0, width: targetW, height: targetH))
+        }
+
         context.draw(image, in: CGRect(x: 0, y: 0, width: targetW, height: targetH))
 
         return context.makeImage() ?? image
@@ -485,13 +506,14 @@ final class ImageOptimizerModel: ObservableObject {
 
 enum ImageOptimizerError: LocalizedError {
     case cannotReadImage
-    case cannotCreateDestination
+    case cannotCreateDestination(format: String)
     case cannotWriteImage
 
     var errorDescription: String? {
         switch self {
         case .cannotReadImage: return "Cannot read image file"
-        case .cannotCreateDestination: return "Cannot create output destination"
+        case .cannotCreateDestination(let format):
+            return "Cannot encode \(format) on this system — the encoder may be unavailable"
         case .cannotWriteImage: return "Failed to write optimized image"
         }
     }

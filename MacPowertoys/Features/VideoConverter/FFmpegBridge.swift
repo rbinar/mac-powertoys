@@ -14,7 +14,7 @@ final class FFmpegBridge: Sendable {
     // MARK: - Script Management
     
     private static let scriptName = "ffmpeg-runner.sh"
-    private static let scriptVersion = "v4"
+    private static let scriptVersion = "v5"
     
     private static var scriptDirectory: URL? {
         FileManager.default.urls(for: .applicationScriptsDirectory, in: .userDomainMask).first
@@ -96,7 +96,11 @@ final class FFmpegBridge: Sendable {
                 echo "$FFMPEG_PID" > "$PID_FILE"
                 wait "$FFMPEG_PID"
                 EXIT_CODE=$?
-                rm -f "$PID_FILE"
+                # Do NOT remove the pid file here — leave it in place so that a
+                # cancel arriving at the GIF pass boundary (after pass 1 exits but
+                # before pass 2 writes its pid) still finds a pid to kill.
+                # The kill of an already-exited pid is harmless ("No such process").
+                # cancel is the sole remover of the pid file.
                 exit $EXIT_CODE
                 ;;
             cancel)
@@ -239,6 +243,12 @@ final class FFmpegBridge: Sendable {
             
             task.execute(withArguments: ["install", brewPath]) { error in
                 outPipe.fileHandleForWriting.closeFile()
+                // Drain any remaining buffered output before removing the handler,
+                // so the last lines of brew output are not silently dropped.
+                let remaining = outPipe.fileHandleForReading.readDataToEndOfFile()
+                if !remaining.isEmpty, let tail = String(data: remaining, encoding: .utf8) {
+                    outputHandler(tail)
+                }
                 outPipe.fileHandleForReading.readabilityHandler = nil
                 completion(error == nil)
             }
@@ -384,11 +394,26 @@ final class FFmpegBridge: Sendable {
                 task.execute(withArguments: taskArgs) { error in
                     stderrPipe.fileHandleForWriting.closeFile()
                     stderrPipe.fileHandleForReading.readabilityHandler = nil
-                    
+
                     if error != nil {
                         continuation.resume(throwing: VideoConverterError.ffmpegProcessFailed(exitCode: 1))
-                    } else {
+                        return
+                    }
+
+                    // NSUserUnixTask does NOT surface ffmpeg's non-zero exit code as `error`.
+                    // Verify the output file exists and has non-zero size as a proxy for success.
+                    // (For GIF pass 1 the "output" is the palette path, not the final file —
+                    //  but the caller passes `output` which is the palette URL for pass 1,
+                    //  so this check still works correctly for both passes.)
+                    let fm = FileManager.default
+                    let outputPath = output.path
+                    if fm.fileExists(atPath: outputPath),
+                       let attrs = try? fm.attributesOfItem(atPath: outputPath),
+                       (attrs[.size] as? Int ?? 0) > 0 {
                         continuation.resume()
+                    } else {
+                        NSLog("[FFmpegBridge] convert: output file missing or empty — treating as ffmpeg failure")
+                        continuation.resume(throwing: VideoConverterError.ffmpegProcessFailed(exitCode: 1))
                     }
                 }
             } catch {

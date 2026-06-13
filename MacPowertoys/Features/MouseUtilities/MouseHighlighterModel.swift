@@ -202,9 +202,7 @@ class MouseHighlighterOverlayView: NSView {
     private func startCleanupTimer() {
         guard cleanupTimer == nil else { return }
         cleanupTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.tick()
-            }
+            self?.tick()
         }
         RunLoop.main.add(cleanupTimer!, forMode: .common)
     }
