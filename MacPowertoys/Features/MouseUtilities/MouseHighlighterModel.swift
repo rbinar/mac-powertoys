@@ -82,6 +82,8 @@ final class MouseHighlighterModel: ObservableObject {
         if let m = globalRightMonitor { NSEvent.removeMonitor(m); globalRightMonitor = nil }
         if let m = localLeftMonitor { NSEvent.removeMonitor(m); localLeftMonitor = nil }
         if let m = localRightMonitor { NSEvent.removeMonitor(m); localRightMonitor = nil }
+        if let m = shortcutGlobalMonitor { NSEvent.removeMonitor(m); shortcutGlobalMonitor = nil }
+        if let m = shortcutLocalMonitor { NSEvent.removeMonitor(m); shortcutLocalMonitor = nil }
         removeOverlayWindows()
     }
 

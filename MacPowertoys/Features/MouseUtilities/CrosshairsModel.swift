@@ -144,6 +144,8 @@ final class CrosshairsModel: ObservableObject {
 
     func stopMonitoring() {
         deactivate()
+        if let m = shortcutGlobalMonitor { NSEvent.removeMonitor(m); shortcutGlobalMonitor = nil }
+        if let m = shortcutLocalMonitor { NSEvent.removeMonitor(m); shortcutLocalMonitor = nil }
     }
 }
 

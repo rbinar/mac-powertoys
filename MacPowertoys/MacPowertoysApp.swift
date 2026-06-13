@@ -109,6 +109,7 @@ private struct AppRootView: View {
                 screenCaptureModel.stopMonitoring()
                 gitHubNotifierModel.stopMonitoring()
                 imageOptimizerModel.stopMonitoring()
+                testDataGeneratorModel.stopMonitoring()
             }
     }
 }

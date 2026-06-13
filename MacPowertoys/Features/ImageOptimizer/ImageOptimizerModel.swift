@@ -196,8 +196,7 @@ final class ImageOptimizerModel: ObservableObject {
     }
 
     func clearAll() {
-        items = []
-        state = .idle
+        reset()
     }
 
     func reset() {
