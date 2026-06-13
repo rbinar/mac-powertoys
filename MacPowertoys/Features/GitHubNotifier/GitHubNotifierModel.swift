@@ -347,7 +347,7 @@ final class GitHubNotifierModel: NSObject, ObservableObject, UNUserNotificationC
     }
 
     func fetchEvents() async {
-        guard isEnabled, tokenStatus == .valid || tokenStatus == .validating else { return }
+        guard isEnabled, !isPolling, tokenStatus == .valid || tokenStatus == .validating else { return }
         guard let token = auth.loadToken(), !token.isEmpty else { return }
 
         if let remaining = rateLimitRemaining, remaining < 10 {
