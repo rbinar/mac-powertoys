@@ -28,12 +28,13 @@ final class MouseHighlighterModel: ObservableObject {
     private let leftOptionKeyCode: UInt16 = 0x3A
 
     init() {
-        registerShortcut()
+        startShortcutMonitoring()
     }
 
     // MARK: - Shortcut (Double Left ⌥)
 
-    private func registerShortcut() {
+    private func startShortcutMonitoring() {
+        stopShortcutMonitoring()
         shortcutGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
             Task { @MainActor in self?.handleFlagsChanged(event) }
         }
@@ -41,6 +42,11 @@ final class MouseHighlighterModel: ObservableObject {
             Task { @MainActor in self?.handleFlagsChanged(event) }
             return event
         }
+    }
+
+    private func stopShortcutMonitoring() {
+        if let m = shortcutGlobalMonitor { NSEvent.removeMonitor(m); shortcutGlobalMonitor = nil }
+        if let m = shortcutLocalMonitor { NSEvent.removeMonitor(m); shortcutLocalMonitor = nil }
     }
 
     private func handleFlagsChanged(_ event: NSEvent) {
@@ -87,8 +93,7 @@ final class MouseHighlighterModel: ObservableObject {
 
     func stopMonitoring() {
         deactivate()
-        if let m = shortcutGlobalMonitor { NSEvent.removeMonitor(m); shortcutGlobalMonitor = nil }
-        if let m = shortcutLocalMonitor { NSEvent.removeMonitor(m); shortcutLocalMonitor = nil }
+        stopShortcutMonitoring()
     }
 
     // MARK: - Overlay Windows (per screen)

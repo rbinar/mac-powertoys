@@ -100,6 +100,7 @@ final class ScreenRulerModel: ObservableObject {
     private var trackingTimer: Timer?
     private var capturedScreens: [UInt32: CapturedScreen] = [:]
     private var captureTickCounter: Int = 0
+    private var isCapturing = false
     private var elevatedWindows: [NSWindow] = []
 
     // Keyboard & mouse monitors (active during measurement)
@@ -222,6 +223,7 @@ final class ScreenRulerModel: ObservableObject {
         boundsEnd = nil
         currentEdges = EdgeDistances()
         captureTickCounter = 0
+        isCapturing = false
     }
 
     private func elevateAppWindows() {
@@ -249,7 +251,12 @@ final class ScreenRulerModel: ObservableObject {
     // MARK: - Screen Capture
 
     private func captureScreensAsync() async {
-        capturedScreens.removeAll()
+        // In-flight guard: only one capture at a time so overlapping captures
+        // can't leave `capturedScreens` empty/partial mid-update.
+        guard !isCapturing else { return }
+        isCapturing = true
+        defer { isCapturing = false }
+
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
 
@@ -257,6 +264,9 @@ final class ScreenRulerModel: ObservableObject {
             let ownWindowIDs = Set(overlayWindows.map { $0.window.windowNumber } + [toolbarWindow?.windowNumber].compactMap { $0 })
             let excludedWindows = content.windows.filter { ownWindowIDs.contains(Int($0.windowID)) }
 
+            // Build into a local dictionary, then publish atomically at the end
+            // so the live dict is never observed empty/partial during a capture.
+            var newScreens: [UInt32: CapturedScreen] = [:]
             for display in content.displays {
                 let filter = SCContentFilter(display: display, excludingWindows: excludedWindows)
                 let config = SCStreamConfiguration()
@@ -271,9 +281,10 @@ final class ScreenRulerModel: ObservableObject {
                 let screenFrame = screen?.frame ?? CGRect(x: 0, y: 0, width: CGFloat(display.width), height: CGFloat(display.height))
 
                 if let captured = renderToBitmapBuffer(image, screenFrame: screenFrame) {
-                    capturedScreens[display.displayID] = captured
+                    newScreens[display.displayID] = captured
                 }
             }
+            capturedScreens = newScreens
         } catch {
             NSLog("[ScreenRuler] Screen capture failed: %@", error.localizedDescription)
             if capturedScreens.isEmpty {

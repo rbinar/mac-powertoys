@@ -226,7 +226,7 @@ final class SystemInfoModel: ObservableObject {
             let family = addrPtr.pointee.sa_family
             if family == UInt8(AF_LINK) {
                 let name = String(cString: addr.pointee.ifa_name)
-                if name.hasPrefix("en") {
+                if !name.hasPrefix("lo") {
                     let data = unsafeBitCast(addr.pointee.ifa_data, to: UnsafeMutablePointer<if_data>.self)
                     totalIn += UInt64(data.pointee.ifi_ibytes)
                     totalOut += UInt64(data.pointee.ifi_obytes)
