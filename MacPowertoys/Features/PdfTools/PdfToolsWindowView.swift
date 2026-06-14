@@ -171,7 +171,10 @@ struct PdfToolsWindowView: View {
             if !model.mergeFiles.isEmpty {
                 fileList(
                     items: model.mergeFiles,
-                    onDelete: { model.removeMergeFile(at: $0) },
+                    onDelete: { offsets in
+                        offsets.forEach { cleanupTempFile(model.mergeFiles[$0]) }
+                        model.removeMergeFile(at: offsets)
+                    },
                     onMove: { model.moveMergeFile(from: $0, to: $1) },
                     showPageCount: true
                 )
@@ -448,7 +451,10 @@ struct PdfToolsWindowView: View {
             if !model.imageToPdfFiles.isEmpty {
                 fileList(
                     items: model.imageToPdfFiles,
-                    onDelete: { model.removeImageToPdfFile(at: $0) },
+                    onDelete: { offsets in
+                        offsets.forEach { cleanupTempFile(model.imageToPdfFiles[$0]) }
+                        model.removeImageToPdfFile(at: offsets)
+                    },
                     onMove: { model.moveImageToPdfFile(from: $0, to: $1) },
                     showPageCount: false
                 )
@@ -695,7 +701,7 @@ struct PdfToolsWindowView: View {
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
                     }
-                    Button("New Operation") { model.resetState() }
+                    Button("New Operation") { cleanupAndReset() }
                         .font(.system(.caption, design: .rounded))
                         .buttonStyle(.bordered)
                         .controlSize(.small)
@@ -716,7 +722,7 @@ struct PdfToolsWindowView: View {
                 Text(message)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
-                Button("Try Again") { model.resetState() }
+                Button("Try Again") { cleanupAndReset() }
                     .font(.system(.caption, design: .rounded))
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -741,7 +747,12 @@ struct PdfToolsWindowView: View {
                     .appendingPathExtension("pdf")
                 try? FileManager.default.copyItem(at: url, to: tempURL)
                 Task { @MainActor in
-                    model.addMergeFiles([tempURL])
+                    // Use the original filename as the display name, not the UUID-based temp name.
+                    let pdf = PDFDocument(url: tempURL)
+                    let pageCount = pdf?.pageCount ?? 0
+                    let fileSize = (try? FileManager.default.attributesOfItem(atPath: tempURL.path)[.size] as? Int64) ?? 0
+                    let item = MergeFileItem(id: UUID(), url: tempURL, name: url.lastPathComponent, pageCount: pageCount, fileSize: fileSize)
+                    model.mergeFiles.append(item)
                 }
             }
             handled = true
@@ -770,6 +781,25 @@ struct PdfToolsWindowView: View {
             handled = true
         }
         return handled
+    }
+
+    // MARK: - Temp File Cleanup
+
+    /// Returns true if `url` points into the system temporary directory (i.e. was copied there on drag-drop).
+    private func isTempFile(_ url: URL) -> Bool {
+        url.path.hasPrefix(FileManager.default.temporaryDirectory.path)
+    }
+
+    /// Deletes the underlying file for `item` if it was copied into the temp directory.
+    private func cleanupTempFile(_ item: MergeFileItem) {
+        guard isTempFile(item.url) else { return }
+        try? FileManager.default.removeItem(at: item.url)
+    }
+
+    /// Deletes all temp copies currently held in both file lists, then calls `model.resetState()`.
+    private func cleanupAndReset() {
+        (model.mergeFiles + model.imageToPdfFiles).forEach { cleanupTempFile($0) }
+        model.resetState()
     }
 }
 

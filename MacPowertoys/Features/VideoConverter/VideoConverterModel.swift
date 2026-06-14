@@ -394,22 +394,38 @@ final class VideoConverterModel: ObservableObject {
     }
     
     static func reopenMenuBarPanel() {
-        // Find and reopen the MenuBarExtra panel
+        // Find and reopen the MenuBarExtra panel.
+        // NOTE: The primary path uses private AppKit API ("statusItem" KVC key and
+        // class-name substring matching). Both are fragile across macOS versions —
+        // if Apple renames the key or class, the code must degrade gracefully.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if let button = NSApp.windows
+            // Safe class-name predicate: uses optional chaining throughout; no force-unwrap.
+            let menuBarPanel = NSApp.windows
                 .compactMap({ $0 as? NSPanel })
-                .first(where: { $0.className.contains("StatusBarWindow") || $0.className.contains("MenuBarExtra") })?
-                .value(forKey: "statusItem") as? NSStatusItem {
-                button.button?.performClick(nil)
-            } else {
-                // Fallback: find status item button directly
-                for window in NSApp.windows {
-                    let className = String(describing: type(of: window))
-                    if className.contains("MenuBarExtraWindow") || className.contains("_NSStatusBarWindow") {
-                        window.makeKeyAndOrderFront(nil)
-                        NSApp.activate(ignoringOtherApps: true)
-                        return
-                    }
+                .first(where: {
+                    let name = $0.className
+                    return name.contains("StatusBarWindow") || name.contains("MenuBarExtra")
+                })
+
+            if let panel = menuBarPanel {
+                // Private KVC: guard with responds(to:) before calling value(forKey:) so
+                // a missing key never triggers an uncatchable NSException.
+                let key = "statusItem"
+                if panel.responds(to: NSSelectorFromString(key)),
+                   let statusItem = panel.value(forKey: key) as? NSStatusItem {
+                    statusItem.button?.performClick(nil)
+                    return
+                }
+            }
+
+            // Fallback: find status item button directly by class-name substring.
+            // Class names are private; if none match we simply no-op (popover stays closed).
+            for window in NSApp.windows {
+                let className = String(describing: type(of: window))
+                if className.contains("MenuBarExtraWindow") || className.contains("_NSStatusBarWindow") {
+                    window.makeKeyAndOrderFront(nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                    return
                 }
             }
         }

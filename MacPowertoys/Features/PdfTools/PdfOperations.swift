@@ -276,6 +276,11 @@ enum PdfRotateOperation {
 
 enum PdfToImageOperation {
     /// Mirrors the previous `performPdfToImage()` detached-task body.
+    /// Maximum pixel dimension for either side of a rendered page.
+    /// Pages exceeding this are scaled down proportionally before CGContext
+    /// allocation to prevent CGContext returning nil on huge/high-DPI pages.
+    private static let maxPixelDimension: CGFloat = 10_000
+
     static func run(
         doc: PDFDocument,
         pageCount: Int,
@@ -287,14 +292,30 @@ enum PdfToImageOperation {
         reportProgress: PdfProgressReporter
     ) async -> PdfOperationOutcome {
         let scale = CGFloat(dpi) / 72.0
+        var written = 0
+        var failures = 0
 
         for i in 0..<pageCount {
             guard !Task.isCancelled else { return .cancelled }
 
-            guard let page = doc.page(at: i) else { continue }
+            guard let page = doc.page(at: i) else {
+                failures += 1
+                continue
+            }
             let bounds = page.bounds(for: .mediaBox)
-            let pixelWidth = Int(bounds.width * scale)
-            let pixelHeight = Int(bounds.height * scale)
+
+            // #95: clamp pixel dimensions so CGContext doesn't return nil on very
+            // large pages at high DPI. Scale both axes down proportionally if
+            // either dimension would exceed the cap.
+            var effectiveScale = scale
+            let rawWidth  = bounds.width  * scale
+            let rawHeight = bounds.height * scale
+            let maxRaw = max(rawWidth, rawHeight)
+            if maxRaw > maxPixelDimension {
+                effectiveScale = scale * (maxPixelDimension / maxRaw)
+            }
+            let pixelWidth  = max(1, Int(bounds.width  * effectiveScale))
+            let pixelHeight = max(1, Int(bounds.height * effectiveScale))
 
             let colorSpace = CGColorSpaceCreateDeviceRGB()
             guard let context = CGContext(
@@ -305,11 +326,16 @@ enum PdfToImageOperation {
                 bytesPerRow: 0,
                 space: colorSpace,
                 bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-            ) else { continue }
+            ) else {
+                // #93/#95: context creation failed even after clamping — count as failure
+                NSLog("[PdfTools] CGContext creation failed for page %d (%dx%d px)", i + 1, pixelWidth, pixelHeight)
+                failures += 1
+                continue
+            }
 
             context.setFillColor(CGColor.white)
             context.fill(CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight))
-            context.scaleBy(x: scale, y: scale)
+            context.scaleBy(x: effectiveScale, y: effectiveScale)
 
             NSGraphicsContext.saveGraphicsState()
             let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
@@ -317,7 +343,10 @@ enum PdfToImageOperation {
             page.draw(with: .mediaBox, to: context)
             NSGraphicsContext.restoreGraphicsState()
 
-            guard let cgImage = context.makeImage() else { continue }
+            guard let cgImage = context.makeImage() else {
+                failures += 1
+                continue
+            }
             let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
 
             let imageData: Data?
@@ -330,27 +359,46 @@ enum PdfToImageOperation {
                 imageData = bitmapRep.representation(using: .tiff, properties: [:])
             }
 
-            guard let data = imageData else { continue }
+            guard let data = imageData else {
+                failures += 1
+                continue
+            }
 
             let fileName = "\(baseName)_page_\(i + 1).\(format.fileExtension)"
             let fileURL = outputDir.appendingPathComponent(fileName)
             do {
                 try data.write(to: fileURL)
+                // #93: only count the page when the write actually succeeded
+                written += 1
             } catch {
                 NSLog("[PdfTools] Failed to write image %@: %@", fileName, error.localizedDescription)
+                failures += 1
             }
 
             let progress = Double(i + 1) / Double(pageCount)
             await reportProgress(progress, "Exporting page \(i + 1) of \(pageCount)...")
         }
 
+        // #93: report accurately — fail if nothing was written, partial-success
+        // message if only some pages were exported, full success otherwise.
+        if written == 0 {
+            return .failure(message: "Failed to export any pages as \(format.displayName) images.")
+        }
+
+        let message: String
+        if failures > 0 {
+            message = "Exported \(written) of \(pageCount) pages as \(format.displayName) images at \(dpi) DPI (\(failures) page(s) failed)"
+        } else {
+            message = "Exported \(written) pages as \(format.displayName) images at \(dpi) DPI"
+        }
+
         let result = OperationResult(
-            message: "Exported \(pageCount) pages as \(format.displayName) images at \(dpi) DPI",
+            message: message,
             outputPath: nil,
             outputDirectory: outputDir.path,
             inputSize: inputSize,
             outputSize: nil,
-            fileCount: pageCount
+            fileCount: written
         )
         return .success(result)
     }

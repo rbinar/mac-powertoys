@@ -232,10 +232,23 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
         
         Task { @MainActor in
             self.connectionStates[topicID] = false
-            if let error = error as NSError?, error.code != NSURLErrorCancelled {
-                NSLog("[WebhookNotifier] Stream disconnected with error: %@", error.localizedDescription)
-                self.scheduleReconnect(for: topicID)
+
+            // Suppress reconnect ONLY for explicit cancellation (unsubscribe/deactivate).
+            if let error = error as NSError?, error.code == NSURLErrorCancelled {
+                return
             }
+
+            // ntfy streams can close cleanly (error == nil: server/idle/proxy EOF) or
+            // with a non-cancelled error. In both cases the topic would otherwise go
+            // dead with no retry, so schedule a reconnect through the existing
+            // backoff-based mechanism (scheduleReconnect itself re-checks isEnabled
+            // and that the topic is still active, so this can't loop hot).
+            if let error = error {
+                NSLog("[WebhookNotifier] Stream disconnected with error: %@", error.localizedDescription)
+            } else {
+                NSLog("[WebhookNotifier] Stream closed cleanly (EOF); reconnecting")
+            }
+            self.scheduleReconnect(for: topicID)
         }
     }
     
@@ -272,12 +285,56 @@ final class WebhookNotifierModel: NSObject, ObservableObject, URLSessionDataDele
     
     // MARK: - Testing
     func sendTestNotification(for topic: WebhookTopic) {
-        guard let url = URL(string: "\(serverURL)/\(topic.topicID)") else { return }
+        // Validate/normalize the server URL: trim whitespace and any trailing
+        // slashes so "\(serverURL)/\(topicID)" can't produce a malformed URL,
+        // and guard against URL(string:) returning nil.
+        let trimmedServer = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedServer = trimmedServer.hasSuffix("/")
+            ? String(trimmedServer.reversed().drop(while: { $0 == "/" }).reversed())
+            : trimmedServer
+
+        guard !normalizedServer.isEmpty,
+              let url = URL(string: "\(normalizedServer)/\(topic.topicID)"),
+              url.scheme != nil, url.host != nil else {
+            reportTestResult(label: topic.label, success: false, detail: "Invalid server URL")
+            return
+        }
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = "This is a test notification from Mac PowerToys".data(using: .utf8)
         request.setValue("Test Notification", forHTTPHeaderField: "Title")
-        
-        URLSession.shared.dataTask(with: request).resume()
+
+        URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
+            // Surface success/failure on the main actor through the model's
+            // existing user-visible status surface (lastMessage).
+            if let error = error {
+                Task { @MainActor in
+                    self?.reportTestResult(label: topic.label, success: false, detail: error.localizedDescription)
+                }
+                return
+            }
+
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                Task { @MainActor in
+                    self?.reportTestResult(label: topic.label, success: false, detail: "Server returned status \(http.statusCode)")
+                }
+                return
+            }
+
+            Task { @MainActor in
+                self?.reportTestResult(label: topic.label, success: true, detail: nil)
+            }
+        }.resume()
+    }
+
+    private func reportTestResult(label: String, success: Bool, detail: String?) {
+        if success {
+            lastMessage = (label: label, title: "Test Notification", body: "Test notification sent successfully.", date: Date())
+        } else {
+            let body = detail.map { "Failed to send test notification: \($0)" } ?? "Failed to send test notification."
+            lastMessage = (label: label, title: "Test Notification Failed", body: body, date: Date())
+            NSLog("[WebhookNotifier] Test notification failed for %@: %@", label, detail ?? "unknown error")
+        }
     }
 }

@@ -666,6 +666,18 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
     }
     /* PDF print styles */
     @media print {
+        :root, [data-theme="dark"] {
+            --bg: #ffffff;
+            --text: #24292f;
+            --text-secondary: #57606a;
+            --border: #d0d7de;
+            --code-bg: #f6f8fa;
+            --blockquote-border: #d0d7de;
+            --blockquote-text: #57606a;
+            --link: #0969da;
+            --table-border: #d0d7de;
+            --table-row-bg: #f6f8fa;
+        }
         body { padding: 20px; background: white; color: black; }
         pre { border: 1px solid #ddd; }
     }

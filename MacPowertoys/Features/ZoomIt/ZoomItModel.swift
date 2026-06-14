@@ -62,6 +62,7 @@ final class ZoomItModel: ObservableObject {
     // MARK: - Settings
     @Published var isEnabled: Bool = false {
         didSet {
+            guard !isMutatingState else { return }
             if isEnabled {
                 if !isZooming && !isLiveZooming {
                     activateScreenZoom()
@@ -87,6 +88,7 @@ final class ZoomItModel: ObservableObject {
     }
     @Published var liveZoomEnabled: Bool = false {
         didSet {
+            guard !isMutatingState else { return }
             if liveZoomEnabled {
                 if !isLiveZooming {
                     activateLiveZoom()
@@ -104,6 +106,10 @@ final class ZoomItModel: ObservableObject {
     @Published private(set) var isLiveZooming: Bool = false
     
     // MARK: - Private
+    /// Set true while activate*/deactivate internally assign the @Published
+    /// settings vars, so their didSets ignore these self-induced writes and
+    /// only respond to genuine user/hotkey toggles.
+    private var isMutatingState = false
     private var overlayWindows: [(window: NSWindow, view: ZoomItOverlayView, displayID: UInt32, screen: NSScreen)] = []
     private var capturedScreens: [UInt32: CGImage] = [:]
     
@@ -182,9 +188,11 @@ final class ZoomItModel: ObservableObject {
             return 
         }
         
+        isMutatingState = true
         isZooming = true
         isEnabled = true
         liveZoomEnabled = false
+        isMutatingState = false
         NSLog("%@", "[ZoomIt] Starting screen capture...")
         
         Task {
@@ -209,9 +217,11 @@ final class ZoomItModel: ObservableObject {
             return 
         }
         
+        isMutatingState = true
         isLiveZooming = true
         isEnabled = true
         liveZoomEnabled = true
+        isMutatingState = false
         NSLog("%@", "[ZoomIt] Starting live streams...")
         
         Task {
@@ -227,11 +237,13 @@ final class ZoomItModel: ObservableObject {
     func deactivate() {
         guard isZooming || isLiveZooming else { return }
         let wasZooming = isZooming
+        isMutatingState = true
         isZooming = false
         isLiveZooming = false
         isEnabled = false
         liveZoomEnabled = false
-        
+        isMutatingState = false
+
         unregisterEscHotKey()
         removeActiveMonitors()
         removeOverlayWindows(wasZooming: wasZooming)
@@ -255,7 +267,8 @@ final class ZoomItModel: ObservableObject {
                     }
                 }
             }
-            isEnabled = false
+            // The synchronous caller (activateScreenZoom/activateLiveZoom) owns
+            // resetting isEnabled/liveZoomEnabled; don't duplicate it here.
             return false
         }
         return true

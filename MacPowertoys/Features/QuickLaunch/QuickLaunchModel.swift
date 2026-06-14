@@ -237,6 +237,23 @@ final class QuickLaunchModel: ObservableObject {
         }
 
         entries.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+        // Preserve frecency accumulated since the last scan by merging useCount/lastUsedAt
+        // from the current indexedApps into the freshly-scanned entries (matched by app path).
+        let frecencyByPath: [String: (useCount: Int, lastUsedAt: Date?)] = Dictionary(
+            uniqueKeysWithValues: indexedApps.compactMap { entry -> (String, (Int, Date?))? in
+                guard case .app(let path) = entry.action else { return nil }
+                return (path, (entry.useCount, entry.lastUsedAt))
+            }
+        )
+        for index in entries.indices {
+            if case .app(let path) = entries[index].action,
+               let frecency = frecencyByPath[path] {
+                entries[index].useCount = frecency.useCount
+                entries[index].lastUsedAt = frecency.lastUsedAt
+            }
+        }
+
         indexedApps = entries
     }
 

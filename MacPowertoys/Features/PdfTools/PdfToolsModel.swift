@@ -418,6 +418,14 @@ final class PdfToolsModel: ObservableObject {
     /// Spawns the detached worker, forwards a progress reporter that hops onto the
     /// main actor, and applies the outcome (idle on cancel, failed on failure,
     /// completed + history on success) — preserving the original semantics.
+    ///
+    /// Thread-confinement contract: the `PDFDocument` a caller captures in `work`
+    /// crosses the @MainActor boundary into this detached task, and some operations
+    /// (e.g. `PdfRotateOperation`) mutate its pages off the main actor. `PDFDocument`
+    /// is not thread-safe, so this is only sound because each `perform*` method opens
+    /// a brand-new document (`openPdfDocument(at:)` / `PDFDocument(...)`) that nothing
+    /// else references — the worker has exclusive ownership for its lifetime. Never
+    /// reuse a cached or shared document here.
     private func runOperation(
         historyOperation: String,
         historyInput: String,
@@ -486,7 +494,11 @@ final class PdfToolsModel: ObservableObject {
             state = .failed(message: "Select a PDF file first.")
             return
         }
-        guard let doc = PDFDocument(url: fileURL) else {
+        // Open through the unlocking path so an encrypted PDF is actually unlocked
+        // before the worker reads pages; nil here means it could not be opened/unlocked.
+        // This is a freshly-created, exclusively-owned document — see thread-confinement
+        // note in `runOperation`.
+        guard let doc = openPdfDocument(at: fileURL) else {
             state = .failed(message: "Failed to open PDF.")
             return
         }
@@ -555,7 +567,11 @@ final class PdfToolsModel: ObservableObject {
             state = .failed(message: "Select a PDF file first.")
             return
         }
-        guard let doc = PDFDocument(url: fileURL) else {
+        // Open through the unlocking path so an encrypted PDF is actually unlocked
+        // before the worker reads pages; nil here means it could not be opened/unlocked.
+        // This is a freshly-created, exclusively-owned document — see thread-confinement
+        // note in `runOperation`.
+        guard let doc = openPdfDocument(at: fileURL) else {
             state = .failed(message: "Failed to open PDF.")
             return
         }
@@ -588,7 +604,11 @@ final class PdfToolsModel: ObservableObject {
             state = .failed(message: "Select a PDF file first.")
             return
         }
-        guard let doc = PDFDocument(url: fileURL) else {
+        // Open through the unlocking path so an encrypted PDF is actually unlocked
+        // before the worker mutates page rotation; nil means it could not be opened/unlocked.
+        // This is a freshly-created, exclusively-owned document — see thread-confinement
+        // note in `runOperation`.
+        guard let doc = openPdfDocument(at: fileURL) else {
             state = .failed(message: "Failed to open PDF.")
             return
         }
@@ -635,7 +655,11 @@ final class PdfToolsModel: ObservableObject {
             state = .failed(message: "Select a PDF file first.")
             return
         }
-        guard let doc = PDFDocument(url: fileURL) else {
+        // Open through the unlocking path so an encrypted PDF is actually unlocked
+        // before the worker renders pages; nil here means it could not be opened/unlocked.
+        // This is a freshly-created, exclusively-owned document — see thread-confinement
+        // note in `runOperation`.
+        guard let doc = openPdfDocument(at: fileURL) else {
             state = .failed(message: "Failed to open PDF.")
             return
         }
@@ -748,7 +772,10 @@ final class PdfToolsModel: ObservableObject {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return nil }
 
-        var ranges: [ClosedRange<Int>] = []
+        // Collect pages in first-seen order, deduping so an overlapping/duplicated
+        // input (e.g. "1-5, 3-8") never yields the same page twice (#98).
+        var seen = Set<Int>()
+        var orderedPages: [Int] = []
         let components = trimmed.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
 
         for component in components {
@@ -760,15 +787,36 @@ final class PdfToolsModel: ObservableObject {
                       start >= 1, end >= start, end <= maxPage else {
                     return nil
                 }
-                ranges.append(start...end)
+                for page in start...end where seen.insert(page).inserted {
+                    orderedPages.append(page)
+                }
             } else {
                 guard let page = Int(component), page >= 1, page <= maxPage else {
                     return nil
                 }
-                ranges.append(page...page)
+                if seen.insert(page).inserted {
+                    orderedPages.append(page)
+                }
             }
         }
 
-        return ranges.isEmpty ? nil : ranges
+        guard !orderedPages.isEmpty else { return nil }
+
+        // Coalesce consecutive runs (in first-seen order) back into ranges.
+        var ranges: [ClosedRange<Int>] = []
+        var runStart = orderedPages[0]
+        var runEnd = orderedPages[0]
+        for page in orderedPages.dropFirst() {
+            if page == runEnd + 1 {
+                runEnd = page
+            } else {
+                ranges.append(runStart...runEnd)
+                runStart = page
+                runEnd = page
+            }
+        }
+        ranges.append(runStart...runEnd)
+
+        return ranges
     }
 }

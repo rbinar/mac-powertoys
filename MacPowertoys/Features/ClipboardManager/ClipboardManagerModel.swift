@@ -236,10 +236,28 @@ final class ClipboardManagerModel: ObservableObject {
     }
     
     // MARK: - Persistence
-    
+
+    /// Maximum UTF-8 byte length stored per text item in UserDefaults.
+    /// Longer text is truncated at persist-time; the in-memory item is unchanged.
+    private let maxTextStorageBytes = 65_536  // 64 KB
+
     private func saveItems() {
+        // Build a persistence-safe copy: cap oversized text items so a single
+        // large paste cannot bloat or break the UserDefaults write.
+        let itemsToSave: [ClipboardItem] = clipboardItems.map { item in
+            guard item.type == .text,
+                  let text = item.textContent,
+                  text.utf8.count > maxTextStorageBytes else {
+                return item
+            }
+            // Truncate to the byte cap on a valid UTF-8 boundary.
+            let truncated = String(text.utf8.prefix(maxTextStorageBytes))!
+            var capped = item
+            capped.textContent = truncated + "… (truncated)"
+            return capped
+        }
         do {
-            let data = try JSONEncoder().encode(clipboardItems)
+            let data = try JSONEncoder().encode(itemsToSave)
             UserDefaults.standard.set(data, forKey: itemsKey)
         } catch {
             NSLog("[ClipboardManager] Failed to encode clipboard items: %@", String(describing: error))

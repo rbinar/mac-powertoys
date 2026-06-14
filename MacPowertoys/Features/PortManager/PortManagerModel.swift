@@ -27,7 +27,7 @@ enum PortSortOrder: String, CaseIterable {
 }
 
 struct PortInfo: Identifiable, Equatable {
-    var id: String { "\(pid)-\(port)" }
+    var id: String { "\(command)-\(pid)-\(port)" }
     let command: String
     let pid: Int32
     let user: String
@@ -246,6 +246,8 @@ final class PortManagerModel: ObservableObject {
     }
 
     private var refreshTimer: Timer?
+    private var refreshTask: Task<Void, Never>?
+    private var isRefreshing = false
 
     init() {
         let saved = UserDefaults.standard.double(forKey: "portManager.refreshInterval")
@@ -273,7 +275,8 @@ final class PortManagerModel: ObservableObject {
                 await self?.refreshPorts()
             }
         }
-        Task {
+        refreshTask?.cancel()
+        refreshTask = Task {
             await refreshPorts()
         }
     }
@@ -281,9 +284,14 @@ final class PortManagerModel: ObservableObject {
     func stopMonitoring() {
         refreshTimer?.invalidate()
         refreshTimer = nil
+        refreshTask?.cancel()
+        refreshTask = nil
     }
 
     func refreshPorts() async {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        defer { isRefreshing = false }
         let result = await runLsof()
         self.ports = result
     }

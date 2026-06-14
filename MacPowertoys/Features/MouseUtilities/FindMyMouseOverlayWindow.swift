@@ -200,6 +200,7 @@ class FindMyMouseOverlayView: NSView {
         animationDuration = (animationDurationMs / 1000.0) * 0.6
         animationStartTime = CACurrentMediaTime()
         isAnimating = true
+        stopAnimationTimer()
         startAnimationTimer()
     }
 
@@ -208,9 +209,7 @@ class FindMyMouseOverlayView: NSView {
     private func startAnimationTimer() {
         guard animationTimer == nil else { return }
         animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.animationTick()
-            }
+            self?.animationTick()
         }
         RunLoop.main.add(animationTimer!, forMode: .common)
     }

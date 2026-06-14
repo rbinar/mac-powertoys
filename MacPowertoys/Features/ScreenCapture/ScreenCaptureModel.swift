@@ -86,8 +86,11 @@ final class ScreenCaptureModel: ObservableObject {
     // MARK: - Private — Event Monitors
 
     private var mouseDownGlobalMonitor: Any?
+    private var mouseDownLocalMonitor: Any?
     private var mouseDragGlobalMonitor: Any?
+    private var mouseDragLocalMonitor: Any?
     private var mouseUpGlobalMonitor: Any?
+    private var mouseUpLocalMonitor: Any?
 
     // MARK: - Private — Carbon Hotkeys
 
@@ -243,21 +246,41 @@ final class ScreenCaptureModel: ObservableObject {
     // MARK: - Event Monitors
 
     private func registerMouseMonitors() {
+        // Paired global + local monitors: global monitors don't fire for events
+        // delivered to the app's own key window, so a drag started over the app's
+        // own window would be dropped. The local monitor covers that case and
+        // returns the event unchanged. Only one of the two delivers a given event,
+        // so the shared @MainActor handlers never double-fire (mirrors ScreenRulerModel).
         mouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
             Task { @MainActor in self?.handleMouseDown() }
+        }
+        mouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+            Task { @MainActor in self?.handleMouseDown() }
+            return event
         }
         mouseDragGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] _ in
             Task { @MainActor in self?.handleMouseDragged() }
         }
+        mouseDragLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+            Task { @MainActor in self?.handleMouseDragged() }
+            return event
+        }
         mouseUpGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] _ in
             Task { @MainActor in self?.handleMouseUp() }
+        }
+        mouseUpLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
+            Task { @MainActor in self?.handleMouseUp() }
+            return event
         }
     }
 
     private func removeMouseMonitors() {
         if let m = mouseDownGlobalMonitor { NSEvent.removeMonitor(m); mouseDownGlobalMonitor = nil }
+        if let m = mouseDownLocalMonitor { NSEvent.removeMonitor(m); mouseDownLocalMonitor = nil }
         if let m = mouseDragGlobalMonitor { NSEvent.removeMonitor(m); mouseDragGlobalMonitor = nil }
+        if let m = mouseDragLocalMonitor { NSEvent.removeMonitor(m); mouseDragLocalMonitor = nil }
         if let m = mouseUpGlobalMonitor { NSEvent.removeMonitor(m); mouseUpGlobalMonitor = nil }
+        if let m = mouseUpLocalMonitor { NSEvent.removeMonitor(m); mouseUpLocalMonitor = nil }
     }
 
     // MARK: - Mouse Event Handling
@@ -365,8 +388,30 @@ final class ScreenCaptureModel: ObservableObject {
 
             let cropRect = CGRect(x: pixelX, y: pixelY, width: pixelW, height: pixelH)
 
-            guard let croppedImage = fullImage.cropping(to: cropRect) else {
-                NSLog("[ScreenCapture] CGImage cropping failed for rect \(cropRect)")
+            // Clamp the crop rect to the captured image bounds. A selection that
+            // spans two displays produces a cropRect that exceeds this single
+            // display's pixel space; cropping out-of-bounds yields a truncated or
+            // garbage image. We intersect against the image bounds so the crop stays
+            // valid. (This does NOT composite across displays — it captures the
+            // portion of the selection that falls on the chosen display.)
+            let imageBounds = CGRect(x: 0, y: 0, width: fullImage.width, height: fullImage.height)
+            let clampedRect = cropRect.intersection(imageBounds).integral
+
+            guard !clampedRect.isNull, clampedRect.width > 0, clampedRect.height > 0 else {
+                NSLog("[ScreenCapture] Crop rect \(cropRect) lies outside captured image bounds \(imageBounds)")
+                return
+            }
+
+            // If clamping materially shrank the rect, the selection likely crossed
+            // a display boundary — warn that only the on-display portion is captured.
+            let shrankWidth = clampedRect.width < cropRect.width - 1
+            let shrankHeight = clampedRect.height < cropRect.height - 1
+            if shrankWidth || shrankHeight {
+                NSLog("[ScreenCapture] Selection extends beyond a single display; capturing only the on-display portion. Requested \(cropRect), clamped to \(clampedRect)")
+            }
+
+            guard let croppedImage = fullImage.cropping(to: clampedRect) else {
+                NSLog("[ScreenCapture] CGImage cropping failed for rect \(clampedRect)")
                 return
             }
 

@@ -457,7 +457,10 @@ final class GitHubNotifierModel: NSObject, ObservableObject, UNUserNotificationC
 
     private func loadSettings() {
         let defaults = UserDefaults.standard
-        isEnabled = defaults.bool(forKey: "gitHubNotifier.isEnabled")
+        // Assign via the backing store so didSet does NOT fire here; startMonitoring()
+        // is called exactly once at the end of init(), after wireHelpers() and the
+        // token check have both run.
+        _isEnabled = Published(initialValue: defaults.bool(forKey: "gitHubNotifier.isEnabled"))
         if let stored = defaults.value(forKey: "gitHubNotifier.pollingInterval") as? Int {
             pollingInterval = stored
         }

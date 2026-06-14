@@ -164,7 +164,18 @@ final class GitHubAuthManager {
             case 401:
                 onTokenStatusChange?(.expired, nil, scopes)
             case 403:
-                onTokenStatusChange?(.scopeInsufficient, nil, scopes)
+                // GitHub returns 403 for BOTH insufficient scope AND rate limiting.
+                // Mirror GitHubAPIClient's disambiguation (forbidden(rateLimited:)):
+                // a 403 with X-RateLimit-Remaining == "0" is a transient rate-limit, not a
+                // scope problem — the token is still valid, so don't flag it (which would
+                // wrongly prompt the user to delete a good token). Only treat 403 as a
+                // scope problem when there's remaining quota (remaining > 0).
+                if httpResponse.value(forHTTPHeaderField: "X-RateLimit-Remaining") == "0" {
+                    NSLog("[GitHubNotifier] Token validation rate limited (HTTP 403, X-RateLimit-Remaining == 0); leaving token status valid")
+                    onTokenStatusChange?(.valid, nil, scopes)
+                } else {
+                    onTokenStatusChange?(.scopeInsufficient, nil, scopes)
+                }
             default:
                 onTokenStatusChange?(.invalid, nil, scopes)
             }
@@ -250,6 +261,10 @@ final class GitHubAuthManager {
 
             do {
                 let (data, _) = try await URLSession.shared.data(for: req)
+                // An in-flight request can complete between cancellation and the next loop
+                // check; bail before acting on it so a cancelled poll can't save a token /
+                // set .idle after the flow was torn down.
+                guard !Task.isCancelled else { return }
                 guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
 
                 if let accessToken = json["access_token"] as? String, !accessToken.isEmpty {

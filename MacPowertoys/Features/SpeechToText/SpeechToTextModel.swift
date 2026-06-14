@@ -190,22 +190,21 @@ final class SpeechToTextModel: ObservableObject {
         }
     }
 
+    /// Loads the selected WhisperKit model if it isn't already ready.
+    ///
+    /// This is only called from `performTranscription`, which already owns the
+    /// `isBusy` lifecycle for the active task. It therefore does NOT inspect or
+    /// toggle `isBusy` itself — doing so previously caused it to early-return on
+    /// its own caller's busy flag (#86), leaving the model unprepared.
     func prepareModelIfNeeded() async {
-        if isBusy { return }
-
 #if canImport(WhisperKit)
         if isModelReady, loadedModel == selectedModel, whisperKit != nil {
             return
         }
 
-        isBusy = true
         progress = 0.1
         statusMessage = "Preparing \(selectedModel.displayName) model..."
         viewState = .processing("Preparing \(selectedModel.displayName) model...")
-
-        defer {
-            isBusy = false
-        }
 
         do {
             let config = WhisperKitConfig(model: selectedModel.whisperModelName)
@@ -282,6 +281,27 @@ final class SpeechToTextModel: ObservableObject {
             return
         }
 
+        // This task is the active one. Take ownership of `isBusy` synchronously,
+        // here at the start, BEFORE any await — so the invariant "isBusy reflects
+        // whether a transcription is running" holds for the whole working phase
+        // (model prep included), not just the WhisperKit.transcribe call. This is
+        // also why `prepareModelIfNeeded` no longer guards on / toggles `isBusy`.
+        isBusy = true
+
+        // Single, function-level cleanup. The finishing task clears `isBusy` ONLY
+        // if it is still the active task. If a newer task replaced it
+        // (`transcribeSelectedFile` cancelled this one, bumped
+        // `activeTranscriptionTaskID`, and started a fresh task that set its own
+        // `isBusy = true`), the newer task owns the flag and we must not clobber
+        // it back to false. On normal completion or on a cancel with no successor,
+        // this task is still active and correctly clears the flag — so `isBusy`
+        // can never get stuck true (#86).
+        defer {
+            if self.activeTranscriptionTaskID == taskID {
+                self.isBusy = false
+            }
+        }
+
         viewState = .processing("Preparing model...")
 
         if !isModelReady {
@@ -290,6 +310,7 @@ final class SpeechToTextModel: ObservableObject {
 
 #if canImport(WhisperKit)
         guard isCurrentTranscriptionTask(taskID) else {
+            resetViewStateIfStillActive(taskID)
             return
         }
 
@@ -297,25 +318,22 @@ final class SpeechToTextModel: ObservableObject {
             if statusMessage.isEmpty {
                 statusMessage = "Model is not ready."
             }
+            // Model prep failed/cancelled; if we're still the active task, fall
+            // back to idle rather than leaving viewState stuck at .processing.
+            resetViewStateIfStillActive(taskID)
             return
         }
 
-        isBusy = true
         progress = 0.15
         statusMessage = "Transcribing \(fileURL.lastPathComponent)..."
         viewState = .processing("Transcribing \(fileURL.lastPathComponent)...")
-
-        defer {
-            if self.activeTranscriptionTaskID == taskID {
-                self.isBusy = false
-            }
-        }
 
         do {
             let decodeOptions = DecodingOptions(language: selectedLanguage.whisperLanguageCode)
             let results = try await whisperKit.transcribe(audioPath: fileURL.path, decodeOptions: decodeOptions)
 
             guard isCurrentTranscriptionTask(taskID) else {
+                resetViewStateIfStillActive(taskID)
                 return
             }
 
@@ -330,9 +348,13 @@ final class SpeechToTextModel: ObservableObject {
             statusMessage = "Transcription completed."
             viewState = .completed
         } catch is CancellationError {
+            // Cancelled mid-transcribe. Reset to idle unless a newer task has
+            // already taken over (#87) — in which case it owns viewState.
+            resetViewStateIfStillActive(taskID)
             return
         } catch {
             guard isCurrentTranscriptionTask(taskID) else {
+                resetViewStateIfStillActive(taskID)
                 return
             }
 
@@ -346,6 +368,16 @@ final class SpeechToTextModel: ObservableObject {
 #else
         statusMessage = "WhisperKit dependency is unavailable in this build."
 #endif
+    }
+
+    /// Returns `viewState` to `.idle` when this task is the one currently in
+    /// charge — i.e. cancelled/aborted without a successor. If a newer task has
+    /// taken over (`activeTranscriptionTaskID != taskID`), the view state belongs
+    /// to that task and is left untouched (#87).
+    private func resetViewStateIfStillActive(_ taskID: UUID) {
+        if activeTranscriptionTaskID == taskID {
+            viewState = .idle
+        }
     }
 
     func copyTranscript() {
