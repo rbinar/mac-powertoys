@@ -102,6 +102,7 @@ final class ScreenRulerModel: ObservableObject {
     private var captureTickCounter: Int = 0
     private var isCapturing = false
     private var elevatedWindows: [NSWindow] = []
+    private var screenParamsObserver: NSObjectProtocol?
 
     // Keyboard & mouse monitors (active during measurement)
     private var keyGlobalMonitor: Any?
@@ -187,6 +188,34 @@ final class ScreenRulerModel: ObservableObject {
             startTracking()
             registerActiveMonitors()
             registerEscHotKey()
+            registerScreenParamsObserver()
+        }
+    }
+
+    private func registerScreenParamsObserver() {
+        guard screenParamsObserver == nil else { return }
+        screenParamsObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.rebuildForScreenChange() }
+        }
+    }
+
+    private func removeScreenParamsObserver() {
+        if let o = screenParamsObserver { NotificationCenter.default.removeObserver(o); screenParamsObserver = nil }
+    }
+
+    /// Display set changed while active: drop stale overlays, re-capture, rebuild for current screens.
+    private func rebuildForScreenChange() {
+        guard isActive else { return }
+        removeOverlayWindows()
+        Task {
+            await captureScreensAsync()
+            guard isEnabled, isActive else { return }
+            removeOverlayWindows()
+            createOverlayWindows()
         }
     }
 
@@ -212,6 +241,7 @@ final class ScreenRulerModel: ObservableObject {
     private func deactivate() {
         guard isActive else { return }
         isActive = false
+        removeScreenParamsObserver()
         unregisterEscHotKey()
         stopTracking()
         removeActiveMonitors()

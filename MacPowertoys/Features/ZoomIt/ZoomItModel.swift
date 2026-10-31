@@ -128,6 +128,10 @@ final class ZoomItModel: ObservableObject {
     // Live Zoom Stream
     private var streams: [UInt32: SCStream] = [:]
     private var streamOutputs: [UInt32: StreamOutput] = [:]
+    private let frameQueue = DispatchQueue(label: "com.rbinar.MacPowerToys.zoomit.frames")
+    
+    // Display configuration changes
+    private var screenParametersObserver: NSObjectProtocol?
     
     init() {
         NSLog("%@", "[ZoomIt] ZoomItModel initialized")
@@ -136,6 +140,7 @@ final class ZoomItModel: ObservableObject {
     
     func stopMonitoring() {
         deactivate()
+        removeScreenParametersObserver()
         if let eventHandlerRef {
             RemoveEventHandler(eventHandlerRef)
         }
@@ -193,6 +198,7 @@ final class ZoomItModel: ObservableObject {
         isEnabled = true
         liveZoomEnabled = false
         isMutatingState = false
+        addScreenParametersObserver()
         NSLog("%@", "[ZoomIt] Starting screen capture...")
         
         Task {
@@ -222,6 +228,7 @@ final class ZoomItModel: ObservableObject {
         isEnabled = true
         liveZoomEnabled = true
         isMutatingState = false
+        addScreenParametersObserver()
         NSLog("%@", "[ZoomIt] Starting live streams...")
         
         Task {
@@ -244,11 +251,44 @@ final class ZoomItModel: ObservableObject {
         liveZoomEnabled = false
         isMutatingState = false
 
+        removeScreenParametersObserver()
         unregisterEscHotKey()
         removeActiveMonitors()
         removeOverlayWindows(wasZooming: wasZooming)
         stopLiveStreams()
         capturedScreens.removeAll()
+    }
+    
+    // MARK: - Display Changes
+    
+    private func addScreenParametersObserver() {
+        removeScreenParametersObserver()
+        screenParametersObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.rebuildForScreenChange() }
+        }
+    }
+    
+    private func removeScreenParametersObserver() {
+        if let screenParametersObserver {
+            NotificationCenter.default.removeObserver(screenParametersObserver)
+            self.screenParametersObserver = nil
+        }
+    }
+    
+    private func rebuildForScreenChange() {
+        guard isZooming || isLiveZooming else { return }
+        NSLog("%@", "[ZoomIt] Screen parameters changed, rebuilding overlays")
+        let wasLive = isLiveZooming
+        deactivate()
+        if wasLive {
+            activateLiveZoom()
+        } else {
+            activateScreenZoom()
+        }
     }
     
     private func checkScreenRecordingPermission() -> Bool {
@@ -325,7 +365,7 @@ final class ZoomItModel: ObservableObject {
                 let stream = SCStream(filter: filter, configuration: config, delegate: nil)
                 let output = StreamOutput(displayID: display.displayID, model: self)
                 
-                try stream.addStreamOutput(output, type: .screen, sampleHandlerQueue: .main)
+                try stream.addStreamOutput(output, type: .screen, sampleHandlerQueue: frameQueue)
                 try await stream.startCapture()
                 
                 streams[display.displayID] = stream
@@ -465,6 +505,7 @@ private class StreamOutput: NSObject, SCStreamOutput {
         self.model = model
     }
     
+    // Runs on the model's dedicated frame queue (not the main thread).
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard type == .screen, let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
@@ -473,6 +514,8 @@ private class StreamOutput: NSObject, SCStreamOutput {
         VTCreateCGImageFromCVPixelBuffer(imageBuffer, options: nil, imageOut: &cgImage)
         
         if let cgImage = cgImage {
+            let model = self.model
+            let displayID = self.displayID
             Task { @MainActor in
                 model?.updateLiveImage(cgImage, for: displayID)
             }

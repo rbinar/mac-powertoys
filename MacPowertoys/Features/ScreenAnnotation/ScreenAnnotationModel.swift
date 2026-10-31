@@ -110,12 +110,19 @@ final class ScreenAnnotationModel: ObservableObject {
     private var pendingTextPoint: NSPoint = .zero
     private var elevatedWindows: [NSWindow] = []
 
-    // Event monitors (global only — local monitors would cause double-firing)
+    // Event monitors. Global monitors never see events for this app's own windows, so paired
+    // local monitors cover those; they skip events destined for interactive windows (toolbar,
+    // text input, elevated app windows) to avoid double-handling.
     private var mouseDownGlobalMonitor: Any?
     private var mouseDragGlobalMonitor: Any?
     private var mouseUpGlobalMonitor: Any?
     private var keyGlobalMonitor: Any?
     private var rightMouseDownGlobalMonitor: Any?
+    private var mouseDownLocalMonitor: Any?
+    private var mouseDragLocalMonitor: Any?
+    private var mouseUpLocalMonitor: Any?
+    private var keyLocalMonitor: Any?
+    private var rightMouseDownLocalMonitor: Any?
 
     // Carbon hotkey
     private var hotKeyRef: EventHotKeyRef?
@@ -359,6 +366,37 @@ final class ScreenAnnotationModel: ObservableObject {
         rightMouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
             Task { @MainActor in self?.handleRightMouseDown(event) }
         }
+
+        mouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+            if let self, self.isDrawingInputEvent(event) { self.handleMouseDown(event) }
+            return event
+        }
+        mouseDragLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+            if let self, self.isDrawingInputEvent(event) { self.handleMouseDragged(event) }
+            return event
+        }
+        mouseUpLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
+            if let self, self.isDrawingInputEvent(event) { self.handleMouseUp(event) }
+            return event
+        }
+        keyLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            // Keys go to our app whenever one of its windows (e.g. the toolbar) is key, so don't
+            // filter by window — only skip while a text field is being edited.
+            if let self, !(event.window?.firstResponder is NSText) { self.handleKeyDown(event) }
+            return event
+        }
+        rightMouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            if let self, self.isDrawingInputEvent(event) { self.handleRightMouseDown(event) }
+            return event
+        }
+    }
+
+    /// False for mouse events destined for the toolbar, text input or elevated app windows.
+    private func isDrawingInputEvent(_ event: NSEvent) -> Bool {
+        guard let window = event.window else { return true }
+        if window === toolbarWindow || window === textInputWindow { return false }
+        if elevatedWindows.contains(where: { $0 === window }) { return false }
+        return true
     }
 
     private func removeActiveMonitors() {
@@ -367,6 +405,11 @@ final class ScreenAnnotationModel: ObservableObject {
         if let m = mouseUpGlobalMonitor { NSEvent.removeMonitor(m); mouseUpGlobalMonitor = nil }
         if let m = keyGlobalMonitor { NSEvent.removeMonitor(m); keyGlobalMonitor = nil }
         if let m = rightMouseDownGlobalMonitor { NSEvent.removeMonitor(m); rightMouseDownGlobalMonitor = nil }
+        if let m = mouseDownLocalMonitor { NSEvent.removeMonitor(m); mouseDownLocalMonitor = nil }
+        if let m = mouseDragLocalMonitor { NSEvent.removeMonitor(m); mouseDragLocalMonitor = nil }
+        if let m = mouseUpLocalMonitor { NSEvent.removeMonitor(m); mouseUpLocalMonitor = nil }
+        if let m = keyLocalMonitor { NSEvent.removeMonitor(m); keyLocalMonitor = nil }
+        if let m = rightMouseDownLocalMonitor { NSEvent.removeMonitor(m); rightMouseDownLocalMonitor = nil }
     }
 
     // MARK: - Mouse Event Handling

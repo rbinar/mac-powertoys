@@ -82,6 +82,7 @@ final class ScreenCaptureModel: ObservableObject {
 
     private var overlayWindows: [(window: NSWindow, view: ScreenCaptureOverlayView, displayID: UInt32, screen: NSScreen)] = []
     private var hudWindow: NSWindow?
+    private var screenParamsObserver: NSObjectProtocol?
 
     // MARK: - Private — Event Monitors
 
@@ -184,6 +185,14 @@ final class ScreenCaptureModel: ObservableObject {
         createOverlayWindows()
         registerMouseMonitors()
         registerEscHotKey()
+        // Display set changed mid-selection: overlays would be stale, so cancel.
+        screenParamsObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.cancelCapture() }
+        }
         NSCursor.crosshair.set()
         NSLog("%@", "[ScreenCapture] Selection mode started")
     }
@@ -199,6 +208,7 @@ final class ScreenCaptureModel: ObservableObject {
         isCapturing = false
         selectionStart = nil
         selectionEnd = nil
+        if let o = screenParamsObserver { NotificationCenter.default.removeObserver(o); screenParamsObserver = nil }
         unregisterEscHotKey()
         removeMouseMonitors()
         removeOverlayWindows()
