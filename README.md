@@ -98,20 +98,18 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 
 ## 🚀 Installation
 
+### Homebrew
+```bash
+brew tap rbinar/tap
+brew trust rbinar/tap   # newer Homebrew versions require trusting third-party taps
+brew install --cask mac-powertoys
+```
+
 ### Download from Releases
 1. Download the latest `MacPowerToys.dmg` from [Releases](https://github.com/rbinar/mac-powertoys/releases)
 2. Open the DMG file
 3. Drag `MacPowerToys.app` to your Applications folder
 4. Launch from Applications or Spotlight
-
-### ⚠️ Security Notice (First Launch)
-Since this app is not notarized by Apple, you may see a security warning on first launch:
-1. If you see **"MacPowerToys" Cannot Be Opened**, click **"OK"**
-2. Go to **System Preferences > Security & Privacy > General**
-3. Click **"Open Anyway"** next to the blocked app message
-4. Click **"Open"** in the confirmation dialog
-
-This is a one-time setup - the app will launch normally afterwards.
 
 ### Build from Source
 ```bash

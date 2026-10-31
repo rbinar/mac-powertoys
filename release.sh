@@ -55,6 +55,7 @@ xcodebuild -project MacPowerToys.xcodeproj \
            -derivedDataPath ./build \
            -archivePath "$ARCHIVE_PATH" \
            DEVELOPMENT_TEAM="$TEAM_ID" \
+           MARKETING_VERSION="$VERSION" \
            CODE_SIGN_IDENTITY="Developer ID Application" \
            CODE_SIGN_STYLE=Manual \
            clean archive
@@ -154,3 +155,16 @@ else
     echo ""
     echo "💡 Tip: brew install gh for automatic release creation"
 fi
+
+# ── Step 12: Update Homebrew cask (rbinar/homebrew-tap) ──────────────────────
+echo "🍺 Updating Homebrew cask..."
+DMG_SHA=$(shasum -a 256 "$DMG_NAME" | awk '{print $1}')
+TAP_DIR=$(mktemp -d)
+gh repo clone rbinar/homebrew-tap "$TAP_DIR" -- -q
+sed -i '' -e "s/^  version \".*\"/  version \"${VERSION}\"/" \
+          -e "s/^  sha256 \".*\"/  sha256 \"${DMG_SHA}\"/" \
+          "$TAP_DIR/Casks/mac-powertoys.rb"
+git -C "$TAP_DIR" commit -qam "mac-powertoys ${VERSION}"
+git -C "$TAP_DIR" push -q
+rm -rf "$TAP_DIR"
+echo "✅ Cask updated: brew upgrade --cask rbinar/tap/mac-powertoys"
