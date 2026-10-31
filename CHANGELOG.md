@@ -2,6 +2,11 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](https://semver.org/)
 
+## [Unreleased]
+
+### Removed
+- Webhook Notifier module removed; it depended on a third-party/self-hosted ntfy relay server. 2026-11-01 00:00
+
 ## [2.1.0] - 2026-04-20
 
 ### Added

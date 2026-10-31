@@ -10,7 +10,6 @@ enum Feature: Hashable {
     case cursorWrap
     case screenRuler
     case zoomIt
-    case webhookNotifier
     case awake
     case mouseJiggler
     case clipboardManager
@@ -152,7 +151,6 @@ struct ContentView: View {
     @EnvironmentObject var cursorWrapModel: CursorWrapModel
     @EnvironmentObject var screenRulerModel: ScreenRulerModel
     @EnvironmentObject var zoomItModel: ZoomItModel
-    @EnvironmentObject var webhookNotifierModel: WebhookNotifierModel
     @EnvironmentObject var awakeModel: AwakeModel
     @EnvironmentObject var mouseJigglerModel: MouseJigglerModel
     @EnvironmentObject var clipboardManagerModel: ClipboardManagerModel
@@ -216,7 +214,6 @@ struct ContentView: View {
             FeatureCardSpec(title: "System Info", icon: "gauge.with.dots.needle.33percent", statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Disabled", isEnabled: $systemInfoModel.isEnabled, feature: .systemInfo),
             FeatureCardSpec(title: "Screen Capture", icon: "camera.viewfinder", statusText: screenCaptureModel.isEnabled ? "⌃⌥4 Active" : "Disabled", isEnabled: $screenCaptureModel.isEnabled, feature: .screenCapture),
             FeatureCardSpec(title: "Image Optimizer", icon: "photo.badge.arrow.down", statusText: imageOptimizerModel.items.isEmpty ? "Ready" : "\(imageOptimizerModel.items.count) images", isEnabled: nil, feature: .imageOptimizer),
-            FeatureCardSpec(title: "Webhook Notifier", icon: "bell.badge", statusText: webhookNotifierModel.isEnabled ? "\(webhookNotifierModel.topics.filter { $0.isActive }.count) active" : "Disabled", isEnabled: $webhookNotifierModel.isEnabled, feature: .webhookNotifier),
             FeatureCardSpec(title: "GitHub Notifier", icon: "bell.badge.circle", statusText: gitHubNotifierModel.hubStatusText, isEnabled: $gitHubNotifierModel.isEnabled, feature: .gitHubNotifier),
         ]
     }
@@ -370,8 +367,6 @@ struct ContentView: View {
             ScreenRulerView(onBack: { goBack() })
         case .zoomIt:
             ZoomItView(onBack: { goBack() })
-        case .webhookNotifier:
-            WebhookNotifierView(onBack: { goBack() })
         case .awake:
             AwakeView(onBack: { goBack() })
         case .mouseJiggler:

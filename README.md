@@ -85,16 +85,6 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 - 🍺 **One-Click FFmpeg Install**: Detects Homebrew and offers one-click FFmpeg installation with live progress
 - 💾 **Persistent Settings**: Selected format, quality, and resolution preferences are saved between sessions
 
-### 🔔 Webhook Notifier
-- 📡 **Real-time Notifications**: Receive and display macOS notifications instantly via webhooks
-- 🔔 **Custom Topics**: Subscribe to specific topics and filter notifications
-- 💬 **ntfy Compatible**: Uses the open-source `ntfy` protocol. Works with any ntfy server (defaults to `https://ntfy.blinkbrosai.com`)
-- 🚀 **Easy Integration**: Trigger notifications with a simple HTTP POST request:
-  ```bash
-  curl -d "Build failed!" https://ntfy.blinkbrosai.com/YOUR_TOPIC_ID
-  ```
-- ⚙️ **Configurable**: Enable or disable specific webhooks as needed
-
 ### General
 - ⚡ **Menu Bar Integration**: Quick access from the menu bar with a Control Center style hub
 - 🔊 **Audio Feedback**: Haptic and sound feedback when colors are picked
@@ -162,16 +152,11 @@ open MacPowerToys.xcodeproj
    - Enable and press `⌃⌥D` to enter annotation mode
    - Use the toolbar to switch between freehand, line, arrow, rectangle, ellipse, and text tools
    - Right-click or `⌘Z` to undo, `Esc` to close
-8. **Webhook Notifier**:
-   - Add custom topics to receive real-time notifications
-   - Trigger notifications using HTTP POST requests (e.g., `curl -d "Message" https://ntfy.blinkbrosai.com/TOPIC_ID`)
-   - Click on notifications to view details
-   - Toggle specific webhooks on or off as needed
-9. **Pomodoro Timer**:
+8. **Pomodoro Timer**:
    - Enable to start a 25-minute focus session
    - Automatically transitions to a 5-minute break (customizable)
    - Tracks your daily completed sessions with visual indicators
-10. **Video Converter**:
+9. **Video Converter**:
    - Requires FFmpeg (one-click install via Homebrew if available)
    - Drag & drop or browse for a video/audio file
    - Select output format (video, audio, or GIF), quality, and resolution
