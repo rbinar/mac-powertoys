@@ -41,6 +41,9 @@ DerivedData/
 # Profiling artifacts
 *.profraw
 
+# Log files
+*.log
+
 # Security - Never commit credentials
 .env
 .env.local
@@ -102,3 +105,8 @@ fastlane/test_output
 
 # Build logs
 build_output.log
+
+# macOS / local tooling
+.DS_Store
+.codegraph/
+CLAUDE.md
