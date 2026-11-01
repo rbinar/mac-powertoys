@@ -11,6 +11,15 @@ struct MacPowerToysApp: App {
         DispatchQueue.main.async {
             NSColorPanel.shared.orderOut(nil)
         }
+
+        // Create every module at launch. MenuBarExtra builds its content lazily (on the first
+        // click), so owning the registry in AppRootView left all global hotkeys dead until then.
+        let registry = AppModules.registry
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification, object: nil, queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { registry.stopAll() }
+        }
     }
 
     var body: some Scene {
@@ -18,22 +27,25 @@ struct MacPowerToysApp: App {
             if isRunningTests {
                 EmptyView()
             } else {
-                AppRootView()
+                AppRootView(registry: AppModules.registry)
             }
         }
         .menuBarExtraStyle(.window)
     }
 }
 
+/// The app-wide module registry, created once at launch (never in unit tests).
+@MainActor
+private enum AppModules {
+    static let registry = ModuleRegistry(catalog: ModuleCatalog.all)
+}
+
 private struct AppRootView: View {
-    @StateObject private var registry = ModuleRegistry(catalog: ModuleCatalog.all)
+    let registry: ModuleRegistry
 
     var body: some View {
         registry.inject(into: AnyView(ContentView()))
             .frame(width: 340, height: 640)
             .padding(.vertical, 8)
-            .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-                registry.stopAll()
-            }
     }
 }

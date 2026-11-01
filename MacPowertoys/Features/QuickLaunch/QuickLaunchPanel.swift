@@ -207,7 +207,8 @@ struct QuickLaunchPanelContent: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
-        .onAppear { isSearchFocused = true }
+        // On the very first show the view appears before the panel is key; focus on the next tick.
+        .onAppear { DispatchQueue.main.async { isSearchFocused = true } }
         .onChange(of: model.isPanelVisible) { visible in
             if visible { isSearchFocused = true }
         }
