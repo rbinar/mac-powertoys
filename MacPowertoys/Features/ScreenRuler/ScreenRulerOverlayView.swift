@@ -76,7 +76,8 @@ class ScreenRulerOverlayView: NSView {
 
         // Draw label
         let label = formatLabel(pixels: totalH)
-        drawLabel(ctx, text: label, at: CGPoint(x: p.x, y: p.y + 14))
+        // Above-right of the cursor so it never overlaps the vertical label
+        drawLabel(ctx, text: label, at: CGPoint(x: p.x + 8, y: p.y + 8), anchor: CGVector(dx: 1, dy: 1))
     }
 
     // MARK: - Vertical Line
@@ -102,7 +103,8 @@ class ScreenRulerOverlayView: NSView {
 
         // Draw label
         let label = formatLabel(pixels: totalV)
-        drawLabel(ctx, text: label, at: CGPoint(x: p.x + 14, y: p.y))
+        // Below-right of the cursor so it never overlaps the horizontal label
+        drawLabel(ctx, text: label, at: CGPoint(x: p.x + 8, y: p.y - 8), anchor: CGVector(dx: 1, dy: -1))
     }
 
     // MARK: - Bounds Mode
@@ -159,7 +161,8 @@ class ScreenRulerOverlayView: NSView {
         ctx.strokePath()
     }
 
-    private func drawLabel(_ ctx: CGContext, text: String, at center: CGPoint) {
+    /// `anchor` shifts the label off `point` by half its size per unit (e.g. dx: 1 puts its left edge at `point`).
+    private func drawLabel(_ ctx: CGContext, text: String, at point: CGPoint, anchor: CGVector = .zero) {
         let nsCtx = NSGraphicsContext(cgContext: ctx, flipped: false)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = nsCtx
@@ -174,6 +177,10 @@ class ScreenRulerOverlayView: NSView {
         ]
         let attrStr = NSAttributedString(string: text, attributes: attrs)
         let textSize = attrStr.size()
+        let center = CGPoint(
+            x: point.x + anchor.dx * (textSize.width / 2 + labelPadding),
+            y: point.y + anchor.dy * (textSize.height / 2 + labelPadding)
+        )
 
         let bgRect = CGRect(
             x: center.x - textSize.width / 2 - labelPadding,
