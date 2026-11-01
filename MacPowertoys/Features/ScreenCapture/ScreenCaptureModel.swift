@@ -31,6 +31,7 @@ private func screenCaptureHotKeyHandler(
         &hotKeyID
     )
     guard status == noErr else { return status }
+    guard hotKeyID.signature == ScreenCaptureHotKey.signature else { return OSStatus(eventNotHandledErr) }
 
     let model = Unmanaged<ScreenCaptureModel>.fromOpaque(userData).takeUnretainedValue()
 

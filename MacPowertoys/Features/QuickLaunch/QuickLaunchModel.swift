@@ -96,6 +96,7 @@ private func quickLaunchHotKeyHandler(nextHandler: EventHandlerCallRef?, event: 
     var hotKeyID = EventHotKeyID()
     GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
 
+    guard hotKeyID.signature == QuickLaunchHotKey.signature else { return OSStatus(eventNotHandledErr) }
     switch hotKeyID.id {
     case QuickLaunchHotKey.togglePanelID:
         Task { @MainActor in

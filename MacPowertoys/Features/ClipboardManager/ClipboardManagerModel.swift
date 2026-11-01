@@ -297,6 +297,10 @@ final class ClipboardManagerModel: ObservableObject {
             var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
             
             let handler: EventHandlerUPP = { (nextHandler, theEvent, userData) -> OSStatus in
+                guard let theEvent else { return OSStatus(eventNotHandledErr) }
+                var firedID = EventHotKeyID()
+                GetEventParameter(theEvent, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &firedID)
+                guard firedID.signature == UTGetOSTypeFromString("CBMG" as CFString) else { return OSStatus(eventNotHandledErr) }
                 Task { @MainActor in
                     NotificationCenter.default.post(name: NSNotification.Name("ShowClipboardManager"), object: nil)
                 }

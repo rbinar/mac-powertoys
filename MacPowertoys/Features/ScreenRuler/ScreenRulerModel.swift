@@ -10,6 +10,8 @@ private func screenRulerHotKeyHandler(nextHandler: EventHandlerCallRef?, event: 
     var hotKeyID = EventHotKeyID()
     let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
     guard status == noErr else { return status }
+    // Only handle our own hotkeys; returning noErr for others would swallow them.
+    guard hotKeyID.signature == OSType(0x52554C52) else { return OSStatus(eventNotHandledErr) }
 
     let model = Unmanaged<ScreenRulerModel>.fromOpaque(userData).takeUnretainedValue()
     

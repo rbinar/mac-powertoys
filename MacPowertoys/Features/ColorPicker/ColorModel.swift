@@ -5,7 +5,10 @@ import Carbon.HIToolbox
 
 // Global C callback for Carbon hotkey
 private func carbonHotKeyHandler(nextHandler: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?) -> OSStatus {
-    guard let userData else { return OSStatus(eventNotHandledErr) }
+    guard let userData, let event else { return OSStatus(eventNotHandledErr) }
+    var hotKeyID = EventHotKeyID()
+    GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
+    guard hotKeyID.signature == OSType(0x434F4C52) else { return OSStatus(eventNotHandledErr) }
     let model = Unmanaged<ColorModel>.fromOpaque(userData).takeUnretainedValue()
     Task { @MainActor in
         model.pickFromScreen()

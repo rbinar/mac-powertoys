@@ -21,6 +21,7 @@ private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: Event
     var hotKeyID = EventHotKeyID()
     GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
     
+    guard hotKeyID.signature == ZoomItHotKey.signature else { return OSStatus(eventNotHandledErr) }
     NSLog("%@", "[ZoomIt] Hotkey pressed with ID: \(hotKeyID.id)")
     
     switch hotKeyID.id {
@@ -110,6 +111,8 @@ final class ZoomItModel: ObservableObject {
     /// settings vars, so their didSets ignore these self-induced writes and
     /// only respond to genuine user/hotkey toggles.
     private var isMutatingState = false
+    /// Bumped on every activate/deactivate so in-flight activation tasks can detect they are stale.
+    private var activationGeneration = 0
     private var overlayWindows: [(window: NSWindow, view: ZoomItOverlayView, displayID: UInt32, screen: NSScreen)] = []
     private var capturedScreens: [UInt32: CGImage] = [:]
     
@@ -199,10 +202,14 @@ final class ZoomItModel: ObservableObject {
         liveZoomEnabled = false
         isMutatingState = false
         addScreenParametersObserver()
+        activationGeneration += 1
+        let generation = activationGeneration
         NSLog("%@", "[ZoomIt] Starting screen capture...")
         
         Task {
             await captureScreensAsync()
+            // Deactivated (or re-activated) while capturing: don't create orphan overlays.
+            guard generation == activationGeneration else { return }
             NSLog("%@", "[ZoomIt] Screen capture finished. Creating overlay windows...")
             createOverlayWindows(isLive: false)
             registerActiveMonitors()
@@ -229,11 +236,14 @@ final class ZoomItModel: ObservableObject {
         liveZoomEnabled = true
         isMutatingState = false
         addScreenParametersObserver()
+        activationGeneration += 1
+        let generation = activationGeneration
         NSLog("%@", "[ZoomIt] Starting live streams...")
         
         Task {
             createOverlayWindows(isLive: true)
-            await startLiveStreams()
+            await startLiveStreams(generation: generation)
+            guard generation == activationGeneration else { return }
             registerActiveMonitors()
             registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
@@ -243,6 +253,7 @@ final class ZoomItModel: ObservableObject {
     
     func deactivate() {
         guard isZooming || isLiveZooming else { return }
+        activationGeneration += 1
         let wasZooming = isZooming
         isMutatingState = true
         isZooming = false
@@ -342,7 +353,7 @@ final class ZoomItModel: ObservableObject {
     
     // MARK: - Live Stream
     
-    private func startLiveStreams() async {
+    private func startLiveStreams(generation: Int) async {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             NSLog("%@", "[ZoomIt] Live stream found \(content.displays.count) displays")
@@ -367,6 +378,11 @@ final class ZoomItModel: ObservableObject {
                 
                 try stream.addStreamOutput(output, type: .screen, sampleHandlerQueue: frameQueue)
                 try await stream.startCapture()
+                guard generation == activationGeneration else {
+                    // Deactivated while starting: don't leave this stream running untracked.
+                    try? await stream.stopCapture()
+                    return
+                }
                 
                 streams[display.displayID] = stream
                 streamOutputs[display.displayID] = output
@@ -450,7 +466,9 @@ final class ZoomItModel: ObservableObject {
     // MARK: - Monitors
     
     private func registerActiveMonitors() {
-        let mask: NSEvent.EventTypeMask = [.mouseMoved, .scrollWheel]
+        // keyDown: ESC fallback that doesn't depend on the Carbon ESC hotkey, which can be
+        // claimed by another feature's registration.
+        let mask: NSEvent.EventTypeMask = [.mouseMoved, .scrollWheel, .keyDown]
         
         mouseMovedGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] event in
             self?.handleEvent(event)
@@ -467,7 +485,9 @@ final class ZoomItModel: ObservableObject {
     }
     
     private func handleEvent(_ event: NSEvent) {
-        if event.type == .mouseMoved {
+        if event.type == .keyDown {
+            if event.keyCode == UInt16(kVK_Escape) { deactivate() }
+        } else if event.type == .mouseMoved {
             updateZoomCenter(NSEvent.mouseLocation)
         } else if event.type == .scrollWheel {
             // Adjust zoom level

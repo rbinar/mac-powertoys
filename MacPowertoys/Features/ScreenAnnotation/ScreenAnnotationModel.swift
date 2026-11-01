@@ -57,6 +57,7 @@ private func annotationHotKeyHandler(nextHandler: EventHandlerCallRef?, event: E
     var hotKeyID = EventHotKeyID()
     let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
     guard status == noErr else { return status }
+    guard hotKeyID.signature == AnnotationHotKey.signature else { return OSStatus(eventNotHandledErr) }
 
     let model = Unmanaged<ScreenAnnotationModel>.fromOpaque(userData).takeUnretainedValue()
 
