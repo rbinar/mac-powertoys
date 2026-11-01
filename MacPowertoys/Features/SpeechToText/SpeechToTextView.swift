@@ -55,6 +55,7 @@ struct SpeechToTextView: View {
             }
             .pickerStyle(.menu)
             .controlSize(.small)
+            .accessibilityLabel("Transcription language")
 
             Picker(selection: $model.selectedModel) {
                 ForEach(model.availableModels) { availableModel in
@@ -65,6 +66,7 @@ struct SpeechToTextView: View {
             }
             .pickerStyle(.menu)
             .controlSize(.small)
+            .accessibilityLabel("Transcription model")
         }
     }
 

@@ -94,6 +94,8 @@ struct PdfToolsView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(.tertiary)
+                                .accessibilityLabel("Reveal in Finder")
+                                .help("Reveal in Finder")
                             }
                         }
                     }

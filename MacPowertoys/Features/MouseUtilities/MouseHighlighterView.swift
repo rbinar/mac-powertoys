@@ -48,7 +48,7 @@ struct MouseHighlighterView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    ColorPicker("", selection: Binding(
+                    ColorPicker("Left Click Color", selection: Binding(
                         get: { Color(nsColor: model.primaryButtonColor) },
                         set: { model.primaryButtonColor = NSColor($0) }
                     ))
@@ -61,7 +61,7 @@ struct MouseHighlighterView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    ColorPicker("", selection: Binding(
+                    ColorPicker("Right Click Color", selection: Binding(
                         get: { Color(nsColor: model.secondaryButtonColor) },
                         set: { model.secondaryButtonColor = NSColor($0) }
                     ))
@@ -80,6 +80,8 @@ struct MouseHighlighterView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.highlightRadius, in: 10...80, step: 5)
+                        .accessibilityLabel("Highlight Radius")
+                        .accessibilityValue("\(Int(model.highlightRadius)) pixels")
                 }
 
                 // Fade delay
@@ -94,6 +96,8 @@ struct MouseHighlighterView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.fadeDelayMs, in: 50...2000, step: 50)
+                        .accessibilityLabel("Fade Delay")
+                        .accessibilityValue("\(Int(model.fadeDelayMs)) milliseconds")
                 }
 
                 // Fade duration
@@ -108,6 +112,8 @@ struct MouseHighlighterView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.fadeDurationMs, in: 100...2000, step: 50)
+                        .accessibilityLabel("Fade Duration")
+                        .accessibilityValue("\(Int(model.fadeDurationMs)) milliseconds")
                 }
             }
             } // VStack inside ScrollView

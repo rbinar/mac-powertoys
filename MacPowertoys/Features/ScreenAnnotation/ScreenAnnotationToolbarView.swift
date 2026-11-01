@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - Screen Annotation Toolbar View
 
-class ScreenAnnotationToolbarView: NSView {
+class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
     var currentTool: AnnotationTool = .freehand {
         didSet { setNeedsDisplay(bounds) }
     }
@@ -27,6 +27,7 @@ class ScreenAnnotationToolbarView: NSView {
 
     private var customTrackingAreas: [NSTrackingArea] = []
     private var hoveredItem: ItemID? = nil
+    private var toolTipTexts: [String] = []
 
     // MARK: - Item Model
 
@@ -111,6 +112,30 @@ class ScreenAnnotationToolbarView: NSView {
         let area = NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways], owner: self, userInfo: nil)
         addTrackingArea(area)
         customTrackingAreas.append(area)
+
+        removeAllToolTips()
+        toolTipTexts.removeAll()
+        let colorNames = ["Red", "Blue", "Green", "Yellow", "Orange", "White", "Black", "Purple"]
+        let actionNames = ["undo": "Undo (⌘Z)", "delete": "Delete selected (⌫)", "clear": "Clear all", "save": "Save", "close": "Close (Esc)"]
+        let y = (bounds.height - itemSize) / 2
+        var x = padding
+        func addTip(_ text: String) {
+            toolTipTexts.append(text)
+            addToolTip(CGRect(x: x, y: y, width: itemSize, height: itemSize), owner: self, userData: UnsafeMutableRawPointer(bitPattern: toolTipTexts.count))
+            x += itemSize + gap
+        }
+        for item in tools { addTip(item.tool.rawValue) }
+        x += separatorGap - gap
+        for i in 0..<colorOptions.count { addTip(i < colorNames.count ? colorNames[i] : "Color \(i + 1)") }
+        x += separatorGap - gap
+        for w in lineWidthOptions { addTip("Line width \(Int(w)) px") }
+        x += separatorGap - gap
+        for item in actions { addTip(actionNames[item.id] ?? item.id) }
+    }
+
+    func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
+        let idx = Int(bitPattern: data) - 1
+        return idx >= 0 && idx < toolTipTexts.count ? toolTipTexts[idx] : ""
     }
 
     override func mouseMoved(with event: NSEvent) {
@@ -330,7 +355,7 @@ class ScreenAnnotationToolbarView: NSView {
     }
 
     private func drawSFSymbol(_ name: String, in rect: CGRect, size: CGFloat, color: NSColor) {
-        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return }
+        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: tools.first(where: { $0.sfSymbol == name })?.tool.rawValue ?? actions.first(where: { $0.sfSymbol == name })?.id.capitalized) else { return }
         let config = NSImage.SymbolConfiguration(pointSize: size, weight: .medium)
         let configured = image.withSymbolConfiguration(config) ?? image
 

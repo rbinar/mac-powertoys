@@ -100,6 +100,7 @@ struct AwakeView: View {
                                         )
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityAddTraits(model.durationMinutes == minutes ? .isSelected : [])
                             }
                         }
                     }

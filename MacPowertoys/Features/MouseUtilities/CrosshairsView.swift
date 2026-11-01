@@ -48,7 +48,7 @@ struct CrosshairsView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    ColorPicker("", selection: Binding(
+                    ColorPicker("Crosshair Color", selection: Binding(
                         get: { Color(nsColor: model.crosshairColor) },
                         set: { model.crosshairColor = NSColor($0) }
                     ))
@@ -67,6 +67,8 @@ struct CrosshairsView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.crosshairOpacity, in: 0.1...1.0, step: 0.05)
+                        .accessibilityLabel("Opacity")
+                        .accessibilityValue("\(Int(model.crosshairOpacity * 100))%")
                 }
 
                 // Center radius
@@ -81,6 +83,8 @@ struct CrosshairsView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.centerRadius, in: 5...60, step: 5)
+                        .accessibilityLabel("Center Radius")
+                        .accessibilityValue("\(Int(model.centerRadius)) pixels")
                 }
 
                 // Thickness
@@ -95,6 +99,8 @@ struct CrosshairsView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.thickness, in: 1...10, step: 1)
+                        .accessibilityLabel("Thickness")
+                        .accessibilityValue("\(Int(model.thickness)) pixels")
                 }
 
                 // Border color
@@ -103,7 +109,7 @@ struct CrosshairsView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    ColorPicker("", selection: Binding(
+                    ColorPicker("Border Color", selection: Binding(
                         get: { Color(nsColor: model.borderColor) },
                         set: { model.borderColor = NSColor($0) }
                     ))
@@ -122,6 +128,8 @@ struct CrosshairsView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.borderSize, in: 0...5, step: 1)
+                        .accessibilityLabel("Border Size")
+                        .accessibilityValue("\(Int(model.borderSize)) pixels")
                 }
             }
             } // VStack inside ScrollView

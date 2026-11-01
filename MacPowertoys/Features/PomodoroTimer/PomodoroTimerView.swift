@@ -95,6 +95,7 @@ struct PomodoroTimerView: View {
             }
             .buttonStyle(.plain)
             .help("Reset")
+            .accessibilityLabel("Reset")
 
             // Start / Pause
             Button {
@@ -115,6 +116,7 @@ struct PomodoroTimerView: View {
             }
             .buttonStyle(.plain)
             .help(model.isRunning ? "Pause" : "Start")
+            .accessibilityLabel(model.isRunning ? "Pause" : "Start")
 
             // Skip
             Button {
@@ -130,6 +132,7 @@ struct PomodoroTimerView: View {
             }
             .buttonStyle(.plain)
             .help("Skip to next phase")
+            .accessibilityLabel("Skip to next phase")
             .disabled(model.currentPhase == .idle)
         }
         .frame(maxWidth: .infinity)

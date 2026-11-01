@@ -198,7 +198,7 @@ struct QuickLaunchPanelContent: View {
 
             Spacer()
 
-            if index == 0 {
+            if model.selectedIndex == index {
                 Text("↩")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.tertiary)

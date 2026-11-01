@@ -53,7 +53,7 @@ struct FindMyMouseView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Picker("", selection: $model.activationMethod) {
+                    Picker("Activation Method", selection: $model.activationMethod) {
                         ForEach(ActivationMethod.allCases) { method in
                             Text(method.rawValue).tag(method)
                         }
@@ -74,6 +74,8 @@ struct FindMyMouseView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.overlayOpacity, in: 0.1...1.0, step: 0.05)
+                        .accessibilityLabel("Overlay Opacity")
+                        .accessibilityValue("\(Int(model.overlayOpacity * 100))%")
                 }
 
                 // Background color
@@ -82,7 +84,7 @@ struct FindMyMouseView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    ColorPicker("", selection: Binding(
+                    ColorPicker("Background", selection: Binding(
                         get: { Color(nsColor: model.backgroundColor) },
                         set: { model.backgroundColor = NSColor($0) }
                     ))
@@ -101,6 +103,8 @@ struct FindMyMouseView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.spotlightRadius, in: 50...300, step: 10)
+                        .accessibilityLabel("Spotlight Radius")
+                        .accessibilityValue("\(Int(model.spotlightRadius)) pixels")
                 }
 
                 // Animation duration
@@ -115,6 +119,8 @@ struct FindMyMouseView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.animationDurationMs, in: 100...2000, step: 50)
+                        .accessibilityLabel("Animation Duration")
+                        .accessibilityValue("\(Int(model.animationDurationMs)) milliseconds")
                 }
 
                 Divider()

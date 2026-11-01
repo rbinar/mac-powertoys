@@ -43,7 +43,7 @@ struct ScreenRulerView: View {
                     Text("Default Mode")
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
-                    Picker("", selection: $model.measurementMode) {
+                    Picker("Default Mode", selection: $model.measurementMode) {
                         ForEach(MeasurementMode.allCases, id: \.self) { mode in
                             Text(mode.rawValue).tag(mode)
                         }
@@ -64,6 +64,8 @@ struct ScreenRulerView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.pixelTolerance, in: 0...255, step: 1)
+                        .accessibilityLabel("Pixel Tolerance")
+                        .accessibilityValue("\(Int(model.pixelTolerance))")
                 }
 
                 // Per-channel edge detection
@@ -96,7 +98,7 @@ struct ScreenRulerView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Picker("", selection: $model.extraUnit) {
+                    Picker("Extra Unit", selection: $model.extraUnit) {
                         ForEach(ExtraUnit.allCases, id: \.self) { unit in
                             Text(unit.rawValue).tag(unit)
                         }
@@ -112,7 +114,7 @@ struct ScreenRulerView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    ColorPicker("", selection: Binding(
+                    ColorPicker("Line Color", selection: Binding(
                         get: { Color(nsColor: model.lineColor) },
                         set: { model.lineColor = NSColor($0) }
                     ))

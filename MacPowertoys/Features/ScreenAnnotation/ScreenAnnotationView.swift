@@ -55,7 +55,7 @@ struct ScreenAnnotationView: View {
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                 Spacer()
-                ColorPicker("", selection: Binding(
+                ColorPicker("Default Color", selection: Binding(
                     get: { Color(nsColor: model.defaultColor) },
                     set: { model.defaultColor = NSColor($0) }
                 ))
@@ -74,6 +74,8 @@ struct ScreenAnnotationView: View {
                         .foregroundStyle(.tertiary)
                 }
                 Slider(value: $model.defaultLineWidth, in: 1...12, step: 1)
+                    .accessibilityLabel("Default Line Width")
+                    .accessibilityValue("\(Int(model.defaultLineWidth)) pixels")
             }
 
             // Dim background

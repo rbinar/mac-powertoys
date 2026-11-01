@@ -53,6 +53,7 @@ struct ImageOptimizerView: View {
     // MARK: - Drop Zone
 
     private var dropZoneSection: some View {
+        Button { model.selectImages() } label: {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
                 .fill(model.isDragTargeted ? Color.accentColor.opacity(0.08) : Color.white.opacity(0.03))
@@ -77,7 +78,10 @@ struct ImageOptimizerView: View {
             }
             .padding(.vertical, 24)
         }
-        .onTapGesture { model.selectImages() }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Select images")
+        .accessibilityHint("Or drop images here")
         .onDrop(of: [.fileURL], isTargeted: $model.isDragTargeted) { providers in
             Task {
                 var urls: [URL] = []
@@ -158,6 +162,8 @@ struct ImageOptimizerView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(.secondary)
+                                .accessibilityLabel("Reveal \(item.name) in Finder")
+                                .help("Reveal in Finder")
                             }
                             if !item.isProcessed {
                                 Button {
@@ -168,6 +174,8 @@ struct ImageOptimizerView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(.tertiary)
+                                .accessibilityLabel("Remove \(item.name)")
+                                .help("Remove \(item.name)")
                             }
                         }
                     }
@@ -200,7 +208,7 @@ struct ImageOptimizerView: View {
             Text("Output Format")
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
-            Picker("", selection: $model.outputFormat) {
+            Picker("Output Format", selection: $model.outputFormat) {
                 ForEach(ImageOutputFormat.available) { format in
                     Text(format.rawValue).tag(format)
                 }
@@ -220,6 +228,8 @@ struct ImageOptimizerView: View {
             }
             Slider(value: $model.compressionQuality, in: 0.1...1.0, step: 0.05)
                 .controlSize(.small)
+                .accessibilityLabel("Quality")
+                .accessibilityValue("\(Int(model.compressionQuality * 100)) percent")
             if model.outputFormat == .png {
                 Text("PNG is lossless — quality affects JPEG/WebP output")
                     .font(.system(.caption2, design: .rounded))
@@ -237,7 +247,7 @@ struct ImageOptimizerView: View {
 
             // Resize options
             if model.shouldResize {
-                Picker("", selection: $model.resizeMode) {
+                Picker("Resize Mode", selection: $model.resizeMode) {
                     ForEach(ResizeMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
@@ -296,6 +306,8 @@ struct ImageOptimizerView: View {
                         step: 5
                     )
                     .controlSize(.small)
+                    .accessibilityLabel("Scale")
+                    .accessibilityValue("\(model.resizePercent) percent")
                 }
             }
         }
@@ -352,6 +364,7 @@ struct ImageOptimizerView: View {
                     Image(systemName: "arrow.counterclockwise")
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel("Reset")
                 .help("Reset")
             }
         }
@@ -453,6 +466,7 @@ struct ImageOptimizerView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
                             ForEach(processedItems) { pi in
+                                Button { previewItemID = pi.id } label: {
                                 Text(pi.name)
                                     .lineLimit(1)
                                     .font(.system(.caption2, design: .rounded))
@@ -463,7 +477,9 @@ struct ImageOptimizerView: View {
                                             ? Color.accentColor.opacity(0.3)
                                             : Color.white.opacity(0.08))
                                     )
-                                    .onTapGesture { previewItemID = pi.id }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityAddTraits(previewItemID == pi.id ? .isSelected : [])
                             }
                         }
                     }

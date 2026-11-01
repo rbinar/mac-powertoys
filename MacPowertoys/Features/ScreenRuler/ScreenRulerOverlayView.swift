@@ -230,7 +230,7 @@ class ScreenRulerOverlayView: NSView {
 
 // MARK: - Toolbar View
 
-class ScreenRulerToolbarView: NSView {
+class ScreenRulerToolbarView: NSView, NSViewToolTipOwner {
     var currentMode: MeasurementMode = .spacing {
         didSet { setNeedsDisplay(bounds) }
     }
@@ -274,6 +274,22 @@ class ScreenRulerToolbarView: NSView {
         let area = NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways], owner: self, userInfo: nil)
         addTrackingArea(area)
         customTrackingAreas.append(area)
+
+        removeAllToolTips()
+        let y = (bounds.height - itemSize) / 2
+        var x = padding
+        for i in 0..<modes.count {
+            addToolTip(CGRect(x: x, y: y, width: itemSize, height: itemSize), owner: self, userData: UnsafeMutableRawPointer(bitPattern: i + 1))
+            x += itemSize + gap
+        }
+        x += separatorGap - gap
+        addToolTip(CGRect(x: x, y: y, width: itemSize, height: itemSize), owner: self, userData: UnsafeMutableRawPointer(bitPattern: modes.count + 1))
+    }
+
+    func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
+        let idx = Int(bitPattern: data) - 1
+        if idx >= 0 && idx < modes.count { return "\(modes[idx].mode.rawValue) (⌘\(idx + 1))" }
+        return "Close (Esc)"
     }
 
     override func mouseMoved(with event: NSEvent) {
@@ -371,7 +387,7 @@ class ScreenRulerToolbarView: NSView {
     }
 
     private func drawSFSymbol(_ name: String, in rect: CGRect, size: CGFloat, color: NSColor) {
-        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return }
+        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: name == "xmark" ? "Close" : modes.first(where: { $0.sfSymbol == name })?.mode.rawValue) else { return }
         let config = NSImage.SymbolConfiguration(pointSize: size, weight: .medium)
         let configured = image.withSymbolConfiguration(config) ?? image
 

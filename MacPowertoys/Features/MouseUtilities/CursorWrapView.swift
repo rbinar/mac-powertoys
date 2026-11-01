@@ -59,6 +59,8 @@ struct CursorWrapView: View {
                             .foregroundStyle(.tertiary)
                     }
                     Slider(value: $model.edgeMargin, in: 0...10, step: 1)
+                        .accessibilityLabel("Edge Margin")
+                        .accessibilityValue("\(Int(model.edgeMargin)) pixels")
                 }
             }
             

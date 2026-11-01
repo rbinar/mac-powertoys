@@ -50,6 +50,8 @@ struct ZoomItView: View {
                         .foregroundStyle(.tertiary)
                 }
                 Slider(value: $model.magnificationLevel, in: 1.25...4.0, step: 0.25)
+                .accessibilityLabel("Magnification Level")
+                .accessibilityValue(String(format: "%.2fx", model.magnificationLevel))
             }
 
             // Animate Zoom

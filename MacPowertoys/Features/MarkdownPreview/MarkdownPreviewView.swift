@@ -76,7 +76,8 @@ struct MarkdownPreviewView: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Toggle("", isOn: $model.isDarkTheme)
+                    Toggle("Dark Theme", isOn: $model.isDarkTheme)
+                        .labelsHidden()
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                 }

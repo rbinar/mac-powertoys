@@ -100,6 +100,8 @@ struct QuickLaunchView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .help("Add shortcut")
+                .accessibilityLabel("Add shortcut")
             }
 
             if model.isAddingEntry {
@@ -167,6 +169,7 @@ struct CustomEntryRow: View {
                     }
                     .buttonStyle(.plain)
                     .help("Edit")
+                    .accessibilityLabel("Edit \(entry.name)")
 
                     Button { showDeleteConfirm = true } label: {
                         Image(systemName: "trash")
@@ -175,6 +178,7 @@ struct CustomEntryRow: View {
                     }
                     .buttonStyle(.plain)
                     .help("Delete")
+                    .accessibilityLabel("Delete \(entry.name)")
                 }
                 .transition(.opacity)
             }
@@ -187,6 +191,8 @@ struct CustomEntryRow: View {
                 .fill(isHovered ? .white.opacity(0.12) : .white.opacity(0.07))
         )
         .onHover { hovering in isHovered = hovering }
+        .accessibilityAction(named: "Edit") { model.editingEntry = entry }
+        .accessibilityAction(named: "Delete") { showDeleteConfirm = true }
         .contextMenu {
             Button("Edit") {
                 model.editingEntry = entry
@@ -326,8 +332,10 @@ struct EntryFormView: View {
                     .buttonStyle(.plain)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
+                    .keyboardShortcut(.cancelAction)
 
                 Button(isEditing ? "Update" : "Save") { save() }
+                    .keyboardShortcut(.defaultAction)
                     .buttonStyle(.plain)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.blue)

@@ -20,7 +20,7 @@ struct GitHubNotifierView: View {
                 Text("GitHub Notifier")
                     .font(.system(.headline, design: .rounded))
                 Spacer()
-                Toggle("", isOn: $model.isEnabled)
+                Toggle("Enable GitHub Notifier", isOn: $model.isEnabled)
                     .toggleStyle(.switch)
                     .labelsHidden()
                     .controlSize(.mini)
@@ -220,6 +220,8 @@ struct GitHubNotifierView: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Copy code")
+                    .help("Copy code")
                 }
             }
             HStack(spacing: 4) {
@@ -376,7 +378,7 @@ struct GitHubNotifierView: View {
     private func repoRow(for repoName: String) -> some View {
         let isWatched = model.watchItems.contains { $0.name == repoName && $0.type == .repo }
         HStack(spacing: 6) {
-            Toggle("", isOn: Binding(
+            Toggle("Watch repository \(repoName)", isOn: Binding(
                 get: { isWatched },
                 set: { enabled in
                     if enabled {
@@ -408,7 +410,7 @@ struct GitHubNotifierView: View {
     private func orgRow(for orgName: String) -> some View {
         let isWatched = model.watchItems.contains { $0.name == orgName && $0.type == .organization }
         HStack(spacing: 6) {
-            Toggle("", isOn: Binding(
+            Toggle("Watch organization \(orgName)", isOn: Binding(
                 get: { isWatched },
                 set: { enabled in
                     if enabled {
@@ -448,7 +450,7 @@ struct GitHubNotifierView: View {
 
             Spacer()
 
-            Toggle("", isOn: Binding(
+            Toggle("Enable watching \(item.name)", isOn: Binding(
                 get: { item.isActive },
                 set: { _ in model.toggleWatchItem(id: item.id) }
             ))
@@ -464,6 +466,8 @@ struct GitHubNotifierView: View {
             }
             .buttonStyle(.plain)
             .font(.system(.caption))
+            .accessibilityLabel("Stop watching \(item.name)")
+            .help("Stop watching \(item.name)")
         }
     }
 
@@ -505,7 +509,7 @@ struct GitHubNotifierView: View {
                 .foregroundStyle(isOn ? .primary : .tertiary)
                 .lineLimit(1)
             Spacer()
-            Toggle("", isOn: Binding(
+            Toggle("\(eventType.displayName) events", isOn: Binding(
                 get: { isOn },
                 set: { enabled in
                     if enabled {
@@ -549,7 +553,7 @@ struct GitHubNotifierView: View {
                 Text("Notification Sound")
                     .font(.system(.subheadline, design: .rounded))
                 Spacer()
-                Toggle("", isOn: $model.notificationSound)
+                Toggle("Notification Sound", isOn: $model.notificationSound)
                     .toggleStyle(.switch)
                     .labelsHidden()
                     .controlSize(.mini)

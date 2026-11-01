@@ -213,12 +213,13 @@ struct PdfToolsWindowView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.medium)
 
-                    Picker("", selection: $model.splitMode) {
+                    Picker("Split Mode", selection: $model.splitMode) {
                         ForEach(SplitMode.allCases, id: \.self) { mode in
                             Text(mode.displayName).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .controlSize(.mini)
 
                     switch model.splitMode {
@@ -280,12 +281,13 @@ struct PdfToolsWindowView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.medium)
 
-                    Picker("", selection: $model.compressQuality) {
+                    Picker("Compress Quality", selection: $model.compressQuality) {
                         ForEach(CompressQuality.allCases, id: \.self) { quality in
                             Text(quality.displayName).tag(quality)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .controlSize(.mini)
 
                     Text(compressQualityDescription)
@@ -330,12 +332,13 @@ struct PdfToolsWindowView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.medium)
 
-                    Picker("", selection: $model.rotationAngle) {
+                    Picker("Rotation Angle", selection: $model.rotationAngle) {
                         ForEach(RotationAngle.allCases, id: \.self) { angle in
                             Text(angle.displayName).tag(angle)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .controlSize(.mini)
 
                     Toggle("All pages", isOn: $model.rotateAllPages)
@@ -379,24 +382,26 @@ struct PdfToolsWindowView: View {
                         .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.medium)
 
-                    Picker("", selection: $model.imageExportFormat) {
+                    Picker("Image Format", selection: $model.imageExportFormat) {
                         ForEach(ImageExportFormat.allCases, id: \.self) { format in
                             Text(format.displayName).tag(format)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .controlSize(.mini)
 
                     Text("DPI")
                         .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.medium)
 
-                    Picker("", selection: $model.imageExportDPI) {
+                    Picker("Export DPI", selection: $model.imageExportDPI) {
                         Text("72").tag(72)
                         Text("150").tag(150)
                         Text("300").tag(300)
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .controlSize(.mini)
 
                     Text(dpiDescription)
@@ -569,6 +574,8 @@ struct PdfToolsWindowView: View {
                             .font(.caption)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Remove \(item.name)")
+                    .help("Remove \(item.name)")
                 }
                 .padding(.vertical, 5)
                 .padding(.horizontal, 10)

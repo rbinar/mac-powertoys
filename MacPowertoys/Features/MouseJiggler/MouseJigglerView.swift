@@ -13,6 +13,7 @@ struct MouseJigglerView: View {
                         .labelStyle(.iconOnly)
                 }
                 .buttonStyle(.plain)
+                .help("Back")
 
                 Text("Mouse Jiggler")
                     .font(.system(.headline, design: .rounded))
@@ -49,6 +50,8 @@ struct MouseJigglerView: View {
                         get: { Double(model.jiggleIntervalSeconds) },
                         set: { model.jiggleIntervalSeconds = Int($0) }
                     ), in: 10...120, step: 5)
+                    .accessibilityLabel("Jiggle Interval")
+                    .accessibilityValue("\(model.jiggleIntervalSeconds) seconds")
                 }
             }
             

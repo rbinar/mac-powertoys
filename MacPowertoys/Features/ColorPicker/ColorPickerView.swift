@@ -47,6 +47,7 @@ struct ColorPickerView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Open color picker")
+                .accessibilityLabel("Open color picker")
             }
 
             Divider()
@@ -96,6 +97,7 @@ struct ValueRow: View {
                 Image(systemName: copied ? "checkmark" : "doc.on.doc")
             }
             .help("Copy")
+            .accessibilityLabel("Copy \(title) value")
         }
     }
 }
@@ -120,6 +122,7 @@ struct SwatchView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Use shade \(ColorMath.hexString(shades[i]))")
+                    .accessibilityLabel("Use shade \(ColorMath.hexString(shades[i]))")
                 } else {
                     RoundedRectangle(cornerRadius: swatchCornerRadius)
                         .fill(Color(nsColor: shades[i]))
@@ -161,6 +164,7 @@ struct ColorHistoryView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Select from color history: \(ColorMath.hexString(color))")
+                .accessibilityLabel("Select from color history: \(ColorMath.hexString(color))")
             }
         }
     }

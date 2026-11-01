@@ -53,6 +53,8 @@ struct PortManagerView: View {
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Clear search")
+                            .help("Clear search")
                         }
                     }
                     .padding(6)
@@ -107,6 +109,8 @@ struct PortManagerView: View {
                     }
                     .menuStyle(.borderlessButton)
                     .fixedSize()
+                    .accessibilityLabel("Sort, filter and refresh options")
+                    .help("Sort, filter and refresh options")
                 }
 
                 // Status bar: count + active filters
@@ -241,6 +245,8 @@ struct PortManagerView: View {
                     .font(.system(size: 7, weight: .bold))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(text) filter")
+            .help("Remove \(text) filter")
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
@@ -332,6 +338,7 @@ struct PortInfoRow: View {
                         .foregroundColor(.red.opacity(0.8))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Terminate \(portInfo.command) on port \(portInfo.port)")
                 .help("Terminate (SIGTERM)")
                 .transition(.opacity)
             }
@@ -352,6 +359,9 @@ struct PortInfoRow: View {
             }
         }
         .onTapGesture { onSelect() }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { onSelect() }
+        .accessibilityAction(named: "Terminate") { onKill() }
         .contextMenu {
             Button(action: { onCopy(String(portInfo.port)) }) {
                 Label("Copy Port", systemImage: "doc.on.doc")

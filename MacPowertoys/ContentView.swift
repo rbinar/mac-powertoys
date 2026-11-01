@@ -80,6 +80,7 @@ struct CompactFeatureCard: View {
     @State private var isHovered = false
     
     var body: some View {
+        Button(action: action) {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: icon)
@@ -96,10 +97,12 @@ struct CompactFeatureCard: View {
                     )
                 Spacer()
                 if let binding = isEnabled {
-                    Toggle("", isOn: binding)
+                    // Layout placeholder only; the real toggle is overlaid below, outside the button.
+                    Toggle("Enable \(title)", isOn: binding)
                         .toggleStyle(.switch)
                         .labelsHidden()
                         .controlSize(.mini)
+                        .hidden()
                 } else {
                     Image(systemName: "chevron.right")
                         .font(.caption2)
@@ -120,13 +123,24 @@ struct CompactFeatureCard: View {
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .onTapGesture {
-            action()
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(statusText)")
+        .overlay(alignment: .topTrailing) {
+            if let binding = isEnabled {
+                Toggle("Enable \(title)", isOn: binding)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .controlSize(.mini)
+                    .frame(height: 28)
+                    .padding(10)
+            }
         }
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(isHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
         )
+        .accessibilityElement(children: .contain)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
@@ -270,6 +284,7 @@ struct ContentView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Pick color from screen")
                 .help("Pick from screen")
 
                 SwatchView(
@@ -299,6 +314,7 @@ struct ContentView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Copy \(model.hexString)")
                 .help("Copy \(model.hexString)")
 
                 Circle()
@@ -417,8 +433,12 @@ struct ContentView: View {
                 Button { goBack() } label: {
                     Label("Back", systemImage: "chevron.left")
                         .labelStyle(.iconOnly)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Back")
+                .help("Back")
 
                 Text("Mouse Utilities")
                     .font(.system(.headline, design: .rounded))
@@ -502,14 +522,14 @@ struct ContentView: View {
                     HStack(spacing: 4) {
                         Text(description)
                             .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                         if let shortcut {
                             Text("·")
                                 .font(.system(.caption2, design: .rounded))
-                                .foregroundStyle(.quaternary)
+                                .foregroundStyle(.secondary)
                             Text(shortcut)
                                 .font(.system(.caption2, design: .monospaced))
-                                .foregroundStyle(.quaternary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -519,7 +539,7 @@ struct ContentView: View {
 
             Spacer()
 
-            Toggle("", isOn: isEnabled)
+            Toggle("Enable \(title)", isOn: isEnabled)
                 .toggleStyle(.switch)
                 .labelsHidden()
                 .controlSize(.mini)

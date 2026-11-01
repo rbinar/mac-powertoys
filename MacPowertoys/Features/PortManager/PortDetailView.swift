@@ -68,6 +68,8 @@ struct PortDetailView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
+                .accessibilityLabel("Process actions")
+                .help("Process actions")
             }
             
             Divider()

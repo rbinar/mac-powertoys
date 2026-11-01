@@ -15,13 +15,15 @@ struct ClipboardManagerView: View {
                         .labelStyle(.iconOnly)
                 }
                 .buttonStyle(.plain)
+                .help("Back")
                 
                 Text("Clipboard Manager")
                     .font(.system(.headline, design: .rounded))
                 
                 Spacer()
                 
-                Toggle("", isOn: $model.isEnabled)
+                Toggle("Enable Clipboard Manager", isOn: $model.isEnabled)
+                    .labelsHidden()
                     .toggleStyle(.switch)
                     .controlSize(.mini)
             }
@@ -42,6 +44,8 @@ struct ClipboardManagerView: View {
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Clear search")
+                            .help("Clear search")
                         }
                     }
                     .padding(6)
@@ -67,6 +71,8 @@ struct ClipboardManagerView: View {
                     }
                     .menuStyle(.borderlessButton)
                     .fixedSize()
+                    .accessibilityLabel("Clipboard options")
+                    .help("Clipboard options")
                 }
                 
                 // List
@@ -193,12 +199,14 @@ struct ClipboardItemRow: View {
                                 .foregroundColor(showCopiedFeedback ? .green : .primary)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Copy to clipboard")
                         .help("Copy to clipboard")
                         
                         Button(action: { model.togglePin(item) }) {
                             Image(systemName: item.isPinned ? "pin.slash" : "pin")
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(item.isPinned ? "Unpin" : "Pin")
                         .help(item.isPinned ? "Unpin" : "Pin")
                         
                         Button(action: { model.deleteItem(item) }) {
@@ -206,6 +214,7 @@ struct ClipboardItemRow: View {
                                 .foregroundColor(.red)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Delete")
                         .help("Delete")
                     }
                     .padding(.top, 4)
@@ -220,6 +229,9 @@ struct ClipboardItemRow: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        .accessibilityAction(named: "Copy") { model.copyItemToPasteboard(item) }
+        .accessibilityAction(named: item.isPinned ? "Unpin" : "Pin") { model.togglePin(item) }
+        .accessibilityAction(named: "Delete") { model.deleteItem(item) }
         .contextMenu {
             Button(action: { model.copyItemToPasteboard(item) }) {
                 Label("Copy", systemImage: "doc.on.doc")

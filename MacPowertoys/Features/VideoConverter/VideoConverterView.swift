@@ -188,6 +188,8 @@ struct VideoConverterView: View {
                                     .font(.caption)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Copy Homebrew install command")
+                            .help("Copy Homebrew install command")
                         }
                         
                         Text("Then install FFmpeg:")
@@ -214,6 +216,8 @@ struct VideoConverterView: View {
                                     .font(.caption)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Copy FFmpeg install command")
+                            .help("Copy FFmpeg install command")
                         }
                     }
                     .padding(10)
@@ -244,6 +248,9 @@ struct VideoConverterView: View {
     // MARK: - Input Section (Drag & Drop)
     
     private var inputSection: some View {
+        Button {
+            model.selectInputFile()
+        } label: {
         VStack(spacing: 10) {
             Image(systemName: "film.fill")
                 .font(.system(size: 28))
@@ -270,9 +277,10 @@ struct VideoConverterView: View {
                         .fill(model.isDragTargeted ? Color.accentColor.opacity(0.08) : Color.white.opacity(0.03))
                 )
         )
-        .onTapGesture {
-            model.selectInputFile()
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Select video")
+        .accessibilityHint("Or drop a video here")
         .onDrop(of: [.fileURL], isTargeted: $model.isDragTargeted) { providers in
             handleDrop(providers)
         }
@@ -300,6 +308,8 @@ struct VideoConverterView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Remove input video")
+                .help("Remove input video")
             }
             
             if let metadata = model.inputMetadata {
@@ -389,6 +399,7 @@ struct VideoConverterView: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(model.selectedFormat == format ? .isSelected : [])
     }
     
     // MARK: - Video Settings
@@ -508,6 +519,8 @@ struct VideoConverterView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Cancel conversion")
+                .help("Cancel conversion")
             }
             
             ProgressView(value: progress)
@@ -718,6 +731,8 @@ struct VideoConverterView: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Reveal \(item.inputName) output in Finder")
+                    .help("Reveal in Finder")
                 }
                 .padding(.vertical, 3)
             }
