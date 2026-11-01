@@ -31,6 +31,7 @@ struct GitHubNotifierView: View {
                 Text("Enable to start monitoring GitHub events.")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
