@@ -36,6 +36,8 @@ final class CrosshairsModel: ObservableObject {
     private var trackingTimer: Timer?
     private var shortcutGlobalMonitor: Any?
     private var shortcutLocalMonitor: Any?
+    private var escGlobalMonitor: Any?
+    private var escLocalMonitor: Any?
     private var lastOptionPressTime: Date?
     private let doublePressInterval: TimeInterval = 0.4
     private let rightOptionKeyCode: UInt16 = 0x3D
@@ -72,6 +74,7 @@ final class CrosshairsModel: ObservableObject {
     private func activate() {
         guard !isActive else { return }
         isActive = true
+        startEscMonitors()
 
         for screen in NSScreen.screens {
             let frame = screen.frame
@@ -103,11 +106,31 @@ final class CrosshairsModel: ObservableObject {
     private func deactivate() {
         guard isActive else { return }
         isActive = false
+        stopEscMonitors()
         stopTracking()
         for entry in overlayWindows {
             entry.window.orderOut(nil)
         }
         overlayWindows.removeAll()
+    }
+
+    // MARK: - ESC to turn off
+
+    private func startEscMonitors() {
+        stopEscMonitors()
+        escGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.keyCode == 53 else { return }
+            Task { @MainActor in self?.isEnabled = false }
+        }
+        escLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if event.keyCode == 53 { Task { @MainActor in self?.isEnabled = false } }
+            return event
+        }
+    }
+
+    private func stopEscMonitors() {
+        if let m = escGlobalMonitor { NSEvent.removeMonitor(m); escGlobalMonitor = nil }
+        if let m = escLocalMonitor { NSEvent.removeMonitor(m); escLocalMonitor = nil }
     }
 
     // MARK: - Tracking

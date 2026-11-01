@@ -196,23 +196,23 @@ struct ContentView: View {
 
     private var featureCards: [FeatureCardSpec] {
         [
-            FeatureCardSpec(title: "Screen Ruler", icon: "ruler", statusText: screenRulerModel.isEnabled ? "Active" : "Disabled", isEnabled: $screenRulerModel.isEnabled, feature: .screenRuler),
-            FeatureCardSpec(title: "ZoomIt", icon: "magnifyingglass", statusText: zoomItModel.isEnabled ? "Active" : "Disabled", isEnabled: $zoomItModel.isEnabled, feature: .zoomIt),
+            FeatureCardSpec(title: "Screen Ruler", icon: "ruler", statusText: screenRulerModel.isActive ? "Measuring" : (screenRulerModel.isEnabled ? "⌃⌥R ready" : "Off"), isEnabled: $screenRulerModel.isEnabled, feature: .screenRuler),
+            FeatureCardSpec(title: "ZoomIt", icon: "magnifyingglass", statusText: (zoomItModel.isZooming || zoomItModel.isLiveZooming) ? "Zooming" : (zoomItModel.isEnabled ? "⌃⌥Z / ⌃⌥L ready" : "Off"), isEnabled: $zoomItModel.isEnabled, feature: .zoomIt),
             FeatureCardSpec(title: "Mouse Utilities", icon: "cursorarrow", statusText: mouseUtilitiesStatusText, isEnabled: nil, feature: .mouseUtilitiesHub),
-            FeatureCardSpec(title: "Mouse Jiggler", icon: "computermouse.fill", statusText: mouseJigglerModel.isEnabled ? "Active" : "Disabled", isEnabled: $mouseJigglerModel.isEnabled, feature: .mouseJiggler),
-            FeatureCardSpec(title: "Awake", icon: "cup.and.saucer.fill", statusText: awakeModel.isEnabled ? (awakeModel.isIndefinite ? "Indefinite" : awakeModel.formattedRemaining) : "Disabled", isEnabled: $awakeModel.isEnabled, feature: .awake),
+            FeatureCardSpec(title: "Mouse Jiggler", icon: "computermouse.fill", statusText: mouseJigglerModel.isEnabled ? "Running" : "Off", isEnabled: $mouseJigglerModel.isEnabled, feature: .mouseJiggler),
+            FeatureCardSpec(title: "Awake", icon: "cup.and.saucer.fill", statusText: awakeModel.isEnabled ? (awakeModel.isIndefinite ? "Indefinite" : awakeModel.formattedRemaining) : "Off", isEnabled: $awakeModel.isEnabled, feature: .awake),
             FeatureCardSpec(title: "Pomodoro Timer", icon: "timer", statusText: pomodoroTimerStatusText, isEnabled: $pomodoroTimerModel.isEnabled, feature: .pomodoroTimer),
-            FeatureCardSpec(title: "Clipboard Manager", icon: "list.clipboard", statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Disabled", isEnabled: $clipboardManagerModel.isEnabled, feature: .clipboardManager),
+            FeatureCardSpec(title: "Clipboard Manager", icon: "list.clipboard", statusText: clipboardManagerModel.isEnabled ? "\(clipboardManagerModel.clipboardItems.count) items" : "Off", isEnabled: $clipboardManagerModel.isEnabled, feature: .clipboardManager),
             FeatureCardSpec(title: "Markdown Preview", icon: "doc.richtext", statusText: "\(markdownPreviewModel.recentFiles.count) recent", isEnabled: nil, feature: .markdownPreview),
-            FeatureCardSpec(title: "Screen Annotation", icon: "pencil.tip.crop.circle", statusText: screenAnnotationModel.isEnabled ? "Active" : "Disabled", isEnabled: $screenAnnotationModel.isEnabled, feature: .screenAnnotation),
+            FeatureCardSpec(title: "Screen Annotation", icon: "pencil.tip.crop.circle", statusText: screenAnnotationModel.isActive ? "Drawing" : (screenAnnotationModel.isEnabled ? "⌃⌥D ready" : "Off"), isEnabled: $screenAnnotationModel.isEnabled, feature: .screenAnnotation),
             FeatureCardSpec(title: "Video Converter", icon: "film", statusText: "Ready", isEnabled: nil, feature: .videoConverter),
             FeatureCardSpec(title: "PDF Tools", icon: "doc.badge.gearshape", statusText: "Ready", isEnabled: nil, feature: .pdfTools),
             FeatureCardSpec(title: "Quick Launch", icon: "bolt.fill", statusText: "\(quickLaunchModel.customEntries.count) shortcuts", isEnabled: nil, feature: .quickLaunch),
             FeatureCardSpec(title: "Test Data Generator", icon: "wand.and.stars", statusText: "Ready", isEnabled: nil, feature: .testDataGenerator),
             FeatureCardSpec(title: "Speech to Text", icon: "waveform.badge.mic", statusText: speechToTextModel.hubStatusText, isEnabled: nil, feature: .speechToText),
-            FeatureCardSpec(title: "Port Manager", icon: "network", statusText: portManagerModel.isEnabled ? "\(portManagerModel.ports.count) ports" : "Disabled", isEnabled: $portManagerModel.isEnabled, feature: .portManager),
-            FeatureCardSpec(title: "System Info", icon: "gauge.with.dots.needle.33percent", statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Disabled", isEnabled: $systemInfoModel.isEnabled, feature: .systemInfo),
-            FeatureCardSpec(title: "Screen Capture", icon: "camera.viewfinder", statusText: screenCaptureModel.isEnabled ? "⌃⌥4 Active" : "Disabled", isEnabled: $screenCaptureModel.isEnabled, feature: .screenCapture),
+            FeatureCardSpec(title: "Port Manager", icon: "network", statusText: portManagerModel.isEnabled ? "\(portManagerModel.ports.count) ports" : "Off", isEnabled: $portManagerModel.isEnabled, feature: .portManager),
+            FeatureCardSpec(title: "System Info", icon: "gauge.with.dots.needle.33percent", statusText: systemInfoModel.isEnabled ? systemInfoModel.hubStatusText : "Off", isEnabled: $systemInfoModel.isEnabled, feature: .systemInfo),
+            FeatureCardSpec(title: "Screen Capture", icon: "camera.viewfinder", statusText: screenCaptureModel.isEnabled ? "⌃⌥4 ready" : "Off", isEnabled: $screenCaptureModel.isEnabled, feature: .screenCapture),
             FeatureCardSpec(title: "Image Optimizer", icon: "photo.badge.arrow.down", statusText: imageOptimizerModel.items.isEmpty ? "Ready" : "\(imageOptimizerModel.items.count) images", isEnabled: nil, feature: .imageOptimizer),
             FeatureCardSpec(title: "GitHub Notifier", icon: "bell.badge.circle", statusText: gitHubNotifierModel.hubStatusText, isEnabled: $gitHubNotifierModel.isEnabled, feature: .gitHubNotifier),
         ]
@@ -537,12 +537,12 @@ struct ContentView: View {
             cursorWrapModel.isEnabled
         ].filter { $0 }.count
 
-        if count == 0 { return "All disabled" }
+        if count == 0 { return "All off" }
         return "\(count) of 4 enabled"
     }
 
     private var pomodoroTimerStatusText: String {
-        guard pomodoroTimerModel.isEnabled else { return "Disabled" }
+        guard pomodoroTimerModel.isEnabled else { return "Off" }
         switch pomodoroTimerModel.currentPhase {
         case .idle: return "Ready"
         case .focus: return "Focus \(pomodoroTimerModel.formattedRemaining)"

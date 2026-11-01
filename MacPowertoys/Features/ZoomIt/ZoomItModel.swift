@@ -82,6 +82,7 @@ final class ZoomItModel: ObservableObject {
     // MARK: - Private
     /// Bumped on every activate/deactivate so in-flight activation tasks can detect they are stale.
     private var activationGeneration = 0
+    private var exitHintWindow: NSWindow?
     private var overlayWindows: [(window: NSWindow, view: ZoomItOverlayView, displayID: UInt32, screen: NSScreen)] = []
     private var capturedScreens: [UInt32: CGImage] = [:]
     
@@ -188,6 +189,7 @@ final class ZoomItModel: ObservableObject {
             registerActiveMonitors()
             registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
+            showExitHintHUD("ESC or ⌃⌥Z to exit")
             NSLog("%@", "[ZoomIt] Overlay windows created and monitors registered.")
         }
     }
@@ -215,10 +217,65 @@ final class ZoomItModel: ObservableObject {
             registerActiveMonitors()
             registerEscHotKey()
             updateZoomCenter(NSEvent.mouseLocation)
+            showExitHintHUD("ESC or ⌃⌥L to exit")
             NSLog("%@", "[ZoomIt] Live zoom overlay windows created and streams started.")
         }
     }
     
+    private func showExitHintHUD(_ text: String) {
+        let hudW: CGFloat = 240
+        let hudH: CGFloat = 40
+        let mouse = NSEvent.mouseLocation
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main else { return }
+
+        let effectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: hudW, height: hudH))
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.appearance = NSAppearance(named: .darkAqua)
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = 12
+        effectView.layer?.masksToBounds = true
+
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        label.textColor = .white
+        label.sizeToFit()
+        label.frame = NSRect(
+            x: (hudW - label.frame.width) / 2,
+            y: (hudH - label.frame.height) / 2,
+            width: label.frame.width,
+            height: label.frame.height
+        )
+        effectView.addSubview(label)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: screen.frame.midX - hudW / 2, y: screen.frame.maxY - hudH - 60, width: hudW, height: hudH),
+            styleMask: .borderless,
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = effectView
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 1)
+        window.backgroundColor = .clear
+        window.isOpaque = false
+        window.hasShadow = true
+        window.ignoresMouseEvents = true
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        window.animationBehavior = .utilityWindow
+        window.orderFrontRegardless()
+
+        exitHintWindow?.orderOut(nil)
+        exitHintWindow = window
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak window] in
+            window?.orderOut(nil)
+            if self?.exitHintWindow === window {
+                self?.exitHintWindow = nil
+            }
+        }
+    }
+
     func deactivate() {
         guard isZooming || isLiveZooming else { return }
         activationGeneration += 1

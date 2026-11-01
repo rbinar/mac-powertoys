@@ -31,7 +31,11 @@ struct ScreenAnnotationView: View {
             }
             .toggleStyle(.switch)
 
-            if model.isEnabled {
+            Text(model.isEnabled ? "Start: ⌃⌥D · ESC to exit" : "Enable to use ⌃⌥D")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+
+            if model.isActive {
                 HStack {
                     Image(systemName: "circle.fill")
                         .foregroundColor(.green)
@@ -40,7 +44,9 @@ struct ScreenAnnotationView: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
+            }
 
+            Group {
                 Divider()
 
                 // Default color
@@ -111,8 +117,6 @@ struct ScreenAnnotationView: View {
                     toolRow("textformat", "Text annotation")
                 }
             }
-            } else {
-                Spacer()
             }
             
             } // VStack inside ScrollView
@@ -124,11 +128,11 @@ struct ScreenAnnotationView: View {
         HStack(spacing: 6) {
             Text(key)
                 .font(.system(.caption2, design: .monospaced))
-                .foregroundStyle(.quaternary)
+                .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .trailing)
             Text(desc)
                 .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -136,7 +140,7 @@ struct ScreenAnnotationView: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption2)
-                .foregroundStyle(.quaternary)
+                .foregroundStyle(.secondary)
                 .frame(width: 20, alignment: .center)
             Text(desc)
                 .font(.system(.caption2, design: .rounded))

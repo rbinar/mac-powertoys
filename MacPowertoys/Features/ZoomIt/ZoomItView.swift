@@ -30,7 +30,11 @@ struct ZoomItView: View {
 
             Text(model.isEnabled ? "Screen Zoom: ⌃⌥Z · Live Zoom: ⌃⌥L · ESC to exit" : "Enable to use ⌃⌥Z (Screen Zoom) and ⌃⌥L (Live Zoom)")
                 .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
+
+            Text("Screen Zoom freezes the screen; Live Zoom follows it in real time.")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
 
             Divider()
 

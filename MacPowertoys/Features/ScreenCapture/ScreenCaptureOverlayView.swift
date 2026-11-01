@@ -21,6 +21,19 @@ class ScreenCaptureOverlayView: NSView {
         NSColor.black.withAlphaComponent(0.45).setFill()
         bounds.fill()
 
+        // Hint pill (hidden once a selection starts)
+        if selectionRect == nil {
+            let hint = NSAttributedString(string: "Drag to capture · ESC to cancel", attributes: [
+                .font: NSFont.systemFont(ofSize: 13, weight: .medium),
+                .foregroundColor: NSColor.white
+            ])
+            let hs = hint.size()
+            let hintPill = NSRect(x: bounds.midX - hs.width / 2 - 12, y: bounds.maxY - hs.height - 60, width: hs.width + 24, height: hs.height + 12)
+            NSColor.black.withAlphaComponent(0.65).setFill()
+            NSBezierPath(roundedRect: hintPill, xRadius: hintPill.height / 2, yRadius: hintPill.height / 2).fill()
+            hint.draw(at: NSPoint(x: hintPill.minX + 12, y: hintPill.minY + 6))
+        }
+
         // Step 2: Punch-through + border + label for selection rect
         guard let rect = selectionRect, rect.width > 1, rect.height > 1 else { return }
 

@@ -63,12 +63,10 @@ private func annotationHotKeyHandler(nextHandler: EventHandlerCallRef?, event: E
 
     Task { @MainActor in
         switch hotKeyID.id {
-        case AnnotationHotKey.toggleID: // ⌃⌥D toggle
-            model.isEnabled.toggle()
-        case AnnotationHotKey.escID: // ESC close
-            if model.isEnabled {
-                model.isEnabled = false
-            }
+        case AnnotationHotKey.toggleID: // ⌃⌥D toggle session
+            if model.isActive { model.deactivate() } else { model.activate() }
+        case AnnotationHotKey.escID: // ESC: cancel text input, else end session
+            model.handleEscape()
         default:
             break
         }
@@ -81,9 +79,16 @@ private func annotationHotKeyHandler(nextHandler: EventHandlerCallRef?, event: E
 @MainActor
 final class ScreenAnnotationModel: ObservableObject {
     // MARK: - Settings
+    /// Arms the ⌃⌥D shortcut. Annotation only starts from the shortcut.
     @Published var isEnabled: Bool = false {
         didSet {
-            if isEnabled { activate() } else { deactivate() }
+            UserDefaults.standard.set(isEnabled, forKey: "screenAnnotation.isEnabled")
+            if isEnabled {
+                registerHotKey()
+            } else {
+                deactivate()
+                unregisterHotKey()
+            }
         }
     }
     @Published var defaultColor: NSColor = .systemRed
@@ -131,16 +136,25 @@ final class ScreenAnnotationModel: ObservableObject {
     private var eventHandlerRef: EventHandlerRef?
 
     init() {
-        registerCarbonHotKey()
+        installHotKeyHandler()
+        isEnabled = UserDefaults.standard.bool(forKey: "screenAnnotation.isEnabled")
+        if isEnabled { registerHotKey() }
     }
 
     // MARK: - Global Shortcut (⌃⌥D) via Carbon HotKey
 
-    private func registerCarbonHotKey() {
+    private func installHotKeyHandler() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(GetApplicationEventTarget(), annotationHotKeyHandler, 1, &eventType, selfPtr, &eventHandlerRef)
+    }
 
+    private func unregisterHotKey() {
+        if let ref = hotKeyRef { UnregisterEventHotKey(ref); hotKeyRef = nil }
+    }
+
+    private func registerHotKey() {
+        guard hotKeyRef == nil else { return }
         // ⌃⌥D (keyCode kVK_ANSI_D = 2)
         let hotKeyID = EventHotKeyID(signature: AnnotationHotKey.signature, id: AnnotationHotKey.toggleID)
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
@@ -172,7 +186,7 @@ final class ScreenAnnotationModel: ObservableObject {
 
     // MARK: - Activation
 
-    private func activate() {
+    fileprivate func activate() {
         guard !isActive else { return }
         isActive = true
         currentColor = defaultColor
@@ -188,7 +202,7 @@ final class ScreenAnnotationModel: ObservableObject {
         registerEscHotKey()
     }
 
-    private func deactivate() {
+    fileprivate func deactivate() {
         guard isActive else { return }
         isActive = false
         unregisterEscHotKey()
@@ -308,7 +322,7 @@ final class ScreenAnnotationModel: ObservableObject {
                 Task { @MainActor in self?.saveScreenshot() }
             },
             onClose: { [weak self] in
-                Task { @MainActor in self?.isEnabled = false }
+                Task { @MainActor in self?.deactivate() }
             }
         )
         view.currentTool = currentTool
@@ -650,8 +664,17 @@ final class ScreenAnnotationModel: ObservableObject {
         }
         // ESC to close (backup — Carbon hotkey should catch this too)
         if event.keyCode == 53 {
-            isEnabled = false
+            deactivate()
             return
+        }
+    }
+
+    /// ESC cancels an open text input first; otherwise it ends the session.
+    fileprivate func handleEscape() {
+        if textInputWindow != nil {
+            dismissTextInput()
+        } else {
+            deactivate()
         }
     }
 

@@ -11,12 +11,14 @@ enum ActivationMethod: String, CaseIterable, Identifiable {
 @MainActor
 final class FindMyMouseModel: ObservableObject {
     // MARK: - Settings
+    /// Double-tap Ctrl activation armed. The spotlight itself is `isSpotlightActive`.
     @Published var isEnabled: Bool = false {
         didSet {
+            UserDefaults.standard.set(isEnabled, forKey: "findMyMouse.isEnabled")
             if isEnabled {
-                activateSpotlight()
+                startMonitoring()
             } else {
-                dismissSpotlight()
+                stopMonitoring()
             }
         }
     }
@@ -32,16 +34,21 @@ final class FindMyMouseModel: ObservableObject {
     // MARK: - Private
     private var globalFlagMonitor: Any?
     private var localFlagMonitor: Any?
+    private var dismissGlobalMonitors: [Any] = []
+    private var dismissLocalMonitors: [Any] = []
+    private var lastClickDismissTime: Date?
     private var lastCtrlPressTime: Date?
     private var overlayWindows: [FindMyMouseOverlayWindow] = []
     private var cursorTrackingTimer: Timer?
     private let doublePressInterval: TimeInterval = 0.4
 
     init() {
-        startMonitoring()
+        // Assigning in init does not fire didSet, so start monitors explicitly.
+        isEnabled = UserDefaults.standard.bool(forKey: "findMyMouse.isEnabled")
+        if isEnabled { startMonitoring() }
     }
 
-    // MARK: - Monitoring (always-on double-Ctrl listener)
+    // MARK: - Monitoring (double-Ctrl listener, only while enabled)
 
     func startMonitoring() {
         stopMonitoring()
@@ -63,9 +70,8 @@ final class FindMyMouseModel: ObservableObject {
     func stopMonitoring() {
         if let m = globalFlagMonitor { NSEvent.removeMonitor(m); globalFlagMonitor = nil }
         if let m = localFlagMonitor { NSEvent.removeMonitor(m); localFlagMonitor = nil }
-        // Tear down the spotlight explicitly without mutating isEnabled. The
-        // double-Ctrl toggle and the terminate handler own isEnabled; coupling
-        // teardown to it here caused re-entrancy through the didSet.
+        // Tear down the spotlight explicitly without mutating isEnabled
+        // (avoids re-entrancy through the didSet).
         dismissSpotlight()
     }
 
@@ -85,7 +91,7 @@ final class FindMyMouseModel: ObservableObject {
         let now = Date()
         if let last = lastCtrlPressTime, now.timeIntervalSince(last) < doublePressInterval {
             lastCtrlPressTime = nil
-            isEnabled.toggle()
+            if isSpotlightActive { dismissSpotlight() } else { activateSpotlight() }
         } else {
             lastCtrlPressTime = now
         }
@@ -100,6 +106,7 @@ final class FindMyMouseModel: ObservableObject {
         // of appending a duplicate set of overlay windows that would leak.
         guard !isSpotlightActive else { return }
         isSpotlightActive = true
+        startDismissMonitors()
 
         for screen in NSScreen.screens {
             let window = FindMyMouseOverlayWindow(
@@ -119,6 +126,7 @@ final class FindMyMouseModel: ObservableObject {
     func dismissSpotlight() {
         guard isSpotlightActive else { return }
         isSpotlightActive = false
+        stopDismissMonitors()
 
         stopCursorTracking()
 
@@ -134,6 +142,52 @@ final class FindMyMouseModel: ObservableObject {
                 w.close()
             }
         }
+    }
+
+    /// Test button action. Ignores the action that follows a click-dismiss
+    /// (mouse-down dismisses via the monitor, mouse-up would re-activate).
+    func toggleSpotlightFromButton() {
+        if let t = lastClickDismissTime, Date().timeIntervalSince(t) < 0.5 { return }
+        if isSpotlightActive { dismissSpotlight() } else { activateSpotlight() }
+    }
+
+    // MARK: - Dismiss Monitors (ESC / click)
+
+    private func startDismissMonitors() {
+        stopDismissMonitors()
+        let globals: [Any?] = [
+            NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard event.keyCode == 53 else { return }
+                Task { @MainActor in self?.dismissSpotlight() }
+            },
+            NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
+                Task { @MainActor in self?.dismissFromClick() }
+            }
+        ]
+        let locals: [Any?] = [
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                if event.keyCode == 53 { Task { @MainActor in self?.dismissSpotlight() } }
+                return event
+            },
+            NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+                Task { @MainActor in self?.dismissFromClick() }
+                return event
+            }
+        ]
+        dismissGlobalMonitors = globals.compactMap { $0 }
+        dismissLocalMonitors = locals.compactMap { $0 }
+    }
+
+    private func stopDismissMonitors() {
+        for m in dismissGlobalMonitors + dismissLocalMonitors { NSEvent.removeMonitor(m) }
+        dismissGlobalMonitors = []
+        dismissLocalMonitors = []
+    }
+
+    private func dismissFromClick() {
+        guard isSpotlightActive else { return }
+        lastClickDismissTime = Date()
+        dismissSpotlight()
     }
 
     // MARK: - Cursor Tracking

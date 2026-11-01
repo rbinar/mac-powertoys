@@ -17,12 +17,10 @@ private func screenRulerHotKeyHandler(nextHandler: EventHandlerCallRef?, event: 
     
     Task { @MainActor in
         switch hotKeyID.id {
-        case 2: // ⌃⌥R toggle
-            model.isEnabled.toggle()
-        case 3: // ESC close
-            if model.isEnabled {
-                model.isEnabled = false
-            }
+        case 2: // ⌃⌥R toggle session
+            if model.isActive { model.deactivate() } else { model.activate() }
+        case 3: // ESC end session
+            model.deactivate()
         default:
             break
         }
@@ -72,9 +70,16 @@ struct EdgeDistances {
 @MainActor
 final class ScreenRulerModel: ObservableObject {
     // MARK: - Settings
+    /// Arms the ⌃⌥R shortcut. Measuring only starts from the shortcut.
     @Published var isEnabled: Bool = false {
         didSet {
-            if isEnabled { activate() } else { deactivate() }
+            UserDefaults.standard.set(isEnabled, forKey: "screenRuler.isEnabled")
+            if isEnabled {
+                registerHotKey()
+            } else {
+                deactivate()
+                unregisterHotKey()
+            }
         }
     }
     @Published var measurementMode: MeasurementMode = .spacing
@@ -123,17 +128,28 @@ final class ScreenRulerModel: ObservableObject {
     private var escHotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
+    private var hudWindow: NSWindow?
+
     init() {
-        registerCarbonHotKey()
+        installHotKeyHandler()
+        isEnabled = UserDefaults.standard.bool(forKey: "screenRuler.isEnabled")
+        if isEnabled { registerHotKey() }
     }
 
     // MARK: - Global Shortcut (⌃⌥R) via Carbon HotKey
 
-    private func registerCarbonHotKey() {
+    private func installHotKeyHandler() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(GetApplicationEventTarget(), screenRulerHotKeyHandler, 1, &eventType, selfPtr, &eventHandlerRef)
+    }
 
+    private func unregisterHotKey() {
+        if let ref = hotKeyRef { UnregisterEventHotKey(ref); hotKeyRef = nil }
+    }
+
+    private func registerHotKey() {
+        guard hotKeyRef == nil else { return }
         // ⌃⌥R  (keyCode kVK_ANSI_R = 15)
         var hotKeyID = EventHotKeyID(signature: OSType(0x52554C52), id: 2) // "RULR"
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
@@ -167,11 +183,10 @@ final class ScreenRulerModel: ObservableObject {
 
     // MARK: - Activation
 
-    private func activate() {
+    fileprivate func activate() {
         guard !isActive else { return }
 
         if !checkScreenRecordingPermission() {
-            isEnabled = false
             return
         }
 
@@ -181,8 +196,8 @@ final class ScreenRulerModel: ObservableObject {
         Task {
             await captureScreensAsync()
             
-            // If capture disabled us (permission issue), bail out
-            guard isEnabled else { return }
+            // If capture ended the session (permission issue) or it was stopped meanwhile, bail out
+            guard isActive else { return }
             
             createOverlayWindows()
             showToolbar()
@@ -191,6 +206,63 @@ final class ScreenRulerModel: ObservableObject {
             registerActiveMonitors()
             registerEscHotKey()
             registerScreenParamsObserver()
+            showEscHUD()
+        }
+    }
+
+    /// Brief non-interactive "ESC to exit" hint near the top-center of the main screen.
+    private func showEscHUD() {
+        guard let screen = NSScreen.main else { return }
+        let hudW: CGFloat = 140
+        let hudH: CGFloat = 36
+
+        let effectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: hudW, height: hudH))
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.appearance = NSAppearance(named: .darkAqua)
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = 12
+        effectView.layer?.masksToBounds = true
+
+        let label = NSTextField(labelWithString: "ESC to exit")
+        label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        label.textColor = .white
+        label.alignment = .center
+        label.sizeToFit()
+        label.frame = NSRect(
+            x: (hudW - label.frame.width) / 2,
+            y: (hudH - label.frame.height) / 2,
+            width: label.frame.width,
+            height: label.frame.height
+        )
+        effectView.addSubview(label)
+
+        // Below the toolbar (maxY - 80) so they don't overlap
+        let window = NSWindow(
+            contentRect: NSRect(x: screen.frame.midX - hudW / 2, y: screen.frame.maxY - 130, width: hudW, height: hudH),
+            styleMask: .borderless,
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = effectView
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 1)
+        window.backgroundColor = .clear
+        window.isOpaque = false
+        window.hasShadow = true
+        window.ignoresMouseEvents = true
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        window.animationBehavior = .utilityWindow
+        window.orderFrontRegardless()
+
+        hudWindow?.orderOut(nil)
+        hudWindow = window
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak window] in
+            window?.orderOut(nil)
+            if self?.hudWindow === window {
+                self?.hudWindow = nil
+            }
         }
     }
 
@@ -215,7 +287,7 @@ final class ScreenRulerModel: ObservableObject {
         removeOverlayWindows()
         Task {
             await captureScreensAsync()
-            guard isEnabled, isActive else { return }
+            guard isActive else { return }
             removeOverlayWindows()
             createOverlayWindows()
         }
@@ -240,9 +312,11 @@ final class ScreenRulerModel: ObservableObject {
         return true
     }
 
-    private func deactivate() {
+    fileprivate func deactivate() {
         guard isActive else { return }
         isActive = false
+        hudWindow?.orderOut(nil)
+        hudWindow = nil
         removeScreenParamsObserver()
         unregisterEscHotKey()
         stopTracking()
@@ -321,7 +395,7 @@ final class ScreenRulerModel: ObservableObject {
             NSLog("[ScreenRuler] Screen capture failed: %@", error.localizedDescription)
             if capturedScreens.isEmpty {
                 if !CGPreflightScreenCaptureAccess() {
-                    isEnabled = false
+                    deactivate()
                 }
             }
         }
@@ -430,7 +504,7 @@ final class ScreenRulerModel: ObservableObject {
                 Task { @MainActor in self?.setMode(mode) }
             },
             onClose: { [weak self] in
-                Task { @MainActor in self?.isEnabled = false }
+                Task { @MainActor in self?.deactivate() }
             }
         )
         view.currentMode = measurementMode
@@ -602,7 +676,7 @@ final class ScreenRulerModel: ObservableObject {
     private func handleKeyDown(_ event: NSEvent) {
         // Esc to close
         if event.keyCode == 53 {
-            isEnabled = false
+            deactivate()
             return
         }
         // Cmd+1-4 for mode selection

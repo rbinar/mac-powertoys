@@ -34,10 +34,10 @@ struct CrosshairsView: View {
             HStack(spacing: 4) {
                 Image(systemName: "keyboard")
                     .font(.caption2)
-                Text("Toggle: Double Right ⌥")
+                Text("Toggle: double-tap right ⌥ · ESC to turn off")
                     .font(.system(.caption, design: .rounded))
             }
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(.secondary)
 
             if model.isEnabled {
                 Divider()

@@ -31,7 +31,11 @@ struct ScreenRulerView: View {
             }
             .toggleStyle(.switch)
 
-            if model.isEnabled {
+            Text(model.isEnabled ? "Start: ⌃⌥R · ESC to exit" : "Enable to use ⌃⌥R")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+
+            Group {
                 Divider()
 
                 // Default mode
@@ -149,11 +153,11 @@ struct ScreenRulerView: View {
         HStack(spacing: 6) {
             Text(key)
                 .font(.system(.caption2, design: .monospaced))
-                .foregroundStyle(.quaternary)
+                .foregroundStyle(.secondary)
                 .frame(width: 60, alignment: .trailing)
             Text(desc)
                 .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
     }
 }

@@ -529,7 +529,6 @@ final class ScreenCaptureModel: ObservableObject {
                     }
                 }
             }
-            isEnabled = false
             return false
         }
         return true

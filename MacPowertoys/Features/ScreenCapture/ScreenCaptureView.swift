@@ -48,10 +48,11 @@ struct ScreenCaptureView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            }
 
-                Divider()
+            Divider()
 
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 6) {
                     Text("How it works")
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
@@ -74,10 +75,7 @@ struct ScreenCaptureView: View {
                         .fill(.white.opacity(0.08))
                 )
 
-                Spacer()
-            } else {
-                Spacer()
-            }
+            Spacer()
         }
     }
 }

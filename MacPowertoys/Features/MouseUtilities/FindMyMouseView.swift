@@ -37,12 +37,14 @@ struct FindMyMouseView: View {
             HStack(spacing: 4) {
                 Image(systemName: "keyboard")
                     .font(.caption2)
-                Text("Toggle: Double ⌃")
+                Text(model.isEnabled
+                     ? "Double-tap \(model.activationMethod.rawValue.replacingOccurrences(of: "Double ", with: "")) to show · ESC or click to dismiss"
+                     : "Enable to use the double-tap shortcut")
                     .font(.system(.caption, design: .rounded))
             }
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(.secondary)
 
-            if model.isEnabled {
+            Group {
                 Divider()
 
                 // Activation method
@@ -119,11 +121,7 @@ struct FindMyMouseView: View {
 
                 // Test button
                 Button {
-                    if model.isSpotlightActive {
-                        model.dismissSpotlight()
-                    } else {
-                        model.activateSpotlight()
-                    }
+                    model.toggleSpotlightFromButton()
                 } label: {
                     HStack {
                         Image(systemName: model.isSpotlightActive ? "eye.slash" : "eye")
