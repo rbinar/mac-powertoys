@@ -128,7 +128,7 @@ final class QuickLaunchModel: ObservableObject {
 
     // MARK: - Command Palette State
 
-    /// Module commands, set once by AppRootView.
+    /// Module commands, set by the module registry.
     var commands: [PaletteCommand] = [] {
         didSet { performSearch() }
     }

@@ -240,7 +240,7 @@ struct QuickLaunchPanelContent: View {
 
             Divider()
 
-            command.screen?()
+            command.screen?({ model.closeScreen() })
                 .padding(12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }

@@ -19,7 +19,7 @@ struct PaletteCommand: Identifiable {
     let keywords: [String]
     let isOn: (() -> Bool)?   // Modes only
     let run: () -> Void       // Screen Tools: start immediately; Modes: toggle
-    let screen: (() -> AnyView)? // Tools: the module's view; also used by ⌘↩ for every command
+    var screen: ((_ onBack: @escaping () -> Void) -> AnyView)? // Tools: the module's view (filled in by the registry); also used by ⌘↩ for every command
 
     init(
         id: String,
@@ -31,7 +31,7 @@ struct PaletteCommand: Identifiable {
         keywords: [String] = [],
         isOn: (() -> Bool)? = nil,
         run: @escaping () -> Void = {},
-        screen: (() -> AnyView)? = nil
+        screen: ((_ onBack: @escaping () -> Void) -> AnyView)? = nil
     ) {
         self.id = id
         self.title = title
