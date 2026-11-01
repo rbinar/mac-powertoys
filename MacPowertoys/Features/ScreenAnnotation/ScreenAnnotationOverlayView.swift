@@ -8,6 +8,12 @@ class ScreenAnnotationOverlayView: NSView {
     var dimBackground: Bool = true
     var selectedAnnotationIndex: Int? = nil
 
+    // The overlay consumes mouse input itself (no click-through); the model handles it.
+    var onMouseDown: (@MainActor (NSEvent) -> Void)?
+    var onMouseDragged: (@MainActor (NSEvent) -> Void)?
+    var onMouseUp: (@MainActor (NSEvent) -> Void)?
+    var onRightMouseDown: (@MainActor (NSEvent) -> Void)?
+
     private let arrowHeadLength: CGFloat = 16
     private let arrowHeadAngle: CGFloat = .pi / 6 // 30 degrees
 
@@ -19,6 +25,26 @@ class ScreenAnnotationOverlayView: NSView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var acceptsFirstResponder: Bool { true }
+    // Keys are handled by the model's key monitors; swallow them here so AppKit doesn't beep.
+    override func keyDown(with event: NSEvent) {}
+    override func mouseDown(with event: NSEvent) { onMouseDown?(event) }
+    override func mouseDragged(with event: NSEvent) { onMouseDragged?(event) }
+    override func mouseUp(with event: NSEvent) { onMouseUp?(event) }
+    override func rightMouseDown(with event: NSEvent) { onRightMouseDown?(event) }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .crosshair)
+    }
+
+    /// True when the text color is light (luminance > 0.5), so its note needs a dark background.
+    static func textNeedsDarkBackground(_ textColor: NSColor) -> Bool {
+        guard let c = textColor.usingColorSpace(.sRGB) else { return true }
+        let luminance = 0.2126 * c.redComponent + 0.7152 * c.greenComponent + 0.0722 * c.blueComponent
+        return luminance > 0.5
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
@@ -171,7 +197,11 @@ class ScreenAnnotationOverlayView: NSView {
             width: size.width + padding * 2,
             height: size.height + padding * 2
         )
-        ctx.setFillColor(NSColor.black.withAlphaComponent(0.6).cgColor)
+        // Contrast with the text: dark pill for light text, light pill for dark text
+        let background: NSColor = Self.textNeedsDarkBackground(annotation.color)
+            ? NSColor.black.withAlphaComponent(0.6)
+            : NSColor.white.withAlphaComponent(0.85)
+        ctx.setFillColor(background.cgColor)
         let path = CGPath(roundedRect: bgRect, cornerWidth: 4, cornerHeight: 4, transform: nil)
         ctx.addPath(path)
         ctx.fillPath()

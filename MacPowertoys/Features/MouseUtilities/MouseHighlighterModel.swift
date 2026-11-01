@@ -142,6 +142,9 @@ final class MouseHighlighterModel: ObservableObject {
             let view = MouseHighlighterOverlayView(frame: NSRect(origin: .zero, size: frame.size))
 
             let window = NSWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false, screen: screen)
+            // With `screen:` set, contentRect is taken relative to that screen's origin,
+            // which double-offsets non-main displays; pin the global frame explicitly.
+            window.setFrame(frame, display: false)
             window.contentView = view
             window.level = .screenSaver
             window.backgroundColor = .clear
@@ -189,10 +192,12 @@ class MouseHighlighterOverlayView: NSView {
         let fadeDuration: CFTimeInterval
 
         var opacity: CGFloat {
+            // Honour the chosen colour's own alpha on top of the fixed 0.6 highlight strength.
+            let peak = color.alphaComponent * 0.6
             let elapsed = CACurrentMediaTime() - createdAt
-            if elapsed < fadeDelay { return 0.6 }
+            if elapsed < fadeDelay { return peak }
             let fadeProgress = min((elapsed - fadeDelay) / fadeDuration, 1.0)
-            return CGFloat(0.6 * (1.0 - fadeProgress))
+            return peak * CGFloat(1.0 - fadeProgress)
         }
 
         var isExpired: Bool {

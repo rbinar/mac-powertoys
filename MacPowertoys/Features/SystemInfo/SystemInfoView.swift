@@ -18,10 +18,16 @@ struct SystemInfoView: View {
                     .font(.system(.headline, design: .rounded))
 
                 Spacer()
+
+                Toggle("Enable System Info", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
             }
 
             Divider()
 
+            if model.isEnabled {
             // CPU
             MetricRow(
                 icon: "gauge.medium",
@@ -84,6 +90,23 @@ struct SystemInfoView: View {
             }
 
             Spacer()
+            } else {
+            VStack(spacing: 12) {
+                Spacer()
+                Image(systemName: "gauge.medium")
+                    .font(.system(size: 32))
+                    .foregroundColor(.secondary)
+                Text("System Info is disabled")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.secondary)
+                Text("Enable it to see CPU, memory, disk and network usage")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+            }
         }
     }
 }

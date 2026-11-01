@@ -27,6 +27,12 @@ class ZoomItOverlayView: NSView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    // Static zoom: swallow clicks on the frozen image (live zoom's window ignores mouse events).
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func mouseDown(with event: NSEvent) {}
+    override func rightMouseDown(with event: NSEvent) {}
+    override func otherMouseDown(with event: NSEvent) {}
     
     func updateImage(_ image: CGImage) {
         // Disable implicit animation for contents update
@@ -65,7 +71,7 @@ class ZoomItOverlayView: NSView {
         transform = CATransform3DTranslate(transform, translateX, translateY, 0)
         transform = CATransform3DScale(transform, zoomLevel, zoomLevel, 1)
         
-        if animated {
+        if animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
             CATransaction.begin()
             CATransaction.setAnimationDuration(0.2)
             CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeOut))

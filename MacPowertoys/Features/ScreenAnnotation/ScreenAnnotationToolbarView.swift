@@ -1,5 +1,24 @@
 import AppKit
 
+// MARK: - Toolbar Accessibility Item
+
+private final class AnnotationToolbarAccessibilityItem: NSAccessibilityElement {
+    private let onPress: () -> Void
+
+    init(label: String, parent: NSView, onPress: @escaping () -> Void) {
+        self.onPress = onPress
+        super.init()
+        setAccessibilityRole(.button)
+        setAccessibilityLabel(label)
+        setAccessibilityParent(parent)
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        onPress()
+        return true
+    }
+}
+
 // MARK: - Screen Annotation Toolbar View
 
 class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
@@ -53,7 +72,7 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
         ToolItem(tool: .text, sfSymbol: "textformat"),
     ]
 
-    private let colorOptions: [NSColor] = annotationPresetColors
+    private let colorOptions = annotationPresetColors
 
     private let lineWidthOptions: [CGFloat] = [2.0, 4.0, 8.0]
 
@@ -64,8 +83,8 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
 
     private let actions: [ActionItem] = [
         ActionItem(id: "undo", sfSymbol: "arrow.uturn.backward"),
-        ActionItem(id: "delete", sfSymbol: "trash"),
-        ActionItem(id: "clear", sfSymbol: "xmark.circle"),
+        ActionItem(id: "delete", sfSymbol: "delete.left"),
+        ActionItem(id: "clear", sfSymbol: "trash"),
         ActionItem(id: "save", sfSymbol: "square.and.arrow.down"),
         ActionItem(id: "close", sfSymbol: "xmark"),
     ]
@@ -114,23 +133,19 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
         customTrackingAreas.append(area)
 
         removeAllToolTips()
-        toolTipTexts.removeAll()
-        let colorNames = ["Red", "Blue", "Green", "Yellow", "Orange", "White", "Black", "Purple"]
-        let actionNames = ["undo": "Undo (⌘Z)", "delete": "Delete selected (⌫)", "clear": "Clear all", "save": "Save", "close": "Close (Esc)"]
-        let y = (bounds.height - itemSize) / 2
-        var x = padding
-        func addTip(_ text: String) {
-            toolTipTexts.append(text)
-            addToolTip(CGRect(x: x, y: y, width: itemSize, height: itemSize), owner: self, userData: UnsafeMutableRawPointer(bitPattern: toolTipTexts.count))
-            x += itemSize + gap
+        toolTipTexts = itemLabels
+        for (i, item) in itemRects().enumerated() {
+            addToolTip(item.rect, owner: self, userData: UnsafeMutableRawPointer(bitPattern: i + 1))
         }
-        for item in tools { addTip(item.tool.rawValue) }
-        x += separatorGap - gap
-        for i in 0..<colorOptions.count { addTip(i < colorNames.count ? colorNames[i] : "Color \(i + 1)") }
-        x += separatorGap - gap
-        for w in lineWidthOptions { addTip("Line width \(Int(w)) px") }
-        x += separatorGap - gap
-        for item in actions { addTip(actionNames[item.id] ?? item.id) }
+    }
+
+    /// Item names in layout order (tools, colors, widths, actions), for tooltips and VoiceOver.
+    private var itemLabels: [String] {
+        let actionNames = ["undo": "Undo (⌘Z)", "delete": "Delete selected (⌫)", "clear": "Clear all", "save": "Save", "close": "Close (Esc)"]
+        return tools.map { $0.tool.rawValue }
+            + colorOptions.map { $0.name }
+            + lineWidthOptions.map { "Line width \(Int($0)) px" }
+            + actions.map { actionNames[$0.id] ?? $0.id }
     }
 
     func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
@@ -159,13 +174,16 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         guard let item = hitTest(at: point) else { return }
+        perform(item)
+    }
 
+    private func perform(_ item: ItemID) {
         switch item {
         case .tool(let i):
             currentTool = tools[i].tool
             onToolChange(currentTool)
         case .color(let i):
-            currentColor = colorOptions[i]
+            currentColor = colorOptions[i].color
             onColorChange(currentColor)
         case .width(let i):
             currentLineWidth = lineWidthOptions[i]
@@ -213,7 +231,8 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
         x += separatorGap / 2
 
         // ── Colors ──
-        for (i, color) in colorOptions.enumerated() {
+        for (i, option) in colorOptions.enumerated() {
+            let color = option.color
             let cellRect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
             let isSelected = colorsAreEqual(color, currentColor)
             let isHovered = hoveredItem == .color(i)
@@ -230,6 +249,12 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
             )
             ctx.setFillColor(color.cgColor)
             ctx.fillEllipse(in: dotRect)
+            if colorsAreEqual(color, .black) {
+                // Black would vanish on the dark HUD background
+                ctx.setStrokeColor(NSColor.white.withAlphaComponent(0.4).cgColor)
+                ctx.setLineWidth(0.5)
+                ctx.strokeEllipse(in: dotRect.insetBy(dx: 0.25, dy: 0.25))
+            }
 
             if isSelected {
                 let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -304,37 +329,57 @@ class ScreenAnnotationToolbarView: NSView, NSViewToolTipOwner {
     // MARK: - Hit Testing
 
     private func hitTest(at point: CGPoint) -> ItemID? {
+        itemRects().first { $0.rect.contains(point) }?.id
+    }
+
+    /// Item frames in view coordinates, in layout order (tools, colors, widths, actions).
+    private func itemRects() -> [(id: ItemID, rect: CGRect)] {
         let y = (bounds.height - itemSize) / 2
         var x = padding
-
-        for i in 0..<tools.count {
-            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
-            if rect.contains(point) { return .tool(i) }
+        var result: [(id: ItemID, rect: CGRect)] = []
+        func add(_ id: ItemID) {
+            result.append((id: id, rect: CGRect(x: x, y: y, width: itemSize, height: itemSize)))
             x += itemSize + gap
         }
+
+        for i in 0..<tools.count { add(.tool(i)) }
         x += separatorGap - gap
-
-        for i in 0..<colorOptions.count {
-            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
-            if rect.contains(point) { return .color(i) }
-            x += itemSize + gap
-        }
+        for i in 0..<colorOptions.count { add(.color(i)) }
         x += separatorGap - gap
-
-        for i in 0..<lineWidthOptions.count {
-            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
-            if rect.contains(point) { return .width(i) }
-            x += itemSize + gap
-        }
+        for i in 0..<lineWidthOptions.count { add(.width(i)) }
         x += separatorGap - gap
+        for i in 0..<actions.count { add(.action(i)) }
 
-        for i in 0..<actions.count {
-            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
-            if rect.contains(point) { return .action(i) }
-            x += itemSize + gap
+        return result
+    }
+
+    // MARK: - Accessibility
+
+    // The items are custom-drawn, so expose one button element per item to VoiceOver.
+    private lazy var accessibilityItems: [AnnotationToolbarAccessibilityItem] =
+        zip(itemRects().map { $0.id }, itemLabels).map { id, label in
+            AnnotationToolbarAccessibilityItem(label: label, parent: self) { [weak self] in self?.perform(id) }
         }
 
-        return nil
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .toolbar }
+    override func accessibilityLabel() -> String? { "Screen Annotation" }
+
+    override func accessibilityChildren() -> [Any]? {
+        for (element, item) in zip(accessibilityItems, itemRects()) {
+            element.setAccessibilityFrameInParentSpace(item.rect)
+            switch item.id {
+            case .tool(let i):
+                element.setAccessibilitySelected(tools[i].tool == currentTool)
+            case .color(let i):
+                element.setAccessibilitySelected(colorsAreEqual(colorOptions[i].color, currentColor))
+            case .width(let i):
+                element.setAccessibilitySelected(lineWidthOptions[i] == currentLineWidth)
+            case .action(let i):
+                element.setAccessibilityEnabled(actions[i].id != "delete" || hasSelection)
+            }
+        }
+        return accessibilityItems
     }
 
     // MARK: - Drawing Helpers

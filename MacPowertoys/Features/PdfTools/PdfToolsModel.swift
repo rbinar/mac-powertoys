@@ -265,7 +265,7 @@ final class PdfToolsModel: ObservableObject {
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 800, height: 550),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            styleMask: [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -478,7 +478,7 @@ final class PdfToolsModel: ObservableObject {
         let files = mergeFiles
         let totalInputSize = files.reduce(Int64(0)) { $0 + $1.fileSize }
 
-        state = .processing(progress: 0, description: "Merging PDFs...")
+        state = .processing(progress: 0, description: "Merging PDFs…")
         runOperation(historyOperation: "Merge", historyInput: "\(files.count) files") { reportProgress in
             await PdfMergeOperation.run(
                 files: files,
@@ -548,7 +548,7 @@ final class PdfToolsModel: ObservableObject {
         let inputSize = metadata.fileSize
         let mode = splitMode
 
-        state = .processing(progress: 0, description: "Splitting PDF...")
+        state = .processing(progress: 0, description: "Splitting PDF…")
         runOperation(historyOperation: "Split", historyInput: baseName) { reportProgress in
             await PdfSplitOperation.run(
                 doc: doc,
@@ -586,7 +586,7 @@ final class PdfToolsModel: ObservableObject {
         let inputSize = metadata.fileSize
         let pageCount = doc.pageCount
 
-        state = .processing(progress: 0, description: "Compressing PDF...")
+        state = .processing(progress: 0, description: "Compressing PDF…")
         runOperation(historyOperation: "Compress", historyInput: fileURL.lastPathComponent) { reportProgress in
             await PdfCompressOperation.run(
                 doc: doc,
@@ -636,7 +636,7 @@ final class PdfToolsModel: ObservableObject {
         let inputSize = metadata.fileSize
         let targetSet = Set(targetPageIndices)
 
-        state = .processing(progress: 0, description: "Rotating pages...")
+        state = .processing(progress: 0, description: "Rotating pages…")
         runOperation(historyOperation: "Rotate", historyInput: fileURL.lastPathComponent) { reportProgress in
             await PdfRotateOperation.run(
                 doc: doc,
@@ -677,7 +677,7 @@ final class PdfToolsModel: ObservableObject {
         let baseName = fileURL.deletingPathExtension().lastPathComponent
         let inputSize = metadata.fileSize
 
-        state = .processing(progress: 0, description: "Exporting pages as images...")
+        state = .processing(progress: 0, description: "Exporting pages as images…")
         runOperation(historyOperation: "PDF to Image", historyInput: baseName) { reportProgress in
             await PdfToImageOperation.run(
                 doc: doc,
@@ -707,7 +707,7 @@ final class PdfToolsModel: ObservableObject {
         let files = imageToPdfFiles
         let totalInputSize = files.reduce(Int64(0)) { $0 + $1.fileSize }
 
-        state = .processing(progress: 0, description: "Converting images to PDF...")
+        state = .processing(progress: 0, description: "Converting images to PDF…")
         runOperation(historyOperation: "Image to PDF", historyInput: "\(files.count) images") { reportProgress in
             await PdfImageToPdfOperation.run(
                 files: files,

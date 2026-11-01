@@ -65,6 +65,14 @@ struct EdgeDistances {
     var bottom: Int = 0
 }
 
+// MARK: - Overlay Panel
+
+/// Non-activating, so consuming mouse input never changes the frontmost app; can become key so
+/// cursor rects and key events land on the overlay rather than on the app underneath.
+private final class ScreenRulerOverlayPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+}
+
 // MARK: - Persistence helpers
 
 private func rulerSaveColor(_ c: NSColor, _ key: String) {
@@ -136,18 +144,15 @@ final class ScreenRulerModel: ObservableObject {
     private var capturedScreens: [UInt32: CapturedScreen] = [:]
     private var captureTickCounter: Int = 0
     private var isCapturing = false
-    private var elevatedWindows: [NSWindow] = []
+    private var elevatedWindows: [(window: NSWindow, level: NSWindow.Level)] = []
     private var screenParamsObserver: NSObjectProtocol?
+    /// Mode of the running session; toolbar / ⌘1-4 change this, never the persisted default.
+    private var sessionMode: MeasurementMode = .spacing
 
-    // Keyboard & mouse monitors (active during measurement)
+    // Keyboard & scroll monitors (active during measurement). Mouse input is handled by the
+    // overlay views themselves so it never reaches the app underneath.
     private var keyGlobalMonitor: Any?
     private var keyLocalMonitor: Any?
-    private var mouseDownGlobalMonitor: Any?
-    private var mouseDownLocalMonitor: Any?
-    private var mouseDragGlobalMonitor: Any?
-    private var mouseDragLocalMonitor: Any?
-    private var mouseUpGlobalMonitor: Any?
-    private var mouseUpLocalMonitor: Any?
     private var scrollGlobalMonitor: Any?
     private var scrollLocalMonitor: Any?
 
@@ -230,6 +235,7 @@ final class ScreenRulerModel: ObservableObject {
         }
 
         isActive = true
+        sessionMode = measurementMode
 
         // Capture screens BEFORE creating overlay windows so they aren't in the screenshot
         Task {
@@ -249,10 +255,28 @@ final class ScreenRulerModel: ObservableObject {
         }
     }
 
-    /// Brief non-interactive "ESC to exit" hint near the top-center of the main screen.
+    /// Brief non-interactive "ESC to exit" hint near the top-center of the screen under the pointer.
     private func showEscHUD() {
-        guard let screen = NSScreen.main else { return }
-        let hudW: CGFloat = 140
+        showHUD("ESC to exit", duration: 1.5)
+    }
+
+    private func screenUnderMouse() -> NSScreen? {
+        let p = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(p, $0.frame, false) } ?? NSScreen.main
+    }
+
+    /// Brief non-interactive HUD near the top-center of the screen under the pointer.
+    private func showHUD(_ text: String, symbol: String? = nil, duration: TimeInterval) {
+        guard let screen = screenUnderMouse() else { return }
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        label.textColor = .white
+        label.alignment = .center
+        label.sizeToFit()
+
+        let iconSize: CGFloat = 16
+        let iconW: CGFloat = symbol == nil ? 0 : iconSize + 6
+        let hudW: CGFloat = max(140, label.frame.width + iconW + 32)
         let hudH: CGFloat = 36
 
         let effectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: hudW, height: hudH))
@@ -264,13 +288,17 @@ final class ScreenRulerModel: ObservableObject {
         effectView.layer?.cornerRadius = 12
         effectView.layer?.masksToBounds = true
 
-        let label = NSTextField(labelWithString: "ESC to exit")
-        label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
-        label.textColor = .white
-        label.alignment = .center
-        label.sizeToFit()
+        var x = (hudW - label.frame.width - iconW) / 2
+        if let symbol, let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) {
+            let imageView = NSImageView(frame: NSRect(x: x, y: (hudH - iconSize) / 2, width: iconSize, height: iconSize))
+            imageView.image = image
+            imageView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+            imageView.contentTintColor = .white
+            effectView.addSubview(imageView)
+            x += iconW
+        }
         label.frame = NSRect(
-            x: (hudW - label.frame.width) / 2,
+            x: x,
             y: (hudH - label.frame.height) / 2,
             width: label.frame.width,
             height: label.frame.height
@@ -291,13 +319,13 @@ final class ScreenRulerModel: ObservableObject {
         window.hasShadow = true
         window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        window.animationBehavior = .utilityWindow
+        window.animationBehavior = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? .none : .utilityWindow
         window.orderFrontRegardless()
 
         hudWindow?.orderOut(nil)
         hudWindow = window
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak window] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self, weak window] in
             window?.orderOut(nil)
             if self?.hudWindow === window {
                 self?.hudWindow = nil
@@ -348,6 +376,8 @@ final class ScreenRulerModel: ObservableObject {
             alert.addButton(withTitle: "Open System Settings")
             alert.addButton(withTitle: "Quit & Reopen")
             alert.addButton(withTitle: "Cancel")
+            // Menu-bar app: bring it forward or the alert opens behind the frontmost app.
+            NSApp.activate(ignoringOtherApps: true)
             switch alert.runModal() {
             case .alertFirstButtonReturn:
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
@@ -394,15 +424,15 @@ final class ScreenRulerModel: ObservableObject {
             // Elevate normal windows so user can click the toggle to turn it off
             // Also elevate popovers/panels (like the color picker)
             if window.level == .normal || window.level == .popUpMenu {
+                elevatedWindows.append((window: window, level: window.level))
                 window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 2)
-                elevatedWindows.append(window)
             }
         }
     }
 
     private func restoreAppWindows() {
-        for window in elevatedWindows {
-            window.level = .normal
+        for entry in elevatedWindows {
+            entry.window.level = entry.level
         }
         elevatedWindows.removeAll()
     }
@@ -420,7 +450,7 @@ final class ScreenRulerModel: ObservableObject {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
 
             // Exclude our own overlay and toolbar windows
-            let ownWindowIDs = Set(overlayWindows.map { $0.window.windowNumber } + [toolbarWindow?.windowNumber].compactMap { $0 })
+            let ownWindowIDs = Set(overlayWindows.map { $0.window.windowNumber } + [toolbarWindow?.windowNumber, hudWindow?.windowNumber].compactMap { $0 })
             let excludedWindows = content.windows.filter { ownWindowIDs.contains(Int($0.windowID)) }
 
             // Build into a local dictionary, then publish atomically at the end
@@ -500,11 +530,16 @@ final class ScreenRulerModel: ObservableObject {
             let view = ScreenRulerOverlayView(frame: NSRect(origin: .zero, size: frame.size))
             view.lineColor = lineColor
             view.showFeet = showFeet
-            view.measurementMode = measurementMode
+            view.measurementMode = sessionMode
+            view.backingScale = screen.backingScaleFactor
+            view.screenDPI = screenDPI(for: screen)
+            view.onMouseDown = { [weak self] event in self?.handleMouseDown(event) }
+            view.onMouseDragged = { [weak self] event in self?.handleMouseDragged(event) }
+            view.onMouseUp = { [weak self] event in self?.handleMouseUp(event) }
 
-            let window = NSWindow(
+            let window = ScreenRulerOverlayPanel(
                 contentRect: frame,
-                styleMask: .borderless,
+                styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false,
                 screen: screen
@@ -517,13 +552,17 @@ final class ScreenRulerModel: ObservableObject {
             window.backgroundColor = .clear
             window.isOpaque = false
             window.hasShadow = false
-            window.ignoresMouseEvents = true
+            window.hidesOnDeactivate = false
+            window.ignoresMouseEvents = false
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             window.animationBehavior = .none
             window.orderFrontRegardless()
+            window.makeFirstResponder(view)
 
             overlayWindows.append((window: window, view: view, displayID: did, screen: screen))
         }
+        // Key (without activating the app) so cursor rects and keys go to the overlay.
+        overlayWindows.first { $0.window.frame.contains(NSEvent.mouseLocation) }?.window.makeKey()
     }
 
     private func removeOverlayWindows() {
@@ -544,7 +583,7 @@ final class ScreenRulerModel: ObservableObject {
     // MARK: - Toolbar
 
     private func showToolbar() {
-        guard let mainScreen = NSScreen.main else { return }
+        guard let mainScreen = screenUnderMouse() else { return }
 
         let toolbarWidth = ScreenRulerToolbarView.computeWidth()
         let toolbarHeight: CGFloat = 48
@@ -560,7 +599,7 @@ final class ScreenRulerModel: ObservableObject {
                 Task { @MainActor in self?.deactivate() }
             }
         )
-        view.currentMode = measurementMode
+        view.currentMode = sessionMode
 
         let effectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: toolbarWidth, height: toolbarHeight))
         effectView.material = .hudWindow
@@ -585,7 +624,7 @@ final class ScreenRulerModel: ObservableObject {
         window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        window.animationBehavior = .utilityWindow
+        window.animationBehavior = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? .none : .utilityWindow
         window.orderFrontRegardless()
 
         toolbarWindow = window
@@ -599,7 +638,7 @@ final class ScreenRulerModel: ObservableObject {
     }
 
     func setMode(_ mode: MeasurementMode) {
-        measurementMode = mode
+        sessionMode = mode
         boundsStart = nil
         boundsEnd = nil
         for entry in overlayWindows {
@@ -658,7 +697,6 @@ final class ScreenRulerModel: ObservableObject {
                     )
                     entry.view.edges = edges
                     entry.view.extraUnit = extraUnit
-                    entry.view.screenDPI = screenDPI(for: entry.screen)
                     currentEdges = edges
                 }
             } else {
@@ -680,29 +718,6 @@ final class ScreenRulerModel: ObservableObject {
             return event
         }
 
-        // Mouse events for bounds mode and click-to-copy
-        mouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDown(event) }
-        }
-        mouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDown(event) }
-            return event
-        }
-        mouseDragGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDragged(event) }
-        }
-        mouseDragLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDragged(event) }
-            return event
-        }
-        mouseUpGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            Task { @MainActor in self?.handleMouseUp(event) }
-        }
-        mouseUpLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            Task { @MainActor in self?.handleMouseUp(event) }
-            return event
-        }
-
         // Scroll wheel for tolerance adjustment
         scrollGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
             Task { @MainActor in self?.handleScrollWheel(event) }
@@ -716,12 +731,6 @@ final class ScreenRulerModel: ObservableObject {
     private func removeActiveMonitors() {
         if let m = keyGlobalMonitor { NSEvent.removeMonitor(m); keyGlobalMonitor = nil }
         if let m = keyLocalMonitor { NSEvent.removeMonitor(m); keyLocalMonitor = nil }
-        if let m = mouseDownGlobalMonitor { NSEvent.removeMonitor(m); mouseDownGlobalMonitor = nil }
-        if let m = mouseDownLocalMonitor { NSEvent.removeMonitor(m); mouseDownLocalMonitor = nil }
-        if let m = mouseDragGlobalMonitor { NSEvent.removeMonitor(m); mouseDragGlobalMonitor = nil }
-        if let m = mouseDragLocalMonitor { NSEvent.removeMonitor(m); mouseDragLocalMonitor = nil }
-        if let m = mouseUpGlobalMonitor { NSEvent.removeMonitor(m); mouseUpGlobalMonitor = nil }
-        if let m = mouseUpLocalMonitor { NSEvent.removeMonitor(m); mouseUpLocalMonitor = nil }
         if let m = scrollGlobalMonitor { NSEvent.removeMonitor(m); scrollGlobalMonitor = nil }
         if let m = scrollLocalMonitor { NSEvent.removeMonitor(m); scrollLocalMonitor = nil }
     }
@@ -753,13 +762,13 @@ final class ScreenRulerModel: ObservableObject {
         }
         
         // Check if click is on an elevated app window (like Settings)
-        for window in elevatedWindows {
-            if window.frame.contains(screenPoint) {
+        for entry in elevatedWindows {
+            if entry.window.frame.contains(screenPoint) {
                 return
             }
         }
 
-        if measurementMode == .bounds {
+        if sessionMode == .bounds {
             // Start bounds measurement
             for entry in overlayWindows {
                 let frame = entry.window.frame
@@ -781,7 +790,7 @@ final class ScreenRulerModel: ObservableObject {
     }
 
     private func handleMouseDragged(_ event: NSEvent) {
-        guard measurementMode == .bounds, boundsStart != nil else { return }
+        guard sessionMode == .bounds, boundsStart != nil else { return }
         let screenPoint = NSEvent.mouseLocation
         for entry in overlayWindows {
             let frame = entry.window.frame
@@ -798,7 +807,7 @@ final class ScreenRulerModel: ObservableObject {
     }
 
     private func handleMouseUp(_ event: NSEvent) {
-        guard measurementMode == .bounds, boundsStart != nil else { return }
+        guard sessionMode == .bounds, boundsStart != nil else { return }
         let screenPoint = NSEvent.mouseLocation
 
         // Check if mouse up is on the toolbar — ignore if so
@@ -807,8 +816,8 @@ final class ScreenRulerModel: ObservableObject {
         }
         
         // Check if click is on an elevated app window
-        for window in elevatedWindows {
-            if window.frame.contains(screenPoint) {
+        for entry in elevatedWindows {
+            if entry.window.frame.contains(screenPoint) {
                 return
             }
         }
@@ -843,30 +852,36 @@ final class ScreenRulerModel: ObservableObject {
     // MARK: - Clipboard
 
     private func copyMeasurementToClipboard() {
+        // Edges are in points; copy real pixels like the on-screen labels.
+        let scale = screenUnderMouse()?.backingScaleFactor ?? 1
+        func px(_ points: Int) -> Int { ScreenRulerUnits.pixels(fromPoints: CGFloat(points), scale: scale) }
         var text = ""
-        switch measurementMode {
+        switch sessionMode {
         case .spacing:
-            text = "H: \(max(1, currentEdges.left + currentEdges.right)) px, V: \(max(1, currentEdges.top + currentEdges.bottom)) px"
+            text = "H: \(px(max(1, currentEdges.left + currentEdges.right))) px, V: \(px(max(1, currentEdges.top + currentEdges.bottom))) px"
         case .horizontal:
-            text = "\(max(1, currentEdges.left + currentEdges.right)) px"
+            text = "\(px(max(1, currentEdges.left + currentEdges.right))) px"
         case .vertical:
-            text = "\(max(1, currentEdges.top + currentEdges.bottom)) px"
+            text = "\(px(max(1, currentEdges.top + currentEdges.bottom))) px"
         case .bounds:
             break
         }
         if !text.isEmpty {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
+            showHUD("Copied: \(text)", symbol: "checkmark", duration: 1.2)
         }
     }
 
     private func copyBoundsMeasurementToClipboard() {
         guard let start = boundsStart, let end = boundsEnd else { return }
-        let w = Int(abs(end.x - start.x))
-        let h = Int(abs(end.y - start.y))
+        let scale = screenUnderMouse()?.backingScaleFactor ?? 1
+        let w = ScreenRulerUnits.pixels(fromPoints: abs(end.x - start.x), scale: scale)
+        let h = ScreenRulerUnits.pixels(fromPoints: abs(end.y - start.y), scale: scale)
         let text = "\(w) × \(h) px"
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+        showHUD("Copied: \(text)", symbol: "checkmark", duration: 1.2)
     }
 
     // MARK: - Edge Detection
@@ -923,11 +938,14 @@ final class ScreenRulerModel: ObservableObject {
 
     // MARK: - Unit Conversion
 
-    func screenDPI(for screen: NSScreen) -> CGFloat {
-        if let resolution = screen.deviceDescription[NSDeviceDescriptionKey.resolution] as? NSSize {
-            return resolution.width // DPI along x-axis
-        }
-        return 72.0 // Default macOS DPI
+    /// Real physical pixels per inch: the display's pixel width over its physical width
+    /// (`CGDisplayScreenSize`, mm). Nil when the display doesn't report a physical size.
+    func screenDPI(for screen: NSScreen) -> CGFloat? {
+        let sizeMM = CGDisplayScreenSize(screenID(for: screen))
+        return ScreenRulerUnits.pixelsPerInch(
+            pixelWidth: screen.frame.width * screen.backingScaleFactor,
+            physicalWidthMM: sizeMM.width
+        )
     }
 
     // MARK: - Cleanup

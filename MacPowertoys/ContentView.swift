@@ -34,6 +34,7 @@ struct FeatureCardView<Content: View>: View {
     let action: () -> Void
     @ViewBuilder let content: Content
     
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var isHovered = false
     
     var body: some View {
@@ -63,6 +64,11 @@ struct FeatureCardView<Content: View>: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(isHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
         )
+        .overlay {
+            if contrast == .increased {
+                RoundedRectangle(cornerRadius: 16).strokeBorder(.separator, lineWidth: 1)
+            }
+        }
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
@@ -78,6 +84,7 @@ struct CompactFeatureCard: View {
     let isEnabled: Binding<Bool>?
     let action: () -> Void
     
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var isHovered = false
     
     var body: some View {
@@ -141,6 +148,11 @@ struct CompactFeatureCard: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(isHovered ? AnyShapeStyle(.quaternary.opacity(0.85)) : AnyShapeStyle(.quaternary.opacity(0.45)))
         )
+        .overlay {
+            if contrast == .increased {
+                RoundedRectangle(cornerRadius: 14).strokeBorder(.separator, lineWidth: 1)
+            }
+        }
         .accessibilityElement(children: .contain)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
@@ -182,7 +194,6 @@ struct ContentView: View {
     @EnvironmentObject var gitHubNotifierModel: GitHubNotifierModel
     @EnvironmentObject var imageOptimizerModel: ImageOptimizerModel
     @State private var activeFeature: Feature? = nil
-    @State private var showingQuitAlert = false
 
     var body: some View {
         Group {
@@ -333,6 +344,8 @@ struct ContentView: View {
                     cardView(featureCards[rowStart])
                     if rowStart + 1 < featureCards.count {
                         cardView(featureCards[rowStart + 1])
+                    } else {
+                        Color.clear.frame(maxWidth: .infinity)
                     }
                 }
             }
@@ -350,21 +363,13 @@ struct ContentView: View {
                     .foregroundStyle(.tertiary)
                 Spacer()
                 Button {
-                    showingQuitAlert = true
+                    NSApplication.shared.terminate(nil)
                 } label: {
                     Label("Quit", systemImage: "power")
                         .labelStyle(.titleAndIcon)
                 }
                 .keyboardShortcut("q")
                 .buttonStyle(.bordered)
-                .alert("Quit Mac PowerToys?", isPresented: $showingQuitAlert) {
-                    Button("Cancel", role: .cancel) { }
-                    Button("Quit", role: .destructive) {
-                        NSApplication.shared.terminate(nil)
-                    }
-                } message: {
-                    Text("Are you sure you want to quit?")
-                }
             }
         }
     }
@@ -589,18 +594,24 @@ private struct AccessibilityBanner: View {
         Group {
             if !isTrusted {
                 HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.shield")
-                        .foregroundStyle(.orange)
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .symbolRenderingMode(.multicolor)
                     Text("Global shortcuts need Accessibility permission")
                         .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                     Button("Grant…") {
-                        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-                        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                            NSWorkspace.shared.open(url)
+                        let promptedKey = "accessibilityBanner.promptShown"
+                        if UserDefaults.standard.bool(forKey: promptedKey) {
+                            // The system prompt was already shown once; send the user to System Settings.
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } else {
+                            UserDefaults.standard.set(true, forKey: promptedKey)
+                            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+                            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
                         }
                     }
                     .controlSize(.small)

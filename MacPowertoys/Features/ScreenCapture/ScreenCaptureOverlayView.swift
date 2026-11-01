@@ -1,10 +1,22 @@
 import AppKit
 
+/// Borderless, non-activating overlay panel: it takes the selection clicks itself
+/// (so they never reach the app underneath) without changing the frontmost app.
+final class ScreenCaptureOverlayPanel: NSPanel {
+    // Key status lets the overlay's cursor rect (crosshair) apply while the app is inactive.
+    override var canBecomeKey: Bool { true }
+}
+
 class ScreenCaptureOverlayView: NSView {
     // Updated by model on every mouseDragged event — triggers redraw automatically
     var selectionRect: NSRect? {
         didSet { setNeedsDisplay(bounds) }
     }
+
+    // Selection input, reported in global screen coordinates (NSEvent.mouseLocation).
+    var onMouseDown: (() -> Void)?
+    var onMouseDragged: (() -> Void)?
+    var onMouseUp: (() -> Void)?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -13,6 +25,16 @@ class ScreenCaptureOverlayView: NSView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .crosshair)
+    }
+
+    override func mouseDown(with event: NSEvent) { onMouseDown?() }
+    override func mouseDragged(with event: NSEvent) { onMouseDragged?() }
+    override func mouseUp(with event: NSEvent) { onMouseUp?() }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
@@ -69,16 +91,18 @@ class ScreenCaptureOverlayView: NSView {
             labelY = rect.maxY + 4 // fallback: overlap top
         }
 
-        // Small rounded pill background behind label
+        // Small rounded pill background behind label, clamped inside bounds on all edges
+        let pillW = strSize.width + 12
+        let pillH = strSize.height + 6
         let pillRect = NSRect(
-            x: max(4, labelX - 6),
-            y: labelY - 3,
-            width: strSize.width + 12,
-            height: strSize.height + 6
+            x: min(max(4, labelX - 6), bounds.maxX - pillW - 4),
+            y: min(max(4, labelY - 3), bounds.maxY - pillH - 4),
+            width: pillW,
+            height: pillH
         )
         NSColor.black.withAlphaComponent(0.65).setFill()
         NSBezierPath(roundedRect: pillRect, xRadius: 4, yRadius: 4).fill()
 
-        str.draw(at: NSPoint(x: max(10, labelX), y: labelY))
+        str.draw(at: NSPoint(x: pillRect.minX + 6, y: pillRect.minY + 3))
     }
 }

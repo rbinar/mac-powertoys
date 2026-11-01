@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct VideoConverterView: View {
     @EnvironmentObject var model: VideoConverterModel
     let onBack: () -> Void
+    private let homebrewInstallCommand = "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -14,10 +15,6 @@ struct VideoConverterView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     if !model.ffmpegAvailable {
                         ffmpegWarningSection
-                    }
-                    
-                    if !model.conversionHistory.isEmpty {
-                        historySection
                     }
                     
                     if model.inputFileURL == nil {
@@ -33,6 +30,10 @@ struct VideoConverterView: View {
                         }
                         Divider()
                         actionSection
+                    }
+                    
+                    if !model.conversionHistory.isEmpty {
+                        historySection
                     }
                 }
             }
@@ -66,7 +67,7 @@ struct VideoConverterView: View {
                     ProgressView()
                         .controlSize(.regular)
                     
-                    Text("Installing FFmpeg...")
+                    Text("Installing FFmpeg…")
                         .font(.system(.headline, design: .rounded))
                     
                     Text("This may take a few minutes")
@@ -85,7 +86,11 @@ struct VideoConverterView: View {
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(.black.opacity(0.3))
+                            .fill(Color(nsColor: .textBackgroundColor))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(Color(nsColor: .separatorColor))
                     )
                 }
             } else if model.ffmpegAvailable {
@@ -124,20 +129,11 @@ struct VideoConverterView: View {
                     Button {
                         model.installFFmpeg()
                     } label: {
-                        HStack {
-                            Image(systemName: "arrow.down.circle.fill")
-                                .font(.body.weight(.semibold))
-                            Text("Install FFmpeg via Homebrew")
-                                .font(.system(.subheadline, design: .rounded))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.accentColor.opacity(0.8))
-                        )
+                        Label("Install FFmpeg via Homebrew", systemImage: "arrow.down.circle.fill")
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     
                     if model.installFailed {
                         // Show log on failure
@@ -157,7 +153,11 @@ struct VideoConverterView: View {
                             .padding(6)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(.black.opacity(0.3))
+                                    .fill(Color(nsColor: .textBackgroundColor))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(Color(nsColor: .separatorColor))
                             )
                         }
                     }
@@ -169,20 +169,24 @@ struct VideoConverterView: View {
                             .foregroundStyle(.secondary)
                         
                         HStack {
-                            Text("/bin/bash -c \"$(curl -fsSL https://brew.sh/install.sh)\"")
+                            Text(homebrewInstallCommand)
                                 .font(.system(size: 9, design: .monospaced))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 6)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 6)
-                                        .fill(.black.opacity(0.3))
+                                        .fill(Color(nsColor: .textBackgroundColor))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(Color(nsColor: .separatorColor))
                                 )
                                 .lineLimit(2)
                             
                             Button {
                                 NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"", forType: .string)
+                                NSPasteboard.general.setString(homebrewInstallCommand, forType: .string)
                             } label: {
                                 Image(systemName: "doc.on.doc")
                                     .font(.caption)
@@ -205,7 +209,11 @@ struct VideoConverterView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 6)
-                                        .fill(.black.opacity(0.3))
+                                        .fill(Color(nsColor: .textBackgroundColor))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(Color(nsColor: .separatorColor))
                                 )
                             
                             Button {
@@ -334,7 +342,7 @@ struct VideoConverterView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Analyzing...")
+                    Text("Analyzing…")
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
@@ -478,27 +486,19 @@ struct VideoConverterView: View {
         Button {
             model.startConversion()
         } label: {
-            HStack {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.body.weight(.semibold))
-                Text("Convert to \(model.selectedFormat.rawValue)")
-                    .font(.system(.subheadline, design: .rounded).weight(.medium))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.accentColor.opacity(model.inputMetadata != nil ? 0.8 : 0.3))
-            )
+            Label("Convert to \(model.selectedFormat.rawValue)", systemImage: "arrow.triangle.2.circlepath")
+                .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .keyboardShortcut(.defaultAction)
         .disabled(model.inputMetadata == nil)
     }
     
     private func progressSection(progress: Double) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Converting...")
+                Text("Converting…")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
                 
@@ -671,7 +671,7 @@ struct VideoConverterView: View {
                     model.reset()
                 } label: {
                     HStack {
-                        Image(systemName: "trash")
+                        Image(systemName: "arrow.counterclockwise")
                         Text("Reset")
                     }
                     .font(.system(.caption, design: .rounded))

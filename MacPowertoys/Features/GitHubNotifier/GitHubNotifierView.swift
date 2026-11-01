@@ -8,6 +8,7 @@ struct GitHubNotifierView: View {
     @State private var repoSearchText = ""
     @State private var isFetchingRepos = false
     @State private var showPATInput = false
+    @State private var showRemoveTokenConfirm = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -49,6 +50,11 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(16)
+        .confirmationDialog("Remove GitHub token?", isPresented: $showRemoveTokenConfirm) {
+            Button("Remove Token", role: .destructive) {
+                model.deleteToken()
+            }
+        }
     }
 
     // MARK: - Token Section
@@ -67,7 +73,7 @@ struct GitHubNotifierView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .controlSize(.mini)
-                    Text("Validating token...")
+                    Text("Validating token…")
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
@@ -94,8 +100,8 @@ struct GitHubNotifierView: View {
                             .foregroundStyle(.orange)
                     }
                     HStack(spacing: 12) {
-                        Button("Remove Token") {
-                            model.deleteToken()
+                        Button("Remove Token", role: .destructive) {
+                            showRemoveTokenConfirm = true
                         }
                         .buttonStyle(.plain)
                         .font(.system(.caption, design: .rounded))
@@ -104,9 +110,9 @@ struct GitHubNotifierView: View {
                             model.deleteToken()
                             model.startDeviceFlow()
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                         .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.blue)
                     }
                 }
             case .invalid:
@@ -187,9 +193,8 @@ struct GitHubNotifierView: View {
             }
             .font(.system(.subheadline, design: .rounded))
             .fontWeight(.medium)
-            .foregroundStyle(.blue)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderedProminent)
     }
 
     @ViewBuilder
@@ -249,9 +254,9 @@ struct GitHubNotifierView: View {
                     model.saveToken(tokenInput)
                     tokenInput = ""
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.blue)
                 .disabled(tokenInput.isEmpty)
                 Spacer()
                 Text("Create a token at github.com/settings/tokens")
@@ -273,8 +278,8 @@ struct GitHubNotifierView: View {
                         .fontWeight(.medium)
                 }
                 Spacer()
-                Button("Remove Token") {
-                    model.deleteToken()
+                Button("Remove Token", role: .destructive) {
+                    showRemoveTokenConfirm = true
                 }
                 .buttonStyle(.plain)
                 .font(.system(.caption, design: .rounded))
@@ -317,25 +322,23 @@ struct GitHubNotifierView: View {
                     }
                     .font(.system(.caption, design: .rounded))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .disabled(isFetchingRepos)
             }
 
             if !model.availableRepos.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    TextField("Search repos...", text: $repoSearchText)
+                    TextField("Search repos…", text: $repoSearchText)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.caption, design: .rounded))
 
-                    ScrollView {
-                        VStack(spacing: 3) {
-                            ForEach(filteredRepos, id: \.self) { repoName in
-                                repoRow(for: repoName)
-                            }
+                    VStack(spacing: 3) {
+                        ForEach(filteredRepos, id: \.self) { repoName in
+                            repoRow(for: repoName)
                         }
-                        .padding(.vertical, 2)
                     }
-                    .frame(maxHeight: 150)
+                    .padding(.vertical, 2)
                 }
             }
 
@@ -345,15 +348,12 @@ struct GitHubNotifierView: View {
                         .font(.system(.caption2, design: .rounded))
                         .foregroundStyle(.tertiary)
 
-                    ScrollView {
-                        VStack(spacing: 3) {
-                            ForEach(model.availableOrgs, id: \.self) { orgName in
-                                orgRow(for: orgName)
-                            }
+                    VStack(spacing: 3) {
+                        ForEach(model.availableOrgs, id: \.self) { orgName in
+                            orgRow(for: orgName)
                         }
-                        .padding(.vertical, 2)
                     }
-                    .frame(maxHeight: 100)
+                    .padding(.vertical, 2)
                 }
             }
 
@@ -486,7 +486,7 @@ struct GitHubNotifierView: View {
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
+            LazyVGrid(columns: [GridItem(.flexible())], spacing: 6) {
                 ForEach(GitHubEventType.allCases, id: \.rawValue) { eventType in
                     eventFilterRow(for: eventType)
                 }
@@ -574,7 +574,8 @@ struct GitHubNotifierView: View {
                     }
                     .font(.system(.caption, design: .rounded))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .disabled(model.isPolling)
 
                 Spacer()
@@ -600,15 +601,12 @@ struct GitHubNotifierView: View {
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
 
-            ScrollView {
-                VStack(spacing: 6) {
-                    ForEach(model.events) { event in
-                        eventCard(for: event)
-                    }
+            VStack(spacing: 6) {
+                ForEach(model.events) { event in
+                    eventCard(for: event)
                 }
-                .padding(.vertical, 2)
             }
-            .frame(maxHeight: 200)
+            .padding(.vertical, 2)
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
@@ -663,9 +661,7 @@ struct GitHubNotifierView: View {
     private func rateLimitDisplayText(remaining: Int) -> String {
         var text = "\(remaining)/5000 requests"
         if let resetDate = model.rateLimitReset {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm"
-            text += " · Resets at \(formatter.string(from: resetDate))"
+            text += " · Resets at \(resetDate.formatted(date: .omitted, time: .shortened))"
         }
         return text
     }
@@ -677,12 +673,6 @@ struct GitHubNotifierView: View {
     }
 
     private func relativeTime(from date: Date) -> String {
-        let seconds = Int(Date().timeIntervalSince(date))
-        if seconds < 60 { return "just now" }
-        let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m ago" }
-        let hours = minutes / 60
-        if hours < 24 { return "\(hours)h ago" }
-        return "\(hours / 24)d ago"
+        date.formatted(.relative(presentation: .named))
     }
 }

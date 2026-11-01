@@ -85,15 +85,6 @@ final class ScreenCaptureModel: ObservableObject {
     private var hudWindow: NSWindow?
     private var screenParamsObserver: NSObjectProtocol?
 
-    // MARK: - Private — Event Monitors
-
-    private var mouseDownGlobalMonitor: Any?
-    private var mouseDownLocalMonitor: Any?
-    private var mouseDragGlobalMonitor: Any?
-    private var mouseDragLocalMonitor: Any?
-    private var mouseUpGlobalMonitor: Any?
-    private var mouseUpLocalMonitor: Any?
-
     // MARK: - Private — Carbon Hotkeys
 
     private var captureHotKeyRef: EventHotKeyRef?
@@ -184,7 +175,6 @@ final class ScreenCaptureModel: ObservableObject {
         selectionEnd = nil
 
         createOverlayWindows()
-        registerMouseMonitors()
         registerEscHotKey()
         // Display set changed mid-selection: overlays would be stale, so cancel.
         screenParamsObserver = NotificationCenter.default.addObserver(
@@ -194,14 +184,12 @@ final class ScreenCaptureModel: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor in self?.cancelCapture() }
         }
-        NSCursor.crosshair.set()
         NSLog("%@", "[ScreenCapture] Selection mode started")
     }
 
     func cancelCapture() {
         guard isCapturing else { return }
         finishCapture()
-        NSCursor.arrow.set()
         NSLog("%@", "[ScreenCapture] Capture cancelled")
     }
 
@@ -211,9 +199,7 @@ final class ScreenCaptureModel: ObservableObject {
         selectionEnd = nil
         if let o = screenParamsObserver { NotificationCenter.default.removeObserver(o); screenParamsObserver = nil }
         unregisterEscHotKey()
-        removeMouseMonitors()
         removeOverlayWindows()
-        NSCursor.arrow.set()
     }
 
     // MARK: - Overlay Windows
@@ -223,10 +209,16 @@ final class ScreenCaptureModel: ObservableObject {
             let frame = screen.frame
             let did = screenID(for: screen)
             let view = ScreenCaptureOverlayView(frame: NSRect(origin: .zero, size: frame.size))
+            // The overlay consumes the selection drag itself, so it never reaches the app
+            // underneath. A drag that crosses displays keeps going to the view that got
+            // mouseDown; handlers read the global NSEvent.mouseLocation.
+            view.onMouseDown = { [weak self] in self?.handleMouseDown() }
+            view.onMouseDragged = { [weak self] in self?.handleMouseDragged() }
+            view.onMouseUp = { [weak self] in self?.handleMouseUp() }
 
-            let window = NSWindow(
+            let window = ScreenCaptureOverlayPanel(
                 contentRect: frame,
-                styleMask: .borderless,
+                styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false,
                 screen: screen
@@ -239,10 +231,12 @@ final class ScreenCaptureModel: ObservableObject {
             window.backgroundColor = .clear
             window.isOpaque = false
             window.hasShadow = false
-            window.ignoresMouseEvents = true
+            window.ignoresMouseEvents = false
+            window.hidesOnDeactivate = false
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             window.animationBehavior = .none
             window.orderFrontRegardless()
+            if NSMouseInRect(NSEvent.mouseLocation, frame, false) { window.makeKey() }
 
             overlayWindows.append((window: window, view: view, displayID: did, screen: screen))
         }
@@ -255,46 +249,6 @@ final class ScreenCaptureModel: ObservableObject {
 
     private func screenID(for screen: NSScreen) -> UInt32 {
         (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? UInt32) ?? 0
-    }
-
-    // MARK: - Event Monitors
-
-    private func registerMouseMonitors() {
-        // Paired global + local monitors: global monitors don't fire for events
-        // delivered to the app's own key window, so a drag started over the app's
-        // own window would be dropped. The local monitor covers that case and
-        // returns the event unchanged. Only one of the two delivers a given event,
-        // so the shared @MainActor handlers never double-fire (mirrors ScreenRulerModel).
-        mouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
-            Task { @MainActor in self?.handleMouseDown() }
-        }
-        mouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDown() }
-            return event
-        }
-        mouseDragGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] _ in
-            Task { @MainActor in self?.handleMouseDragged() }
-        }
-        mouseDragLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDragged() }
-            return event
-        }
-        mouseUpGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] _ in
-            Task { @MainActor in self?.handleMouseUp() }
-        }
-        mouseUpLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            Task { @MainActor in self?.handleMouseUp() }
-            return event
-        }
-    }
-
-    private func removeMouseMonitors() {
-        if let m = mouseDownGlobalMonitor { NSEvent.removeMonitor(m); mouseDownGlobalMonitor = nil }
-        if let m = mouseDownLocalMonitor { NSEvent.removeMonitor(m); mouseDownLocalMonitor = nil }
-        if let m = mouseDragGlobalMonitor { NSEvent.removeMonitor(m); mouseDragGlobalMonitor = nil }
-        if let m = mouseDragLocalMonitor { NSEvent.removeMonitor(m); mouseDragLocalMonitor = nil }
-        if let m = mouseUpGlobalMonitor { NSEvent.removeMonitor(m); mouseUpGlobalMonitor = nil }
-        if let m = mouseUpLocalMonitor { NSEvent.removeMonitor(m); mouseUpLocalMonitor = nil }
     }
 
     // MARK: - Mouse Event Handling
@@ -323,14 +277,13 @@ final class ScreenCaptureModel: ObservableObject {
 
         // Hide overlays before capture so they don't appear in screenshot
         for entry in overlayWindows { entry.window.orderOut(nil) }
-        NSCursor.arrow.set()
 
         Task {
             // Wait 2 frames for overlay to fully disappear from screen compositor
             try? await Task.sleep(nanoseconds: 30_000_000)
             let copied = await captureAndCopy(screenRect: screenRect)
             finishCapture()
-            showCopiedHUD(success: copied)
+            showCopiedHUD(success: copied, on: primaryScreen(for: screenRect))
         }
     }
 
@@ -455,10 +408,13 @@ final class ScreenCaptureModel: ObservableObject {
 
     // MARK: - HUD
 
-    private func showCopiedHUD(success: Bool = true) {
+    private func showCopiedHUD(success: Bool = true, on captureScreen: NSScreen?) {
         let hudW: CGFloat = 220
         let hudH: CGFloat = 44
-        guard let screen = NSScreen.main else { return }
+        let mouse = NSEvent.mouseLocation
+        guard let screen = captureScreen
+            ?? NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) })
+            ?? NSScreen.main else { return }
 
         let x = screen.frame.midX - hudW / 2
         let y = screen.frame.minY + 80
@@ -472,17 +428,27 @@ final class ScreenCaptureModel: ObservableObject {
         effectView.layer?.cornerRadius = 12
         effectView.layer?.masksToBounds = true
 
-        let label = NSTextField(labelWithString: success ? "✓  Copied to clipboard" : "✗  Capture failed")
+        let iconSize: CGFloat = 16
+        let iconGap: CGFloat = 8
+        let symbolName = success ? "checkmark.circle.fill" : "xmark.octagon.fill"
+        let iconView = NSImageView(image: NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) ?? NSImage())
+        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+        iconView.contentTintColor = success ? .systemGreen : .systemRed
+
+        let label = NSTextField(labelWithString: success ? "Copied to clipboard" : "Capture failed")
         label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         label.textColor = .white
         label.alignment = .center
         label.sizeToFit()
+        let contentX = (hudW - (iconSize + iconGap + label.frame.width)) / 2
+        iconView.frame = NSRect(x: contentX, y: (hudH - iconSize) / 2, width: iconSize, height: iconSize)
         label.frame = NSRect(
-            x: (hudW - label.frame.width) / 2,
+            x: contentX + iconSize + iconGap,
             y: (hudH - label.frame.height) / 2,
             width: label.frame.width,
             height: label.frame.height
         )
+        effectView.addSubview(iconView)
         effectView.addSubview(label)
 
         let window = NSWindow(
@@ -492,10 +458,11 @@ final class ScreenCaptureModel: ObservableObject {
             defer: false
         )
         window.contentView = effectView
-        window.level = .statusBar
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 1)
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true
+        window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         window.animationBehavior = .utilityWindow
         window.orderFrontRegardless()
@@ -529,6 +496,7 @@ final class ScreenCaptureModel: ObservableObject {
             alert.addButton(withTitle: "Open System Settings")
             alert.addButton(withTitle: "Quit & Reopen")
             alert.addButton(withTitle: "Cancel")
+            NSApp.activate(ignoringOtherApps: true)
             switch alert.runModal() {
             case .alertFirstButtonReturn:
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {

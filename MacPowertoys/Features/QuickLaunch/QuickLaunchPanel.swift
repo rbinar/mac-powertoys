@@ -10,6 +10,7 @@ class QuickLaunchPanelController {
     private var clickMonitor: Any?
     private var keyMonitor: Any?
     private var screenObserver: AnyCancellable?
+    private var resignKeyObserver: NSObjectProtocol?
 
     @MainActor
     init(model: QuickLaunchModel) {
@@ -49,6 +50,8 @@ class QuickLaunchPanelController {
     func cleanup() {
         if let resizeObserver { NotificationCenter.default.removeObserver(resizeObserver) }
         resizeObserver = nil
+        if let resignKeyObserver { NotificationCenter.default.removeObserver(resignKeyObserver) }
+        resignKeyObserver = nil
         removeMonitors()
         panel?.orderOut(nil)
         panel = nil
@@ -90,6 +93,24 @@ class QuickLaunchPanelController {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.pinTopEdge() }
         }
+
+        // Close the palette when it loses key status (e.g. ⌘Tab to another app).
+        resignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            // Defer so NSApp.isActive / the new key window have settled.
+            DispatchQueue.main.async { self?.closeIfFocusLost() }
+        }
+    }
+
+    /// Ignores key loss caused by our own sheets/alerts/modal panels, and by windows a module screen
+    /// opens while the app stays active; a hidden panel needs no second close.
+    private func closeIfFocusLost() {
+        guard let panel, panel.isVisible, !panel.isKeyWindow,
+              panel.attachedSheet == nil, NSApp.modalWindow == nil else { return }
+        let showingScreen = MainActor.assumeIsolated { model.activeScreen != nil }
+        if showingScreen && NSApp.isActive { return }
+        hidePanel()
     }
 
     /// Top edge for the list panel: chosen so the panel at its tallest (search + 420 pt list + footer)
@@ -105,6 +126,7 @@ class QuickLaunchPanelController {
         if abs(f.maxY - top) > 0.5 {
             panel.setFrameOrigin(NSPoint(x: f.origin.x, y: top - f.height))
         }
+        panel.invalidateShadow()
     }
 
     /// Module screens use a 380 x up-to-640 pt panel (the views are designed for a 340 pt popover).
@@ -117,9 +139,11 @@ class QuickLaunchPanelController {
             let height = min(640, visible.height - 40)
             let y = visible.midY - height / 2
             panel.setFrame(NSRect(x: visible.midX - width / 2, y: y, width: width, height: height), display: true)
+            panel.invalidateShadow()
         } else {
             panel.setContentSize(NSSize(width: 680, height: 56))
             positionPanel()
+            panel.invalidateShadow()
         }
     }
 
@@ -206,7 +230,10 @@ struct QuickLaunchPanelContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(.separator.opacity(0.5), lineWidth: 0.5)
+        )
         // On the very first show the view appears before the panel is key; focus on the next tick.
         .onAppear { DispatchQueue.main.async { isSearchFocused = true } }
         .onChange(of: model.isPanelVisible) { visible in
@@ -255,12 +282,20 @@ struct QuickLaunchPanelContent: View {
         VStack(spacing: 0) {
             searchBar
 
-            if !model.sections.isEmpty {
+            if model.sections.isEmpty {
+                if !model.searchText.isEmpty {
+                    Divider()
+                        .padding(.horizontal, 16)
+                    Text("No Results")
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 16)
+                }
+            } else {
                 Divider()
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 16)
                 resultsList
                 Divider()
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 16)
                 Text("↑↓ navigate · ↩ run · ⌘↩ settings · esc close")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(.tertiary)
@@ -278,7 +313,7 @@ struct QuickLaunchPanelContent: View {
                 .foregroundStyle(.secondary)
 
             TextField("Search commands, apps, shortcuts...", text: $model.searchText)
-                .font(.system(size: 20, weight: .light, design: .rounded))
+                .font(.system(size: 22))
                 .textFieldStyle(.plain)
                 .focused($isSearchFocused)
         }
@@ -298,7 +333,7 @@ struct QuickLaunchPanelContent: View {
                                 .font(.system(.caption2, design: .rounded).weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 16)
+                                .padding(.horizontal, 8)
                                 .padding(.top, 8)
                                 .padding(.bottom, 2)
                         }
@@ -308,6 +343,7 @@ struct QuickLaunchPanelContent: View {
                         }
                     }
                 }
+                .padding(.horizontal, 8)
             }
             .frame(maxHeight: 420)
             .onChange(of: model.selectedIndex) { index in
@@ -333,9 +369,9 @@ struct QuickLaunchPanelContent: View {
         HStack(spacing: 12) {
             Image(systemName: command.symbol)
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(tint(for: command.group))
                 .frame(width: 32, height: 32)
-                .background(RoundedRectangle(cornerRadius: 8).fill(tint(for: command.group)))
+                .background(RoundedRectangle(cornerRadius: 6).fill(tint(for: command.group).opacity(0.15)))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(command.title)
@@ -351,12 +387,17 @@ struct QuickLaunchPanelContent: View {
 
             if let isOn = command.isOn {
                 let on = isOn()
-                Text(on ? "On" : "Off")
-                    .font(.system(.caption2, design: .rounded).weight(.semibold))
-                    .foregroundStyle(on ? Color.green : Color.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Capsule().fill((on ? Color.green : Color.secondary).opacity(0.18)))
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(on ? Color.green : Color.secondary)
+                        .frame(width: 6, height: 6)
+                    Text(on ? "On" : "Off")
+                        .font(.system(.caption2, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(Color.secondary.opacity(0.18)))
             }
 
             if let shortcut = command.shortcut {
@@ -446,14 +487,17 @@ private struct RowChrome: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 8)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(selected ? Color.primary.opacity(0.14) : .clear)
+                    .fill(selected ? Color.accentColor.opacity(0.22) : .clear)
             )
             .contentShape(Rectangle())
             .onTapGesture(perform: onTap)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+            .accessibilityAction(.default, onTap)
     }
 }
 

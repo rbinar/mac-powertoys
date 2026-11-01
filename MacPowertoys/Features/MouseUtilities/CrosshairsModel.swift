@@ -124,6 +124,9 @@ final class CrosshairsModel: ObservableObject {
             view.borderSize = borderSize
 
             let window = NSWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false, screen: screen)
+            // With `screen:` set, contentRect is taken relative to that screen's origin,
+            // which double-offsets non-main displays; pin the global frame explicitly.
+            window.setFrame(frame, display: false)
             window.contentView = view
             window.level = .screenSaver
             window.backgroundColor = .clear
@@ -240,9 +243,14 @@ class CrosshairsOverlayView: NSView {
         let halfThickness = thickness / 2
         let halfBorder = (thickness + borderSize * 2) / 2
 
+        // Draw everything opaque inside one transparency layer and apply the opacity to the
+        // layer, so the border/line overlap doesn't stack two translucent colours.
+        ctx.setAlpha(CGFloat(crosshairOpacity))
+        ctx.beginTransparencyLayer(auxiliaryInfo: nil)
+        defer { ctx.endTransparencyLayer() }
+
         // Draw border lines first (slightly thicker)
-        let borderAlphaColor = borderColor.withAlphaComponent(CGFloat(crosshairOpacity))
-        ctx.setFillColor(borderAlphaColor.cgColor)
+        ctx.setFillColor(borderColor.withAlphaComponent(1).cgColor)
 
         // Horizontal border
         let hBorderRect = CGRect(x: 0, y: viewPoint.y - halfBorder, width: bounds.width, height: thickness + borderSize * 2)
@@ -253,8 +261,7 @@ class CrosshairsOverlayView: NSView {
         ctx.fill(vBorderRect)
 
         // Draw crosshair lines on top
-        let lineColor = crosshairColor.withAlphaComponent(CGFloat(crosshairOpacity))
-        ctx.setFillColor(lineColor.cgColor)
+        ctx.setFillColor(crosshairColor.withAlphaComponent(1).cgColor)
 
         // Horizontal line (left part)
         let hLeftRect = CGRect(x: 0, y: viewPoint.y - halfThickness, width: viewPoint.x - centerRadius, height: thickness)
@@ -283,5 +290,6 @@ class CrosshairsOverlayView: NSView {
             height: centerRadius * 2
         )
         ctx.fillEllipse(in: centerRect)
+        ctx.setBlendMode(.normal)
     }
 }

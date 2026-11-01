@@ -203,8 +203,8 @@ final class SpeechToTextModel: ObservableObject {
         }
 
         progress = 0.1
-        statusMessage = "Preparing \(selectedModel.displayName) model..."
-        viewState = .processing("Preparing \(selectedModel.displayName) model...")
+        statusMessage = "Preparing \(selectedModel.displayName) model…"
+        viewState = .processing("Preparing \(selectedModel.displayName) model…")
 
         do {
             let config = WhisperKitConfig(model: selectedModel.whisperModelName)
@@ -302,7 +302,7 @@ final class SpeechToTextModel: ObservableObject {
             }
         }
 
-        viewState = .processing("Preparing model...")
+        viewState = .processing("Preparing model…")
 
         if !isModelReady {
             await prepareModelIfNeeded()
@@ -325,8 +325,8 @@ final class SpeechToTextModel: ObservableObject {
         }
 
         progress = 0.15
-        statusMessage = "Transcribing \(fileURL.lastPathComponent)..."
-        viewState = .processing("Transcribing \(fileURL.lastPathComponent)...")
+        statusMessage = "Transcribing \(fileURL.lastPathComponent)…"
+        viewState = .processing("Transcribing \(fileURL.lastPathComponent)…")
 
         do {
             let decodeOptions = DecodingOptions(language: selectedLanguage.whisperLanguageCode)

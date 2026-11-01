@@ -135,20 +135,21 @@ class FindMyMouseOverlayView: NSView {
         let innerRadius = max(currentRadius - 20, 0)
         let outerRadius = currentRadius
 
-        // Clear the inner circle completely
+        // Clear the whole outer circle; the ring between inner and outer radius is
+        // then re-filled by the gradient, so there is no hard edge or doubled band.
         let circlePath = CGPath(
             ellipseIn: CGRect(
-                x: viewPoint.x - innerRadius,
-                y: viewPoint.y - innerRadius,
-                width: innerRadius * 2,
-                height: innerRadius * 2
+                x: viewPoint.x - outerRadius,
+                y: viewPoint.y - outerRadius,
+                width: outerRadius * 2,
+                height: outerRadius * 2
             ),
             transform: nil
         )
         ctx.addPath(circlePath)
         ctx.fillPath()
 
-        // Draw gradient ring for soft edge
+        // Draw gradient ring for soft edge (no extend options: drawn only within the ring)
         ctx.setBlendMode(.normal)
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let gradientColors = [
@@ -182,8 +183,11 @@ class FindMyMouseOverlayView: NSView {
 
     // MARK: - Animations
 
+    /// Reduce Motion: keep the spotlight at its final radius and only fade opacity.
+    private var reduceMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
     func animateIn() {
-        startRadius = spotlightRadius * 4
+        startRadius = reduceMotion ? spotlightRadius : spotlightRadius * 4
         currentRadius = startRadius
         startOpacity = 0
         currentOpacity = 0
@@ -198,7 +202,7 @@ class FindMyMouseOverlayView: NSView {
     func animateOut() {
         startRadius = currentRadius
         startOpacity = currentOpacity
-        targetRadius = spotlightRadius * 4
+        targetRadius = reduceMotion ? currentRadius : spotlightRadius * 4
         targetOpacity = 0
         animationDuration = (animationDurationMs / 1000.0) * 0.6
         animationStartTime = CACurrentMediaTime()

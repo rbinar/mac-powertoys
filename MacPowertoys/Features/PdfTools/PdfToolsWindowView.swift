@@ -5,11 +5,15 @@ import UniformTypeIdentifiers
 struct PdfToolsWindowView: View {
     @EnvironmentObject var model: PdfToolsModel
     @State private var draggedItemID: UUID?
+    @State private var isMergeDragTargeted = false
+    @State private var isImageDragTargeted = false
+    @State private var isDropZoneTargeted = false
 
     var body: some View {
-        HStack(spacing: 0) {
+        NavigationSplitView {
             sidebar
-            Divider()
+                .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
+        } detail: {
             contentArea
         }
         .frame(minWidth: 600, minHeight: 400)
@@ -19,81 +23,34 @@ struct PdfToolsWindowView: View {
     // MARK: - Sidebar
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Operations")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-                .padding(.bottom, 4)
-
-            ForEach(PdfOperation.allCases, id: \.self) { operation in
-                sidebarRow(operation)
+        List(selection: Binding<PdfOperation?>(
+            get: { model.selectedOperation },
+            set: { if let operation = $0 { model.selectedOperation = operation } }
+        )) {
+            Section("Operations") {
+                ForEach(PdfOperation.allCases, id: \.self) { operation in
+                    Label(operation.displayName, systemImage: operation.icon)
+                        .tag(operation)
+                }
             }
 
-            Divider()
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-
-            historySection
-
-            Spacer()
-        }
-        .frame(width: 200)
-        .background(.ultraThinMaterial)
-    }
-
-    private func sidebarRow(_ operation: PdfOperation) -> some View {
-        let isSelected = model.selectedOperation == operation
-        return Button {
-            model.selectedOperation = operation
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: operation.icon)
-                    .frame(width: 20)
-                Text(operation.displayName)
-                Spacer()
-            }
-            .font(.system(.subheadline, design: .rounded))
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 8)
-    }
-
-    private var historySection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("History")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if !model.operationHistory.isEmpty {
-                    Button("Clear") { model.clearHistory() }
+            Section("History") {
+                if model.operationHistory.isEmpty {
+                    Text("No history yet")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    ForEach(model.operationHistory.prefix(5)) { item in
+                        historyRow(item)
+                    }
+                    Button("Clear History") { model.clearHistory() }
                         .font(.system(.caption2, design: .rounded))
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 12)
-
-            if model.operationHistory.isEmpty {
-                Text("No history yet")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                    .padding(.horizontal, 12)
-            } else {
-                ForEach(model.operationHistory.prefix(5)) { item in
-                    historyRow(item)
-                }
-            }
         }
+        .listStyle(.sidebar)
     }
 
     private func historyRow(_ item: PdfOperationHistoryItem) -> some View {
@@ -117,12 +74,9 @@ struct PdfToolsWindowView: View {
                 }
                 Spacer()
             }
-            .padding(.vertical, 4)
-            .padding(.horizontal, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 8)
     }
 
     // MARK: - Content Area
@@ -157,7 +111,7 @@ struct PdfToolsWindowView: View {
                     Label("Add Files", systemImage: "plus.circle")
                         .font(.system(.subheadline, design: .rounded))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
 
                 Spacer()
 
@@ -178,7 +132,8 @@ struct PdfToolsWindowView: View {
                     onMove: { model.moveMergeFile(from: $0, to: $1) },
                     showPageCount: true
                 )
-                .onDrop(of: [.fileURL, .pdf], isTargeted: nil) { providers in
+                .overlay(dragHighlight(isMergeDragTargeted))
+                .onDrop(of: [.fileURL, .pdf], isTargeted: $isMergeDragTargeted) { providers in
                     handlePdfDrop(providers)
                 }
             } else {
@@ -220,7 +175,6 @@ struct PdfToolsWindowView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .controlSize(.mini)
 
                     switch model.splitMode {
                     case .ranges:
@@ -288,7 +242,6 @@ struct PdfToolsWindowView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .controlSize(.mini)
 
                     Text(compressQualityDescription)
                         .font(.system(.caption, design: .rounded))
@@ -339,7 +292,6 @@ struct PdfToolsWindowView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .controlSize(.mini)
 
                     Toggle("All pages", isOn: $model.rotateAllPages)
                         .toggleStyle(.switch)
@@ -389,7 +341,6 @@ struct PdfToolsWindowView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .controlSize(.mini)
 
                     Text("DPI")
                         .font(.system(.subheadline, design: .rounded))
@@ -402,7 +353,6 @@ struct PdfToolsWindowView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .controlSize(.mini)
 
                     Text(dpiDescription)
                         .font(.system(.caption, design: .rounded))
@@ -442,7 +392,7 @@ struct PdfToolsWindowView: View {
                     Label("Add Images", systemImage: "plus.circle")
                         .font(.system(.subheadline, design: .rounded))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
 
                 Spacer()
 
@@ -463,7 +413,8 @@ struct PdfToolsWindowView: View {
                     onMove: { model.moveImageToPdfFile(from: $0, to: $1) },
                     showPageCount: false
                 )
-                .onDrop(of: [.fileURL, .image], isTargeted: nil) { providers in
+                .overlay(dragHighlight(isImageDragTargeted))
+                .onDrop(of: [.fileURL, .image], isTargeted: $isImageDragTargeted) { providers in
                     handleImageDrop(providers)
                 }
             } else {
@@ -501,7 +452,7 @@ struct PdfToolsWindowView: View {
                 Label(model.selectedFileURL == nil ? "Select PDF" : "Change PDF", systemImage: "doc.badge.plus")
                     .font(.system(.subheadline, design: .rounded))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bordered)
 
             if let url = model.selectedFileURL {
                 Text(url.lastPathComponent)
@@ -634,7 +585,15 @@ struct PdfToolsWindowView: View {
                         .foregroundStyle(.secondary)
                 }
             )
-            .onDrop(of: types, isTargeted: nil, perform: handler)
+            .overlay(dragHighlight(isDropZoneTargeted))
+            .onDrop(of: types, isTargeted: $isDropZoneTargeted, perform: handler)
+    }
+
+    private func dragHighlight(_ isTargeted: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 10)
+            .strokeBorder(Color.accentColor, lineWidth: 2)
+            .opacity(isTargeted ? 1 : 0)
+            .allowsHitTesting(false)
     }
 
     @ViewBuilder
@@ -642,17 +601,12 @@ struct PdfToolsWindowView: View {
         switch model.state {
         case .idle:
             Button(action: performAction) {
-                HStack {
-                    Image(systemName: "play.fill")
-                    Text(actionLabel)
-                }
-                .font(.system(.subheadline, design: .rounded))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(canPerform ? Color.accentColor : Color.gray.opacity(0.3)))
-                .foregroundColor(.white)
+                Label(actionLabel, systemImage: "play.fill")
+                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
             .disabled(!canPerform)
 
         case .processing(let progress, let description):
@@ -667,10 +621,10 @@ struct PdfToolsWindowView: View {
                 }
                 ProgressView(value: progress)
                     .progressViewStyle(.linear)
-                Button("Cancel") { model.cancelOperation() }
+                Button("Cancel", role: .cancel) { model.cancelOperation() }
                     .font(.system(.caption, design: .rounded))
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.red)
+                    .buttonStyle(.bordered)
+                    .keyboardShortcut(.cancelAction)
             }
             .padding(10)
             .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))

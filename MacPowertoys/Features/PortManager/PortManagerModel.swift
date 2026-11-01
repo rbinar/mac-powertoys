@@ -286,6 +286,7 @@ final class PortManagerModel: ObservableObject {
         refreshTimer = nil
         refreshTask?.cancel()
         refreshTask = nil
+        ports = []
     }
 
     func refreshPorts() async {

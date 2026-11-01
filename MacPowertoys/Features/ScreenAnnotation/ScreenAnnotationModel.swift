@@ -24,20 +24,26 @@ struct Annotation {
 
 // MARK: - Preset Colors
 
-let annotationPresetColors: [NSColor] = [
-    .systemRed,
-    .systemBlue,
-    .systemGreen,
-    .systemYellow,
-    .systemOrange,
-    .white,
-    .black,
-    .systemPurple,
+let annotationPresetColors: [(color: NSColor, name: String)] = [
+    (.systemRed, "Red"),
+    (.systemBlue, "Blue"),
+    (.systemGreen, "Green"),
+    (.systemYellow, "Yellow"),
+    (.systemOrange, "Orange"),
+    (.white, "White"),
+    (.black, "Black"),
+    (.systemPurple, "Purple"),
 ]
 
 // MARK: - Keyable Window (borderless windows can't become key by default)
 
 private class KeyableWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+}
+
+/// Non-activating, so consuming mouse input never changes the frontmost app; can become key so
+/// cursor rects and key events land on the overlay rather than on the app underneath.
+private final class AnnotationOverlayPanel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
@@ -125,28 +131,25 @@ final class ScreenAnnotationModel: ObservableObject {
     var selectedAnnotationIndex: Int? = nil
     private var dragOffset: CGPoint = .zero
     private var isDraggingSelection: Bool = false
+    /// Snapshots of `annotations` taken before each change, so ⌘Z also restores clear / delete / move.
+    private var undoStack: [[Annotation]] = []
+    /// Taken when a selection drag starts; pushed to `undoStack` only once it actually moves.
+    private var preDragSnapshot: [Annotation]?
 
     // MARK: - Private
     private var overlayWindows: [(window: NSWindow, view: ScreenAnnotationOverlayView, displayID: UInt32, screen: NSScreen)] = []
     private var toolbarWindow: NSWindow?
     private var toolbarView: ScreenAnnotationToolbarView?
     private var textInputWindow: NSWindow?
+    private var hudWindow: NSWindow?
     private var pendingTextPoint: NSPoint = .zero
-    private var elevatedWindows: [NSWindow] = []
+    private var elevatedWindows: [(window: NSWindow, level: NSWindow.Level)] = []
 
-    // Event monitors. Global monitors never see events for this app's own windows, so paired
-    // local monitors cover those; they skip events destined for interactive windows (toolbar,
-    // text input, elevated app windows) to avoid double-handling.
-    private var mouseDownGlobalMonitor: Any?
-    private var mouseDragGlobalMonitor: Any?
-    private var mouseUpGlobalMonitor: Any?
+    // Key monitors. Global monitors never see events for this app's own windows, so a paired
+    // local monitor covers those. Mouse input is handled by the overlay views themselves so it
+    // never reaches the app underneath.
     private var keyGlobalMonitor: Any?
-    private var rightMouseDownGlobalMonitor: Any?
-    private var mouseDownLocalMonitor: Any?
-    private var mouseDragLocalMonitor: Any?
-    private var mouseUpLocalMonitor: Any?
     private var keyLocalMonitor: Any?
-    private var rightMouseDownLocalMonitor: Any?
 
     // Carbon hotkey
     private var hotKeyRef: EventHotKeyRef?
@@ -217,6 +220,7 @@ final class ScreenAnnotationModel: ObservableObject {
         currentColor = defaultColor
         currentLineWidth = defaultLineWidth
         annotations.removeAll()
+        undoStack.removeAll()
         currentAnnotation = nil
         selectedAnnotationIndex = nil
 
@@ -236,7 +240,10 @@ final class ScreenAnnotationModel: ObservableObject {
         hideToolbar()
         removeOverlayWindows()
         restoreAppWindows()
+        hudWindow?.orderOut(nil)
+        hudWindow = nil
         annotations.removeAll()
+        undoStack.removeAll()
         currentAnnotation = nil
     }
 
@@ -246,15 +253,15 @@ final class ScreenAnnotationModel: ObservableObject {
             if window === toolbarWindow { continue }
             if window === textInputWindow { continue }
             if window.level == .normal || window.level == .popUpMenu {
+                elevatedWindows.append((window: window, level: window.level))
                 window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 2)
-                elevatedWindows.append(window)
             }
         }
     }
 
     private func restoreAppWindows() {
-        for window in elevatedWindows {
-            window.level = .normal
+        for entry in elevatedWindows {
+            entry.window.level = entry.level
         }
         elevatedWindows.removeAll()
     }
@@ -271,10 +278,14 @@ final class ScreenAnnotationModel: ObservableObject {
             let did = screenID(for: screen)
             let view = ScreenAnnotationOverlayView(frame: NSRect(origin: .zero, size: frame.size))
             view.dimBackground = dimBackground
+            view.onMouseDown = { [weak self] event in self?.handleMouseDown(event) }
+            view.onMouseDragged = { [weak self] event in self?.handleMouseDragged(event) }
+            view.onMouseUp = { [weak self] event in self?.handleMouseUp(event) }
+            view.onRightMouseDown = { [weak self] event in self?.handleRightMouseDown(event) }
 
-            let window = NSWindow(
+            let window = AnnotationOverlayPanel(
                 contentRect: frame,
-                styleMask: .borderless,
+                styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false,
                 screen: screen
@@ -287,13 +298,26 @@ final class ScreenAnnotationModel: ObservableObject {
             window.backgroundColor = .clear
             window.isOpaque = false
             window.hasShadow = false
-            window.ignoresMouseEvents = true // We use event monitors instead
+            window.hidesOnDeactivate = false
+            window.ignoresMouseEvents = false // The overlay consumes drawing input (no click-through)
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             window.animationBehavior = .none
             window.orderFrontRegardless()
+            window.makeFirstResponder(view)
 
             overlayWindows.append((window: window, view: view, displayID: did, screen: screen))
         }
+        makeOverlayUnderMouseKey()
+    }
+
+    /// Key (without activating the app) so cursor rects and keys go to the overlay.
+    private func makeOverlayUnderMouseKey() {
+        overlayWindows.first { $0.window.frame.contains(NSEvent.mouseLocation) }?.window.makeKey()
+    }
+
+    private func screenUnderMouse() -> NSScreen? {
+        let p = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(p, $0.frame, false) } ?? NSScreen.main
     }
 
     private func removeOverlayWindows() {
@@ -316,7 +340,7 @@ final class ScreenAnnotationModel: ObservableObject {
     // MARK: - Toolbar
 
     private func showToolbar() {
-        guard let mainScreen = NSScreen.main else { return }
+        guard let mainScreen = screenUnderMouse() else { return }
 
         let toolbarWidth = ScreenAnnotationToolbarView.computeWidth()
         let toolbarHeight: CGFloat = 48
@@ -378,7 +402,7 @@ final class ScreenAnnotationModel: ObservableObject {
         window.hasShadow = true
         window.isMovableByWindowBackground = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        window.animationBehavior = .utilityWindow
+        window.animationBehavior = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? .none : .utilityWindow
         window.orderFrontRegardless()
 
         toolbarWindow = window
@@ -394,33 +418,8 @@ final class ScreenAnnotationModel: ObservableObject {
     // MARK: - Event Monitors
 
     private func registerActiveMonitors() {
-        mouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDown(event) }
-        }
-        mouseDragGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-            Task { @MainActor in self?.handleMouseDragged(event) }
-        }
-        mouseUpGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            Task { @MainActor in self?.handleMouseUp(event) }
-        }
         keyGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             Task { @MainActor in self?.handleKeyDown(event) }
-        }
-        rightMouseDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
-            Task { @MainActor in self?.handleRightMouseDown(event) }
-        }
-
-        mouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            if let self, self.isDrawingInputEvent(event) { self.handleMouseDown(event) }
-            return event
-        }
-        mouseDragLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
-            if let self, self.isDrawingInputEvent(event) { self.handleMouseDragged(event) }
-            return event
-        }
-        mouseUpLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            if let self, self.isDrawingInputEvent(event) { self.handleMouseUp(event) }
-            return event
         }
         keyLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             // Keys go to our app whenever one of its windows (e.g. the toolbar) is key, so don't
@@ -428,31 +427,11 @@ final class ScreenAnnotationModel: ObservableObject {
             if let self, !(event.window?.firstResponder is NSText) { self.handleKeyDown(event) }
             return event
         }
-        rightMouseDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
-            if let self, self.isDrawingInputEvent(event) { self.handleRightMouseDown(event) }
-            return event
-        }
-    }
-
-    /// False for mouse events destined for the toolbar, text input or elevated app windows.
-    private func isDrawingInputEvent(_ event: NSEvent) -> Bool {
-        guard let window = event.window else { return true }
-        if window === toolbarWindow || window === textInputWindow { return false }
-        if elevatedWindows.contains(where: { $0 === window }) { return false }
-        return true
     }
 
     private func removeActiveMonitors() {
-        if let m = mouseDownGlobalMonitor { NSEvent.removeMonitor(m); mouseDownGlobalMonitor = nil }
-        if let m = mouseDragGlobalMonitor { NSEvent.removeMonitor(m); mouseDragGlobalMonitor = nil }
-        if let m = mouseUpGlobalMonitor { NSEvent.removeMonitor(m); mouseUpGlobalMonitor = nil }
         if let m = keyGlobalMonitor { NSEvent.removeMonitor(m); keyGlobalMonitor = nil }
-        if let m = rightMouseDownGlobalMonitor { NSEvent.removeMonitor(m); rightMouseDownGlobalMonitor = nil }
-        if let m = mouseDownLocalMonitor { NSEvent.removeMonitor(m); mouseDownLocalMonitor = nil }
-        if let m = mouseDragLocalMonitor { NSEvent.removeMonitor(m); mouseDragLocalMonitor = nil }
-        if let m = mouseUpLocalMonitor { NSEvent.removeMonitor(m); mouseUpLocalMonitor = nil }
         if let m = keyLocalMonitor { NSEvent.removeMonitor(m); keyLocalMonitor = nil }
-        if let m = rightMouseDownLocalMonitor { NSEvent.removeMonitor(m); rightMouseDownLocalMonitor = nil }
     }
 
     // MARK: - Mouse Event Handling
@@ -477,8 +456,8 @@ final class ScreenAnnotationModel: ObservableObject {
         // Ignore clicks on toolbar or elevated windows
         if let tbFrame = toolbarWindow?.frame, tbFrame.contains(screenPoint) { return }
         if let tiFrame = textInputWindow?.frame, tiFrame.contains(screenPoint) { return }
-        for window in elevatedWindows {
-            if window.frame.contains(screenPoint) { return }
+        for entry in elevatedWindows {
+            if entry.window.frame.contains(screenPoint) { return }
         }
 
         guard let (localPoint, _) = screenPointToLocal(screenPoint) else { return }
@@ -544,6 +523,7 @@ final class ScreenAnnotationModel: ObservableObject {
     private func handleMouseUp(_ event: NSEvent) {
         if isDraggingSelection {
             isDraggingSelection = false
+            preDragSnapshot = nil
             return
         }
 
@@ -584,6 +564,7 @@ final class ScreenAnnotationModel: ObservableObject {
         }
 
         if shouldAdd {
+            undoStack.append(annotations)
             annotations.append(annotation)
         }
         currentAnnotation = nil
@@ -605,6 +586,7 @@ final class ScreenAnnotationModel: ObservableObject {
                 let center = annotationCenter(annotations[i])
                 dragOffset = CGPoint(x: point.x - center.x, y: point.y - center.y)
                 isDraggingSelection = true
+                preDragSnapshot = annotations
                 updateAllOverlays()
                 return true
             }
@@ -614,6 +596,10 @@ final class ScreenAnnotationModel: ObservableObject {
 
     private func handleSelectMouseDragged(to point: CGPoint) {
         guard let idx = selectedAnnotationIndex, idx < annotations.count else { return }
+        if let snapshot = preDragSnapshot {
+            undoStack.append(snapshot)
+            preDragSnapshot = nil
+        }
         let center = annotationCenter(annotations[idx])
         let dx = point.x - dragOffset.x - center.x
         let dy = point.y - dragOffset.y - center.y
@@ -712,7 +698,7 @@ final class ScreenAnnotationModel: ObservableObject {
         let inputHeight: CGFloat = 36
 
         let textField = NSTextField(frame: NSRect(x: 8, y: 4, width: inputWidth - 16, height: inputHeight - 8))
-        textField.placeholderString = "Type text and press Enter"
+        textField.placeholderString = "Type text, then press Return"
         textField.font = .systemFont(ofSize: 16, weight: .medium)
         textField.isBezeled = false
         textField.drawsBackground = false
@@ -761,6 +747,7 @@ final class ScreenAnnotationModel: ObservableObject {
             text: text,
             isFilled: false
         )
+        undoStack.append(annotations)
         annotations.append(annotation)
         updateAllOverlays()
 
@@ -768,29 +755,32 @@ final class ScreenAnnotationModel: ObservableObject {
     }
 
     private func dismissTextInput() {
-        textInputWindow?.orderOut(nil)
+        guard let window = textInputWindow else { return }
+        window.orderOut(nil)
         textInputWindow = nil
+        // Hand keyboard focus back to the overlay so ⌫ / ⌘Z don't reach the app underneath.
+        if isActive { makeOverlayUnderMouseKey() }
     }
 
     // MARK: - Actions
 
     func undo() {
-        guard !annotations.isEmpty else { return }
-        annotations.removeLast()
-        if let idx = selectedAnnotationIndex, idx >= annotations.count {
-            selectedAnnotationIndex = nil
-        }
+        guard let previous = undoStack.popLast() else { return }
+        annotations = previous
+        selectedAnnotationIndex = nil
         updateAllOverlays()
     }
 
     func deleteSelected() {
         guard let idx = selectedAnnotationIndex, idx < annotations.count else { return }
+        undoStack.append(annotations)
         annotations.remove(at: idx)
         selectedAnnotationIndex = nil
         updateAllOverlays()
     }
 
     func clearAll() {
+        if !annotations.isEmpty { undoStack.append(annotations) }
         annotations.removeAll()
         currentAnnotation = nil
         selectedAnnotationIndex = nil
@@ -822,21 +812,94 @@ final class ScreenAnnotationModel: ObservableObject {
 
         guard let tiffData = compositeImage.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else { return }
+              let pngData = bitmap.representation(using: .png, properties: [:]) else {
+            NSLog("[ScreenAnnotation] Failed to encode screenshot")
+            showSaveFailedHUD()
+            return
+        }
 
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         let filename = "Annotation_\(formatter.string(from: Date())).png"
 
-        guard let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first else { NSLog("[ScreenAnnotation] Cannot resolve Desktop directory"); return }
+        guard let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first else {
+            NSLog("[ScreenAnnotation] Cannot resolve Desktop directory")
+            showSaveFailedHUD()
+            return
+        }
         let fileURL = desktopURL.appendingPathComponent(filename)
 
         do {
             try pngData.write(to: fileURL)
             NSLog("%@", "[ScreenAnnotation] Screenshot saved to \(fileURL.path)")
             NSSound(named: "Tink")?.play()
+            showHUD("Saved to \(desktopURL.lastPathComponent)", symbol: "checkmark")
         } catch {
             NSLog("%@", "[ScreenAnnotation] Failed to save screenshot: \(error)")
+            showSaveFailedHUD()
+        }
+    }
+
+    private func showSaveFailedHUD() {
+        showHUD("Couldn't save screenshot", symbol: "xmark.octagon.fill")
+    }
+
+    /// Brief non-interactive HUD near the top-center of the screen under the pointer.
+    private func showHUD(_ text: String, symbol: String) {
+        guard let screen = screenUnderMouse() else { return }
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        label.textColor = .white
+        label.sizeToFit()
+
+        let iconSize: CGFloat = 16
+        let iconW = iconSize + 6
+        let hudW = max(140, label.frame.width + iconW + 32)
+        let hudH: CGFloat = 36
+
+        let effectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: hudW, height: hudH))
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.appearance = NSAppearance(named: .darkAqua)
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = 12
+        effectView.layer?.masksToBounds = true
+
+        let x = (hudW - label.frame.width - iconW) / 2
+        let imageView = NSImageView(frame: NSRect(x: x, y: (hudH - iconSize) / 2, width: iconSize, height: iconSize))
+        imageView.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+        imageView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+        imageView.contentTintColor = .white
+        effectView.addSubview(imageView)
+        label.frame.origin = NSPoint(x: x + iconW, y: (hudH - label.frame.height) / 2)
+        effectView.addSubview(label)
+
+        // Below the toolbar (maxY - 80) so they don't overlap
+        let window = NSWindow(
+            contentRect: NSRect(x: screen.frame.midX - hudW / 2, y: screen.frame.maxY - 130, width: hudW, height: hudH),
+            styleMask: .borderless,
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = effectView
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 1)
+        window.backgroundColor = .clear
+        window.isOpaque = false
+        window.hasShadow = true
+        window.ignoresMouseEvents = true
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        window.animationBehavior = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? .none : .utilityWindow
+        window.orderFrontRegardless()
+
+        hudWindow?.orderOut(nil)
+        hudWindow = window
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak window] in
+            window?.orderOut(nil)
+            if self?.hudWindow === window {
+                self?.hudWindow = nil
+            }
         }
     }
 

@@ -278,7 +278,7 @@ final class VideoConverterModel: ObservableObject {
         }
         
         isInstallingFFmpeg = true
-        installLog = "Starting FFmpeg installation...\n"
+        installLog = "Starting FFmpeg installation…\n"
         installFailed = false
         
         FFmpegBridge.installViaHomebrew(

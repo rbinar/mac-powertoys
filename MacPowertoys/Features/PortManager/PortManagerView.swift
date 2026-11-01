@@ -36,16 +36,38 @@ struct PortManagerView: View {
                     .font(.system(.headline, design: .rounded))
 
                 Spacer()
+
+                Toggle("Enable Port Manager", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
             }
 
             Divider()
 
+            if !model.isEnabled {
+                VStack(spacing: 12) {
+                Spacer()
+                Image(systemName: "network")
+                    .font(.system(size: 32))
+                    .foregroundColor(.secondary)
+                Text("Port Manager is disabled")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.secondary)
+                Text("Enable it to list listening TCP ports")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+            } else {
                 // Search bar + menu
                 HStack(spacing: 6) {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.secondary)
-                        TextField("Search port, process, service...", text: $model.searchText)
+                        TextField("Search port, process, service…", text: $model.searchText)
                             .textFieldStyle(.plain)
                         if !model.searchText.isEmpty {
                             Button(action: { model.searchText = "" }) {
@@ -193,6 +215,7 @@ struct PortManagerView: View {
                         .padding(.trailing, 4)
                     }
                 }
+            }
         }
         // SIGTERM confirmation
         .alert("Terminate Process", isPresented: $showKillConfirm) {

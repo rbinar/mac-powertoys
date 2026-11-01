@@ -344,6 +344,7 @@ final class ZoomItModel: ObservableObject {
             alert.addButton(withTitle: "Open System Settings")
             alert.addButton(withTitle: "Quit & Reopen")
             alert.addButton(withTitle: "Cancel")
+            NSApp.activate(ignoringOtherApps: true)
             switch alert.runModal() {
             case .alertFirstButtonReturn:
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
@@ -458,9 +459,13 @@ final class ZoomItModel: ObservableObject {
                 view.updateImage(image)
             }
             
-            let window = NSWindow(
+            // Non-activating panel: static zoom shows a frozen image, so it consumes clicks
+            // itself (they must not reach the live app underneath) without changing the
+            // frontmost app. Live zoom keeps the point under the cursor fixed while showing
+            // live content, so its clicks pass through to what the user sees.
+            let window = NSPanel(
                 contentRect: frame,
-                styleMask: .borderless,
+                styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false,
                 screen: screen
@@ -473,7 +478,8 @@ final class ZoomItModel: ObservableObject {
             window.backgroundColor = .clear
             window.isOpaque = false
             window.hasShadow = false
-            window.ignoresMouseEvents = true
+            window.ignoresMouseEvents = isLive
+            window.hidesOnDeactivate = false
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             window.animationBehavior = .none
             window.orderFrontRegardless()

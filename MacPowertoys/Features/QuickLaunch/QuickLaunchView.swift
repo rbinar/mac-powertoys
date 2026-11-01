@@ -7,18 +7,12 @@ struct QuickLaunchView: View {
     let onBack: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             header
 
             Divider()
 
             hotkeyInfo
-
-            Text("⌃⌥Space opens the command palette: modules + your shortcuts")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
-
-            Divider()
 
             statsRow
 
@@ -55,8 +49,8 @@ struct QuickLaunchView: View {
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(.secondary)
             Spacer()
-            Text("⌃⌥ Space")
-                .font(.system(.caption, design: .monospaced))
+            Text("⌃⌥Space")
+                .font(.caption)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(
@@ -168,8 +162,10 @@ struct CustomEntryRow: View {
                 HStack(spacing: 6) {
                     Button { model.editingEntry = entry } label: {
                         Image(systemName: "pencil")
-                            .font(.system(size: 11))
+                            .font(.callout)
                             .foregroundStyle(.secondary)
+                            .frame(width: 22, height: 22)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help("Edit")
@@ -177,8 +173,10 @@ struct CustomEntryRow: View {
 
                     Button { showDeleteConfirm = true } label: {
                         Image(systemName: "trash")
-                            .font(.system(size: 11))
+                            .font(.callout)
                             .foregroundStyle(.red.opacity(0.8))
+                            .frame(width: 22, height: 22)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help("Delete")
@@ -205,13 +203,13 @@ struct CustomEntryRow: View {
                 showDeleteConfirm = true
             }
         }
-        .alert("Delete Shortcut", isPresented: $showDeleteConfirm) {
+        .alert("Delete “\(entry.name)”?", isPresented: $showDeleteConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 model.deleteEntry(entry)
             }
         } message: {
-            Text("Are you sure you want to delete \"\(entry.name)\"?")
+            Text("This can’t be undone.")
         }
     }
 
@@ -229,7 +227,7 @@ struct CustomEntryRow: View {
                 .foregroundStyle(.blue)
         case .folder:
             Image(systemName: "folder.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(.blue)
         case .url:
             if let faviconData = entry.faviconData, let nsImage = NSImage(data: faviconData) {
                 Image(nsImage: nsImage)
@@ -255,7 +253,7 @@ struct CustomEntryRow: View {
         case .shellCommand: label = "Shell"
         }
         return Text(label)
-            .font(.system(size: 9, weight: .medium, design: .rounded))
+            .font(.caption2.weight(.medium))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -313,7 +311,7 @@ struct EntryFormView: View {
                     .font(.system(.caption, design: .rounded))
 
                 if showBrowseButton {
-                    Button("Browse") { browseFile() }
+                    Button("Choose…") { browseFile() }
                         .buttonStyle(.plain)
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.blue)
@@ -333,16 +331,13 @@ struct EntryFormView: View {
             HStack {
                 Spacer()
                 Button("Cancel") { cancel() }
-                    .buttonStyle(.plain)
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
                     .keyboardShortcut(.cancelAction)
+                    .controlSize(.small)
 
                 Button(isEditing ? "Update" : "Save") { save() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.plain)
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.blue)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
                     .disabled(!canSave)
             }
         }

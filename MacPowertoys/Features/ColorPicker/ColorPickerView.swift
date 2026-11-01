@@ -50,6 +50,15 @@ struct ColorPickerView: View {
                 .accessibilityLabel("Open color picker")
             }
 
+            HStack(spacing: 4) {
+                Image(systemName: "keyboard")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Text("⌃⌥C to pick a color from the screen")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.tertiary)
+            }
+
             Divider()
 
             // Swatch strip
@@ -84,10 +93,11 @@ struct ValueRow: View {
                 .frame(width: 44, alignment: .leading)
                 .foregroundStyle(.secondary)
 
-            TextField("", text: .constant(value))
-                .textFieldStyle(.roundedBorder)
+            Text(value)
                 .font(.system(.body, design: .monospaced))
-                .disabled(true)
+                .textSelection(.enabled)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Button {
                 onCopy()

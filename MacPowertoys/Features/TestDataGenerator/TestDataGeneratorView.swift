@@ -29,10 +29,12 @@ struct TestDataGeneratorView: View {
                     // Generated Data Display
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Last Generated (Copied to Clipboard):")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         
                         Text(model.generatedData.isEmpty ? "No data generated yet." : model.generatedData)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color(NSColor.controlBackgroundColor))
@@ -51,7 +53,8 @@ struct TestDataGeneratorView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Group {
                             Text("Identifiers")
-                                .font(.headline)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             
                             actionButton(title: "UUID", icon: "number") {
                                 model.generateUUID()
@@ -60,7 +63,8 @@ struct TestDataGeneratorView: View {
                         
                         Group {
                             Text("Names & Dates")
-                                .font(.headline)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             
                             HStack(spacing: 12) {
                                 actionButton(title: "Random Name", icon: "person") {
@@ -74,26 +78,26 @@ struct TestDataGeneratorView: View {
                         }
                         
                         Group {
-                            Text("Texts")
-                                .font(.headline)
+                            Text("Lorem Ipsum")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             
                             HStack(spacing: 12) {
-                                actionButton(title: "Lorem Ipsum (Short)", icon: "text.alignleft") {
+                                actionButton(title: "Short", icon: "text.alignleft") {
                                     model.generateLoremIpsum(length: .short)
                                 }
                                 
-                                actionButton(title: "Lorem Ipsum (Medium)", icon: "text.alignleft") {
+                                actionButton(title: "Medium", icon: "text.alignleft") {
                                     model.generateLoremIpsum(length: .medium)
                                 }
                             }
                             
-                            actionButton(title: "Lorem Ipsum (Long)", icon: "text.alignleft") {
+                            actionButton(title: "Long", icon: "text.alignleft") {
                                 model.generateLoremIpsum(length: .long)
                             }
                         }
                     }
                 }
-                .padding()
             }
         }
     }
@@ -108,7 +112,8 @@ struct TestDataGeneratorView: View {
                 Image(systemName: "doc.on.doc")
                     .foregroundColor(.secondary)
             }
-            .padding()
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
             .frame(maxWidth: .infinity)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)

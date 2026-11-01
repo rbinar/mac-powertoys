@@ -103,19 +103,10 @@ final class ColorModel: ObservableObject {
         
         // Panel settings
         colorPanel.showsAlpha = false  // Hide Alpha/Opacity slider
-        colorPanel.mode = .wheel  // Use color wheel mode
+        // Mode and position are left to the system, which remembers the user's last choice.
         colorPanel.hidesOnDeactivate = false  // Allow manual closing
         colorPanel.isFloatingPanel = true    // Make floating panel
         colorPanel.level = .floating         // Set panel level
-        
-        // Position panel at center of screen
-        if let screen = NSScreen.main {
-            let screenFrame = screen.visibleFrame
-            let panelSize = colorPanel.frame.size
-            let centerX = screenFrame.midX - panelSize.width / 2
-            let centerY = screenFrame.midY - panelSize.height / 2
-            colorPanel.setFrameOrigin(NSPoint(x: centerX, y: centerY))
-        }
         
         colorPanel.orderFront(nil)
     }

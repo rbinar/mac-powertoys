@@ -80,29 +80,15 @@ struct AwakeView: View {
                             .font(.system(.subheadline, design: .rounded))
                             .foregroundStyle(.secondary)
 
-                        HStack(spacing: 6) {
+                        Picker("Duration", selection: $model.durationMinutes) {
                             ForEach(durationPresets, id: \.self) { minutes in
-                                Button {
-                                    model.durationMinutes = minutes
-                                } label: {
-                                    Text(durationLabel(minutes))
-                                        .font(.system(.caption, design: .rounded))
-                                        .fontWeight(model.durationMinutes == minutes ? .semibold : .regular)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(model.durationMinutes == minutes ? Color.primary.opacity(0.15) : Color.primary.opacity(0.05))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .stroke(model.durationMinutes == minutes ? Color.primary.opacity(0.3) : .clear, lineWidth: 0.8)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(model.durationMinutes == minutes ? .isSelected : [])
+                                Text(durationLabel(minutes))
+                                    .accessibilityLabel(durationAccessibilityLabel(minutes))
+                                    .tag(minutes)
                             }
                         }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
                 }
             }
@@ -118,5 +104,11 @@ struct AwakeView: View {
             let hours = minutes / 60
             return "\(hours)h"
         }
+    }
+
+    private func durationAccessibilityLabel(_ minutes: Int) -> String {
+        if minutes < 60 { return "\(minutes) minutes" }
+        let hours = minutes / 60
+        return hours == 1 ? "1 hour" : "\(hours) hours"
     }
 }

@@ -125,12 +125,12 @@ struct ImageOptimizerView: View {
                                     Image(systemName: "exclamationmark.circle.fill")
                                         .font(.system(size: 11))
                                         .foregroundStyle(.red)
-                                        .background(Circle().fill(Color.black).padding(-1))
+                                        .background(Circle().fill(Color(nsColor: .textBackgroundColor)).padding(-1))
                                 } else if item.isProcessed {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 11))
                                         .foregroundStyle(.green)
-                                        .background(Circle().fill(Color.black).padding(-1))
+                                        .background(Circle().fill(Color(nsColor: .textBackgroundColor)).padding(-1))
                                 }
                             }
                             VStack(alignment: .leading, spacing: 1) {
@@ -183,6 +183,12 @@ struct ImageOptimizerView: View {
             }
             .frame(maxHeight: 160)
         }
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(Color.accentColor, lineWidth: 2)
+                .opacity(model.isDragTargeted ? 1 : 0)
+                .allowsHitTesting(false)
+        )
         .onDrop(of: [.fileURL], isTargeted: $model.isDragTargeted) { providers in
             Task {
                 var urls: [URL] = []
@@ -345,16 +351,12 @@ struct ImageOptimizerView: View {
             Button {
                 model.process()
             } label: {
-                HStack {
-                    if case .processing = model.state {
-                        ProgressView().controlSize(.small)
-                    }
-                    Text(actionButtonLabel)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 7)
+                Text(actionButtonLabel)
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
             .disabled(model.items.isEmpty || isProcessing)
 
             if !model.items.isEmpty {
@@ -426,7 +428,7 @@ struct ImageOptimizerView: View {
 
     private var actionButtonLabel: String {
         switch model.state {
-        case .processing: return "Optimizing..."
+        case .processing: return "Optimizing…"
         case .completed: return "Optimize Again"
         default: return "Optimize"
         }

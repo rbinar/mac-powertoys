@@ -3,6 +3,7 @@ import SwiftUI
 struct MouseJigglerView: View {
     @EnvironmentObject var model: MouseJigglerModel
     let onBack: () -> Void
+    @State private var isTrusted = AXIsProcessTrusted()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -23,7 +24,7 @@ struct MouseJigglerView: View {
 
             Divider()
 
-            if !AXIsProcessTrusted() {
+            if !isTrusted {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.shield")
                         .foregroundStyle(.orange)
@@ -35,9 +36,6 @@ struct MouseJigglerView: View {
                     Button("Grant…") {
                         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
                         _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                            NSWorkspace.shared.open(url)
-                        }
                     }
                     .controlSize(.small)
                 }
@@ -49,12 +47,12 @@ struct MouseJigglerView: View {
             }
             .toggleStyle(.switch)
 
+            Text("Simulates tiny mouse movements to stay active in Teams, Slack, etc.")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+
             if model.isEnabled {
                 Divider()
-
-                Text("Simulates tiny mouse movements to stay active in Teams, Slack, etc.")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
@@ -76,6 +74,13 @@ struct MouseJigglerView: View {
             }
             
             Spacer()
+        }
+        // Re-check while visible so the warning clears once access is granted in System Settings.
+        .task {
+            while !Task.isCancelled {
+                isTrusted = AXIsProcessTrusted()
+                try? await Task.sleep(for: .seconds(1))
+            }
         }
     }
 }

@@ -10,6 +10,8 @@ struct SpeechToTextView: View {
         VStack(alignment: .leading, spacing: 12) {
             headerSection
 
+            pickersRow
+
             Divider()
 
             ScrollView(.vertical, showsIndicators: false) {
@@ -41,11 +43,15 @@ struct SpeechToTextView: View {
             }
             .buttonStyle(.plain)
 
-            Label("Speech to Text", systemImage: "waveform.and.mic")
+            Text("Speech to Text")
                 .font(.system(.headline, design: .rounded))
 
             Spacer()
+        }
+    }
 
+    private var pickersRow: some View {
+        HStack {
             Picker(selection: $model.selectedLanguage) {
                 ForEach(model.availableLanguages) { lang in
                     Text(lang.displayName).tag(lang)
@@ -54,6 +60,8 @@ struct SpeechToTextView: View {
                 Label(model.selectedLanguage.displayName, systemImage: "globe")
             }
             .pickerStyle(.menu)
+            .labelsHidden()
+            .fixedSize()
             .controlSize(.small)
             .accessibilityLabel("Transcription language")
 
@@ -65,14 +73,21 @@ struct SpeechToTextView: View {
                 Label(model.selectedModel.displayName, systemImage: "cpu")
             }
             .pickerStyle(.menu)
+            .labelsHidden()
+            .fixedSize()
             .controlSize(.small)
             .accessibilityLabel("Transcription model")
+
+            Spacer()
         }
     }
 
     // MARK: - Drop Zone (idle)
 
     private var dropZoneSection: some View {
+        Button {
+            model.selectInputFile()
+        } label: {
         VStack(spacing: 10) {
             Image(systemName: "waveform.badge.mic")
                 .font(.system(size: 28))
@@ -100,7 +115,10 @@ struct SpeechToTextView: View {
                 )
         )
         .contentShape(Rectangle())
-        .onTapGesture { model.selectInputFile() }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Select audio or video")
+        .accessibilityHint("Or drop a file here")
         .onDrop(of: [.fileURL], isTargeted: $model.isDragTargeted) { providers in
             handleDrop(providers)
         }
@@ -110,8 +128,10 @@ struct SpeechToTextView: View {
 
     private func processingSection(message: String) -> some View {
         VStack(spacing: 16) {
-            ProgressView()
-                .controlSize(.large)
+            if model.progress <= 0 {
+                ProgressView()
+                    .controlSize(.large)
+            }
 
             Text(message)
                 .font(.system(.subheadline, design: .rounded))

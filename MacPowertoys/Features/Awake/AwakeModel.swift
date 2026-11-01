@@ -32,10 +32,15 @@ final class AwakeModel: ObservableObject {
     // MARK: - Runtime State
     @Published private(set) var remainingSeconds: Int = 0
 
-    var formattedRemaining: String {
-        let m = remainingSeconds / 60
-        let s = remainingSeconds % 60
-        return String(format: "%d:%02d", m, s)
+    var formattedRemaining: String { Self.formatRemaining(remainingSeconds) }
+
+    /// "29:59" below one hour, "4:00:00" from one hour up.
+    static func formatRemaining(_ seconds: Int) -> String {
+        guard seconds >= 3600 else { return String(format: "%d:%02d", seconds / 60, seconds % 60) }
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = .positional
+        formatter.allowedUnits = [.hour, .minute, .second]
+        return formatter.string(from: TimeInterval(seconds)) ?? ""
     }
 
     // MARK: - Private

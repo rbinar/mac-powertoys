@@ -223,7 +223,7 @@ final class ImageOptimizerModel: ObservableObject {
             items[i].error = nil
         }
 
-        state = .processing(progress: 0, message: "Preparing...")
+        state = .processing(progress: 0, message: "Preparing…")
 
         let snapshot = items
 
@@ -249,7 +249,7 @@ final class ImageOptimizerModel: ObservableObject {
                 await MainActor.run {
                     self?.state = .processing(
                         progress: Double(idx) / Double(snapshot.count),
-                        message: "Processing \(item.name)..."
+                        message: "Processing \(item.name)…"
                     )
                 }
 

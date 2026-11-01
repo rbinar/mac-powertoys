@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 @MainActor
 final class MarkdownPreviewModel: NSObject, ObservableObject {
     @Published var recentFiles: [URL] = []
-    @Published var isDarkTheme: Bool = true {
+    @Published var isDarkTheme: Bool = MarkdownPreviewModel.systemIsDark() {
         didSet {
             UserDefaults.standard.set(isDarkTheme, forKey: "markdownPreview.isDarkTheme")
             updateTheme()
@@ -27,8 +27,14 @@ final class MarkdownPreviewModel: NSObject, ObservableObject {
 
     override init() {
         super.init()
-        isDarkTheme = UserDefaults.standard.object(forKey: "markdownPreview.isDarkTheme") as? Bool ?? true
+        if let stored = UserDefaults.standard.object(forKey: "markdownPreview.isDarkTheme") as? Bool {
+            isDarkTheme = stored
+        }
         loadRecentFiles()
+    }
+
+    private static func systemIsDark() -> Bool {
+        (NSApp?.effectiveAppearance ?? NSAppearance.currentDrawing()).bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
     func stopMonitoring() {

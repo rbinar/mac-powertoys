@@ -177,7 +177,7 @@ struct PomodoroTimerView: View {
                 Text("Sessions before long break")
                     .font(.system(.caption, design: .rounded))
                 Spacer()
-                Stepper("\(model.sessionsBeforeLongBreak)", value: $model.sessionsBeforeLongBreak, in: 2...8)
+                Stepper("Sessions before long break", value: $model.sessionsBeforeLongBreak, in: 2...8)
                     .font(.system(.caption, design: .rounded))
                     .labelsHidden()
                 Text("\(model.sessionsBeforeLongBreak)")
@@ -218,7 +218,7 @@ struct PomodoroTimerView: View {
             Text(label)
                 .font(.system(.caption, design: .rounded))
             Spacer()
-            Stepper("", value: value, in: range, step: step)
+            Stepper(label, value: value, in: range, step: step)
                 .labelsHidden()
             Text("\(value.wrappedValue) \(unit)")
                 .font(.system(.caption, design: .rounded))
@@ -229,7 +229,7 @@ struct PomodoroTimerView: View {
 
     private var phaseColor: Color {
         switch model.currentPhase {
-        case .idle: return .secondary
+        case .idle: return .accentColor
         case .focus: return .red
         case .shortBreak: return .green
         case .longBreak: return .blue

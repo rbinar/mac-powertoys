@@ -36,7 +36,7 @@ struct ClipboardManagerView: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.secondary)
-                        TextField("Search...", text: $model.searchText)
+                        TextField("Search…", text: $model.searchText)
                             .textFieldStyle(.plain)
                         if !model.searchText.isEmpty {
                             Button(action: { model.searchText = "" }) {
@@ -185,8 +185,7 @@ struct ClipboardItemRow: View {
                         .foregroundStyle(.tertiary)
                 }
                 
-                if isHovered {
-                    HStack(spacing: 8) {
+                HStack(spacing: 8) {
                         Button(action: {
                             model.copyItemToPasteboard(item)
                             withAnimation { showCopiedFeedback = true }
@@ -217,8 +216,9 @@ struct ClipboardItemRow: View {
                         .accessibilityLabel("Delete")
                         .help("Delete")
                     }
-                    .padding(.top, 4)
-                }
+                .padding(.top, 4)
+                .opacity(isHovered ? 1 : 0)
+                .allowsHitTesting(isHovered)
             }
         }
         .padding(8)

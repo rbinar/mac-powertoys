@@ -1,18 +1,61 @@
 import AppKit
 
+// MARK: - Unit Conversion
+
+/// Pure conversions for ruler labels: measurements are tracked in points, labels show real pixels.
+enum ScreenRulerUnits {
+    /// Points → real device pixels (points × backingScaleFactor).
+    static func pixels(fromPoints points: CGFloat, scale: CGFloat) -> Int {
+        Int((points * scale).rounded())
+    }
+
+    /// Physical pixels per inch from the display's pixel width and its physical width in mm
+    /// (`CGDisplayScreenSize`). Nil when the physical size is unknown (reported as 0).
+    static func pixelsPerInch(pixelWidth: CGFloat, physicalWidthMM: CGFloat) -> CGFloat? {
+        guard pixelWidth > 0, physicalWidthMM > 0 else { return nil }
+        return pixelWidth / (physicalWidthMM / 25.4)
+    }
+
+    /// Formats a pixel length in the extra physical unit; nil for `.none` or an unknown DPI.
+    static func physicalLabel(pixels: Int, unit: ExtraUnit, pixelsPerInch: CGFloat?) -> String? {
+        guard let ppi = pixelsPerInch, ppi > 0 else { return nil }
+        let inches = CGFloat(pixels) / ppi
+        switch unit {
+        case .none:
+            return nil
+        case .inches:
+            return String(format: "%.2f in", inches)
+        case .centimeters:
+            return String(format: "%.2f cm", inches * 2.54)
+        case .millimeters:
+            return String(format: "%.1f mm", inches * 25.4)
+        }
+    }
+}
+
 // MARK: - Screen Ruler Overlay View
 
 class ScreenRulerOverlayView: NSView {
     var lineColor: NSColor = .systemYellow
     var showFeet: Bool = true
-    var measurementMode: MeasurementMode = .spacing
+    var measurementMode: MeasurementMode = .spacing {
+        didSet { window?.invalidateCursorRects(for: self) }
+    }
     var cursorPosition: NSPoint = .zero
     var isActiveScreen: Bool = false
     var edges: EdgeDistances = EdgeDistances()
     var boundsStart: NSPoint? = nil
     var boundsEnd: NSPoint? = nil
     var extraUnit: ExtraUnit = .none
-    var screenDPI: CGFloat = 72.0
+    /// Physical pixels per inch of this display; nil when unknown.
+    var screenDPI: CGFloat? = nil
+    /// Points → pixels factor of this display, for px labels.
+    var backingScale: CGFloat = 1
+
+    // The overlay consumes mouse input itself (no click-through); the model handles it.
+    var onMouseDown: (@MainActor (NSEvent) -> Void)?
+    var onMouseDragged: (@MainActor (NSEvent) -> Void)?
+    var onMouseUp: (@MainActor (NSEvent) -> Void)?
 
     private let feetLength: CGFloat = 6
     private let lineThickness: CGFloat = 1.5
@@ -28,6 +71,20 @@ class ScreenRulerOverlayView: NSView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var acceptsFirstResponder: Bool { true }
+    // Keys are handled by the model's key monitors; swallow them here so AppKit doesn't beep.
+    override func keyDown(with event: NSEvent) {}
+    override func mouseDown(with event: NSEvent) { onMouseDown?(event) }
+    override func mouseDragged(with event: NSEvent) { onMouseDragged?(event) }
+    override func mouseUp(with event: NSEvent) { onMouseUp?(event) }
+
+    override func resetCursorRects() {
+        if measurementMode == .bounds {
+            addCursorRect(bounds, cursor: .crosshair)
+        }
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
@@ -62,11 +119,7 @@ class ScreenRulerOverlayView: NSView {
         let totalH = max(1, edges.left + edges.right)
 
         // Draw line
-        ctx.setStrokeColor(lineColor.withAlphaComponent(0.9).cgColor)
-        ctx.setLineWidth(lineThickness)
-        ctx.move(to: CGPoint(x: leftX, y: p.y))
-        ctx.addLine(to: CGPoint(x: rightX, y: p.y))
-        ctx.strokePath()
+        strokeSegment(ctx, from: CGPoint(x: leftX, y: p.y), to: CGPoint(x: rightX, y: p.y))
 
         // Draw feet
         if showFeet {
@@ -75,7 +128,7 @@ class ScreenRulerOverlayView: NSView {
         }
 
         // Draw label
-        let label = formatLabel(pixels: totalH)
+        let label = formatLabel(points: totalH)
         // Above-right of the cursor so it never overlaps the vertical label
         drawLabel(ctx, text: label, at: CGPoint(x: p.x + 8, y: p.y + 8), anchor: CGVector(dx: 1, dy: 1))
     }
@@ -89,11 +142,7 @@ class ScreenRulerOverlayView: NSView {
         let totalV = max(1, edges.top + edges.bottom)
 
         // Draw line
-        ctx.setStrokeColor(lineColor.withAlphaComponent(0.9).cgColor)
-        ctx.setLineWidth(lineThickness)
-        ctx.move(to: CGPoint(x: p.x, y: bottomY))
-        ctx.addLine(to: CGPoint(x: p.x, y: topY))
-        ctx.strokePath()
+        strokeSegment(ctx, from: CGPoint(x: p.x, y: bottomY), to: CGPoint(x: p.x, y: topY))
 
         // Draw feet
         if showFeet {
@@ -102,7 +151,7 @@ class ScreenRulerOverlayView: NSView {
         }
 
         // Draw label
-        let label = formatLabel(pixels: totalV)
+        let label = formatLabel(points: totalV)
         // Below-right of the cursor so it never overlaps the horizontal label
         drawLabel(ctx, text: label, at: CGPoint(x: p.x + 8, y: p.y - 8), anchor: CGVector(dx: 1, dy: -1))
     }
@@ -131,8 +180,8 @@ class ScreenRulerOverlayView: NSView {
         ctx.fill(rect)
 
         // Draw dimension label
-        let w = Int(abs(end.x - start.x))
-        let h = Int(abs(end.y - start.y))
+        let w = ScreenRulerUnits.pixels(fromPoints: abs(end.x - start.x), scale: backingScale)
+        let h = ScreenRulerUnits.pixels(fromPoints: abs(end.y - start.y), scale: backingScale)
         var label = "\(w) × \(h) px"
         if extraUnit != .none {
             let wUnit = convertPixels(w)
@@ -147,17 +196,27 @@ class ScreenRulerOverlayView: NSView {
     // MARK: - Drawing Helpers
 
     private func drawFoot(_ ctx: CGContext, at point: CGPoint, vertical: Bool) {
-        ctx.setStrokeColor(lineColor.withAlphaComponent(0.9).cgColor)
-        ctx.setLineWidth(lineThickness)
         if vertical {
             // Vertical foot (perpendicular to horizontal line)
-            ctx.move(to: CGPoint(x: point.x, y: point.y - feetLength))
-            ctx.addLine(to: CGPoint(x: point.x, y: point.y + feetLength))
+            strokeSegment(ctx, from: CGPoint(x: point.x, y: point.y - feetLength), to: CGPoint(x: point.x, y: point.y + feetLength))
         } else {
             // Horizontal foot (perpendicular to vertical line)
-            ctx.move(to: CGPoint(x: point.x - feetLength, y: point.y))
-            ctx.addLine(to: CGPoint(x: point.x + feetLength, y: point.y))
+            strokeSegment(ctx, from: CGPoint(x: point.x - feetLength, y: point.y), to: CGPoint(x: point.x + feetLength, y: point.y))
         }
+    }
+
+    /// Colored segment over a 1pt-wider 40% black contour so it stays legible on any background.
+    private func strokeSegment(_ ctx: CGContext, from a: CGPoint, to b: CGPoint) {
+        ctx.setStrokeColor(NSColor.black.withAlphaComponent(0.4).cgColor)
+        ctx.setLineWidth(lineThickness + 1)
+        ctx.move(to: a)
+        ctx.addLine(to: b)
+        ctx.strokePath()
+
+        ctx.setStrokeColor(lineColor.withAlphaComponent(0.9).cgColor)
+        ctx.setLineWidth(lineThickness)
+        ctx.move(to: a)
+        ctx.addLine(to: b)
         ctx.strokePath()
     }
 
@@ -182,12 +241,16 @@ class ScreenRulerOverlayView: NSView {
             y: point.y + anchor.dy * (textSize.height / 2 + labelPadding)
         )
 
-        let bgRect = CGRect(
+        var bgRect = CGRect(
             x: center.x - textSize.width / 2 - labelPadding,
             y: center.y - textSize.height / 2 - labelPadding,
             width: textSize.width + labelPadding * 2,
             height: textSize.height + labelPadding * 2
         )
+        // Keep the label fully on screen
+        let limit = bounds.insetBy(dx: 4, dy: 4)
+        bgRect.origin.x = max(limit.minX, min(bgRect.origin.x, limit.maxX - bgRect.width))
+        bgRect.origin.y = max(limit.minY, min(bgRect.origin.y, limit.maxY - bgRect.height))
 
         // Background
         let bgPath = NSBezierPath(roundedRect: bgRect, xRadius: labelCornerRadius, yRadius: labelCornerRadius)
@@ -196,15 +259,16 @@ class ScreenRulerOverlayView: NSView {
 
         // Text
         let textOrigin = CGPoint(
-            x: center.x - textSize.width / 2,
-            y: center.y - textSize.height / 2
+            x: bgRect.minX + labelPadding,
+            y: bgRect.minY + labelPadding
         )
         attrStr.draw(at: textOrigin)
 
         NSGraphicsContext.restoreGraphicsState()
     }
 
-    private func formatLabel(pixels: Int) -> String {
+    private func formatLabel(points: Int) -> String {
+        let pixels = ScreenRulerUnits.pixels(fromPoints: CGFloat(points), scale: backingScale)
         var label = "\(pixels) px"
         if let unitStr = convertPixels(pixels) {
             label += "  (\(unitStr))"
@@ -213,18 +277,27 @@ class ScreenRulerOverlayView: NSView {
     }
 
     private func convertPixels(_ pixels: Int) -> String? {
-        guard extraUnit != .none else { return nil }
-        let inches = CGFloat(pixels) / screenDPI
-        switch extraUnit {
-        case .none:
-            return nil
-        case .inches:
-            return String(format: "%.2f in", inches)
-        case .centimeters:
-            return String(format: "%.2f cm", inches * 2.54)
-        case .millimeters:
-            return String(format: "%.1f mm", inches * 25.4)
-        }
+        ScreenRulerUnits.physicalLabel(pixels: pixels, unit: extraUnit, pixelsPerInch: screenDPI)
+    }
+}
+
+// MARK: - Toolbar Accessibility Item
+
+private final class RulerToolbarAccessibilityItem: NSAccessibilityElement {
+    private let onPress: () -> Void
+
+    init(label: String, help: String, parent: NSView, onPress: @escaping () -> Void) {
+        self.onPress = onPress
+        super.init()
+        setAccessibilityRole(.button)
+        setAccessibilityLabel(label)
+        setAccessibilityHelp(help)
+        setAccessibilityParent(parent)
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        onPress()
+        return true
     }
 }
 
@@ -361,20 +434,51 @@ class ScreenRulerToolbarView: NSView, NSViewToolTipOwner {
     // MARK: - Hit Testing
 
     private func hitTestItem(at point: CGPoint) -> Int? {
+        itemRects().firstIndex { $0.contains(point) }
+    }
+
+    /// Item frames in view coordinates: mode buttons, then close.
+    private func itemRects() -> [CGRect] {
         let y = (bounds.height - itemSize) / 2
         var x = padding
+        var rects: [CGRect] = []
 
-        for i in 0..<modes.count {
-            let rect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
-            if rect.contains(point) { return i }
+        for _ in 0..<modes.count {
+            rects.append(CGRect(x: x, y: y, width: itemSize, height: itemSize))
             x += itemSize + gap
         }
         x += separatorGap - gap
 
-        let closeRect = CGRect(x: x, y: y, width: itemSize, height: itemSize)
-        if closeRect.contains(point) { return modes.count }
+        rects.append(CGRect(x: x, y: y, width: itemSize, height: itemSize))
+        return rects
+    }
 
-        return nil
+    // MARK: - Accessibility
+
+    // The items are custom-drawn, so expose one button element per item to VoiceOver.
+    private lazy var accessibilityItems: [RulerToolbarAccessibilityItem] = {
+        var items = modes.enumerated().map { i, item in
+            RulerToolbarAccessibilityItem(label: "\(item.mode.rawValue) mode", help: "⌘\(i + 1)", parent: self) { [weak self] in
+                self?.onModeChange(item.mode)
+            }
+        }
+        items.append(RulerToolbarAccessibilityItem(label: "Close", help: "Esc", parent: self) { [weak self] in
+            self?.onClose()
+        })
+        return items
+    }()
+
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .toolbar }
+    override func accessibilityLabel() -> String? { "Screen Ruler" }
+
+    override func accessibilityChildren() -> [Any]? {
+        let rects = itemRects()
+        for (i, element) in accessibilityItems.enumerated() {
+            element.setAccessibilityFrameInParentSpace(rects[i])
+            element.setAccessibilitySelected(i < modes.count && modes[i].mode == currentMode)
+        }
+        return accessibilityItems
     }
 
     // MARK: - Drawing Helpers

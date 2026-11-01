@@ -58,7 +58,7 @@ enum PdfMergeOperation {
                     pageIndex += 1
                 }
                 let progress = Double(pageIndex) / Double(totalPages)
-                await reportProgress(progress, "Merging page \(pageIndex) of \(totalPages)...")
+                await reportProgress(progress, "Merging page \(pageIndex) of \(totalPages)…")
             }
         }
 
@@ -128,7 +128,7 @@ enum PdfSplitOperation {
             filesWritten += 1
 
             let progress = Double(index + 1) / Double(total)
-            await reportProgress(progress, "Writing file \(index + 1) of \(total)...")
+            await reportProgress(progress, "Writing file \(index + 1) of \(total)…")
         }
 
         let result = OperationResult(
@@ -196,7 +196,7 @@ enum PdfCompressOperation {
             }
 
             let progress = Double(i + 1) / Double(pageCount)
-            await reportProgress(progress, "Compressing page \(i + 1) of \(pageCount)...")
+            await reportProgress(progress, "Compressing page \(i + 1) of \(pageCount)…")
         }
 
         guard outputDoc.write(to: outputURL) else {
@@ -252,7 +252,7 @@ enum PdfRotateOperation {
             }
 
             let progress = Double(i + 1) / Double(pageCount)
-            await reportProgress(progress, "Rotating page \(i + 1) of \(pageCount)...")
+            await reportProgress(progress, "Rotating page \(i + 1) of \(pageCount)…")
         }
 
         guard doc.write(to: outputURL) else {
@@ -376,7 +376,7 @@ enum PdfToImageOperation {
             }
 
             let progress = Double(i + 1) / Double(pageCount)
-            await reportProgress(progress, "Exporting page \(i + 1) of \(pageCount)...")
+            await reportProgress(progress, "Exporting page \(i + 1) of \(pageCount)…")
         }
 
         // #93: report accurately — fail if nothing was written, partial-success
@@ -431,7 +431,7 @@ enum PdfImageToPdfOperation {
             outIndex += 1
 
             let progress = Double(index + 1) / Double(total)
-            await reportProgress(progress, "Converting image \(index + 1) of \(total)...")
+            await reportProgress(progress, "Converting image \(index + 1) of \(total)…")
         }
 
         guard outputDoc.pageCount > 0 else {
