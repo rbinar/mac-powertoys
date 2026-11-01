@@ -74,6 +74,18 @@ private func annotationHotKeyHandler(nextHandler: EventHandlerCallRef?, event: E
     return noErr
 }
 
+// MARK: - Persistence helpers
+
+private func annotationSaveColor(_ c: NSColor, _ key: String) {
+    let s = c.usingColorSpace(.sRGB) ?? c
+    UserDefaults.standard.set([Double(s.redComponent), Double(s.greenComponent), Double(s.blueComponent), Double(s.alphaComponent)], forKey: key)
+}
+
+private func annotationLoadColor(_ key: String, _ fallback: NSColor) -> NSColor {
+    guard let a = UserDefaults.standard.array(forKey: key) as? [Double], a.count == 4 else { return fallback }
+    return NSColor(srgbRed: CGFloat(a[0]), green: CGFloat(a[1]), blue: CGFloat(a[2]), alpha: CGFloat(a[3]))
+}
+
 // MARK: - Screen Annotation Model
 
 @MainActor
@@ -91,9 +103,15 @@ final class ScreenAnnotationModel: ObservableObject {
             }
         }
     }
-    @Published var defaultColor: NSColor = .systemRed
-    @Published var defaultLineWidth: CGFloat = 4.0
-    @Published var dimBackground: Bool = true
+    @Published var defaultColor: NSColor = .systemRed {
+        didSet { annotationSaveColor(defaultColor, "screenAnnotation.defaultColor") }
+    }
+    @Published var defaultLineWidth: CGFloat = 4.0 {
+        didSet { UserDefaults.standard.set(Double(defaultLineWidth), forKey: "screenAnnotation.defaultLineWidth") }
+    }
+    @Published var dimBackground: Bool = true {
+        didSet { UserDefaults.standard.set(dimBackground, forKey: "screenAnnotation.dimBackground") }
+    }
 
     // MARK: - Runtime State
     @Published private(set) var isActive: Bool = false
@@ -136,6 +154,10 @@ final class ScreenAnnotationModel: ObservableObject {
     private var eventHandlerRef: EventHandlerRef?
 
     init() {
+        let d = UserDefaults.standard
+        defaultColor = annotationLoadColor("screenAnnotation.defaultColor", defaultColor)
+        if d.object(forKey: "screenAnnotation.defaultLineWidth") != nil { defaultLineWidth = CGFloat(d.double(forKey: "screenAnnotation.defaultLineWidth")) }
+        if d.object(forKey: "screenAnnotation.dimBackground") != nil { dimBackground = d.bool(forKey: "screenAnnotation.dimBackground") }
         installHotKeyHandler()
         isEnabled = UserDefaults.standard.bool(forKey: "screenAnnotation.isEnabled")
         if isEnabled { registerHotKey() }

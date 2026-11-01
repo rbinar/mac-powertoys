@@ -11,7 +11,7 @@ private enum ZoomItHotKey {
     static let close: UInt32 = 6
 }
 
-private let zoomIncrement = 0.1
+private let zoomIncrement = 0.25
 
 // Global C callback for ZoomIt hotkeys
 private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?) -> OSStatus {
@@ -64,11 +64,13 @@ final class ZoomItModel: ObservableObject {
     }
     @Published var magnificationLevel: Double = 2.0 {
         didSet {
+            UserDefaults.standard.set(magnificationLevel, forKey: "zoomIt.magnificationLevel")
             updateZoomLevel()
         }
     }
     @Published var animateZoom: Bool = true {
         didSet {
+            UserDefaults.standard.set(animateZoom, forKey: "zoomIt.animateZoom")
             for entry in overlayWindows {
                 entry.view.animateZoom = animateZoom
             }
@@ -109,6 +111,9 @@ final class ZoomItModel: ObservableObject {
     init() {
         NSLog("%@", "[ZoomIt] ZoomItModel initialized")
         installHotKeyHandler()
+        let d = UserDefaults.standard
+        if d.object(forKey: "zoomIt.magnificationLevel") != nil { magnificationLevel = min(4.0, max(1.25, d.double(forKey: "zoomIt.magnificationLevel"))) }
+        if d.object(forKey: "zoomIt.animateZoom") != nil { animateZoom = d.bool(forKey: "zoomIt.animateZoom") }
         isEnabled = UserDefaults.standard.bool(forKey: "zoomIt.isEnabled")
         if isEnabled { registerZoomHotKeys() }
     }

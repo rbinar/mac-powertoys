@@ -8,6 +8,18 @@ enum ActivationMethod: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+// MARK: - Persistence helpers
+
+private func findMyMouseSaveColor(_ c: NSColor, _ key: String) {
+    let s = c.usingColorSpace(.sRGB) ?? c
+    UserDefaults.standard.set([Double(s.redComponent), Double(s.greenComponent), Double(s.blueComponent), Double(s.alphaComponent)], forKey: key)
+}
+
+private func findMyMouseLoadColor(_ key: String, _ fallback: NSColor) -> NSColor {
+    guard let a = UserDefaults.standard.array(forKey: key) as? [Double], a.count == 4 else { return fallback }
+    return NSColor(srgbRed: CGFloat(a[0]), green: CGFloat(a[1]), blue: CGFloat(a[2]), alpha: CGFloat(a[3]))
+}
+
 @MainActor
 final class FindMyMouseModel: ObservableObject {
     // MARK: - Settings
@@ -22,11 +34,21 @@ final class FindMyMouseModel: ObservableObject {
             }
         }
     }
-    @Published var activationMethod: ActivationMethod = .doubleLeftCtrl
-    @Published var overlayOpacity: Double = 0.5
-    @Published var backgroundColor: NSColor = .black
-    @Published var spotlightRadius: CGFloat = 100
-    @Published var animationDurationMs: Double = 500
+    @Published var activationMethod: ActivationMethod = .doubleLeftCtrl {
+        didSet { UserDefaults.standard.set(activationMethod.rawValue, forKey: "findMyMouse.activationMethod") }
+    }
+    @Published var overlayOpacity: Double = 0.5 {
+        didSet { UserDefaults.standard.set(overlayOpacity, forKey: "findMyMouse.overlayOpacity") }
+    }
+    @Published var backgroundColor: NSColor = .black {
+        didSet { findMyMouseSaveColor(backgroundColor, "findMyMouse.backgroundColor") }
+    }
+    @Published var spotlightRadius: CGFloat = 100 {
+        didSet { UserDefaults.standard.set(Double(spotlightRadius), forKey: "findMyMouse.spotlightRadius") }
+    }
+    @Published var animationDurationMs: Double = 500 {
+        didSet { UserDefaults.standard.set(animationDurationMs, forKey: "findMyMouse.animationDurationMs") }
+    }
 
     // MARK: - Runtime State
     @Published private(set) var isSpotlightActive: Bool = false
@@ -43,6 +65,12 @@ final class FindMyMouseModel: ObservableObject {
     private let doublePressInterval: TimeInterval = 0.4
 
     init() {
+        let d = UserDefaults.standard
+        if let raw = d.string(forKey: "findMyMouse.activationMethod"), let v = ActivationMethod(rawValue: raw) { activationMethod = v }
+        if d.object(forKey: "findMyMouse.overlayOpacity") != nil { overlayOpacity = d.double(forKey: "findMyMouse.overlayOpacity") }
+        backgroundColor = findMyMouseLoadColor("findMyMouse.backgroundColor", backgroundColor)
+        if d.object(forKey: "findMyMouse.spotlightRadius") != nil { spotlightRadius = CGFloat(d.double(forKey: "findMyMouse.spotlightRadius")) }
+        if d.object(forKey: "findMyMouse.animationDurationMs") != nil { animationDurationMs = d.double(forKey: "findMyMouse.animationDurationMs") }
         // Assigning in init does not fire didSet, so start monitors explicitly.
         isEnabled = UserDefaults.standard.bool(forKey: "findMyMouse.isEnabled")
         if isEnabled { startMonitoring() }

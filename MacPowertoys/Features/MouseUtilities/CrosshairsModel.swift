@@ -1,6 +1,18 @@
 import Foundation
 import AppKit
 
+// MARK: - Persistence helpers
+
+private func crosshairsSaveColor(_ c: NSColor, _ key: String) {
+    let s = c.usingColorSpace(.sRGB) ?? c
+    UserDefaults.standard.set([Double(s.redComponent), Double(s.greenComponent), Double(s.blueComponent), Double(s.alphaComponent)], forKey: key)
+}
+
+private func crosshairsLoadColor(_ key: String, _ fallback: NSColor) -> NSColor {
+    guard let a = UserDefaults.standard.array(forKey: key) as? [Double], a.count == 4 else { return fallback }
+    return NSColor(srgbRed: CGFloat(a[0]), green: CGFloat(a[1]), blue: CGFloat(a[2]), alpha: CGFloat(a[3]))
+}
+
 @MainActor
 final class CrosshairsModel: ObservableObject {
     // MARK: - Settings
@@ -10,22 +22,40 @@ final class CrosshairsModel: ObservableObject {
         }
     }
     @Published var crosshairColor: NSColor = NSColor.systemYellow {
-        didSet { for entry in overlayWindows { entry.view.crosshairColor = crosshairColor } }
+        didSet {
+            crosshairsSaveColor(crosshairColor, "crosshairs.crosshairColor")
+            for entry in overlayWindows { entry.view.crosshairColor = crosshairColor }
+        }
     }
     @Published var crosshairOpacity: Double = 0.75 {
-        didSet { for entry in overlayWindows { entry.view.crosshairOpacity = crosshairOpacity } }
+        didSet {
+            UserDefaults.standard.set(crosshairOpacity, forKey: "crosshairs.crosshairOpacity")
+            for entry in overlayWindows { entry.view.crosshairOpacity = crosshairOpacity }
+        }
     }
     @Published var centerRadius: CGFloat = 20 {
-        didSet { for entry in overlayWindows { entry.view.centerRadius = centerRadius } }
+        didSet {
+            UserDefaults.standard.set(Double(centerRadius), forKey: "crosshairs.centerRadius")
+            for entry in overlayWindows { entry.view.centerRadius = centerRadius }
+        }
     }
     @Published var thickness: CGFloat = 2 {
-        didSet { for entry in overlayWindows { entry.view.thickness = thickness } }
+        didSet {
+            UserDefaults.standard.set(Double(thickness), forKey: "crosshairs.thickness")
+            for entry in overlayWindows { entry.view.thickness = thickness }
+        }
     }
     @Published var borderColor: NSColor = NSColor.black {
-        didSet { for entry in overlayWindows { entry.view.borderColor = borderColor } }
+        didSet {
+            crosshairsSaveColor(borderColor, "crosshairs.borderColor")
+            for entry in overlayWindows { entry.view.borderColor = borderColor }
+        }
     }
     @Published var borderSize: CGFloat = 1 {
-        didSet { for entry in overlayWindows { entry.view.borderSize = borderSize } }
+        didSet {
+            UserDefaults.standard.set(Double(borderSize), forKey: "crosshairs.borderSize")
+            for entry in overlayWindows { entry.view.borderSize = borderSize }
+        }
     }
 
     // MARK: - Runtime State
@@ -43,6 +73,13 @@ final class CrosshairsModel: ObservableObject {
     private let rightOptionKeyCode: UInt16 = 0x3D
 
     init() {
+        let d = UserDefaults.standard
+        crosshairColor = crosshairsLoadColor("crosshairs.crosshairColor", crosshairColor)
+        if d.object(forKey: "crosshairs.crosshairOpacity") != nil { crosshairOpacity = d.double(forKey: "crosshairs.crosshairOpacity") }
+        if d.object(forKey: "crosshairs.centerRadius") != nil { centerRadius = CGFloat(d.double(forKey: "crosshairs.centerRadius")) }
+        if d.object(forKey: "crosshairs.thickness") != nil { thickness = CGFloat(d.double(forKey: "crosshairs.thickness")) }
+        borderColor = crosshairsLoadColor("crosshairs.borderColor", borderColor)
+        if d.object(forKey: "crosshairs.borderSize") != nil { borderSize = CGFloat(d.double(forKey: "crosshairs.borderSize")) }
         registerShortcut()
     }
 

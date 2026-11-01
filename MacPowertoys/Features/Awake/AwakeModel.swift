@@ -12,16 +12,19 @@ final class AwakeModel: ObservableObject {
     }
     @Published var keepDisplayOn: Bool = true {
         didSet {
+            UserDefaults.standard.set(keepDisplayOn, forKey: "awake.keepDisplayOn")
             if isEnabled { restartAssertion() }
         }
     }
     @Published var isIndefinite: Bool = true {
         didSet {
+            UserDefaults.standard.set(isIndefinite, forKey: "awake.isIndefinite")
             if isEnabled { restartAssertion() }
         }
     }
     @Published var durationMinutes: Int = 30 {
         didSet {
+            UserDefaults.standard.set(durationMinutes, forKey: "awake.durationMinutes")
             if isEnabled && !isIndefinite { restartAssertion() }
         }
     }
@@ -39,6 +42,16 @@ final class AwakeModel: ObservableObject {
     private var assertionID: IOPMAssertionID = 0
     private var hasAssertion = false
     private var countdownTimer: Timer?
+
+    // MARK: - Init
+
+    init() {
+        // isEnabled stays false here, so the didSets below never touch the assertion.
+        let d = UserDefaults.standard
+        if d.object(forKey: "awake.keepDisplayOn") != nil { keepDisplayOn = d.bool(forKey: "awake.keepDisplayOn") }
+        if d.object(forKey: "awake.isIndefinite") != nil { isIndefinite = d.bool(forKey: "awake.isIndefinite") }
+        if d.object(forKey: "awake.durationMinutes") != nil { durationMinutes = d.integer(forKey: "awake.durationMinutes") }
+    }
 
     // MARK: - Monitoring
 

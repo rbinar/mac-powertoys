@@ -1,6 +1,18 @@
 import Foundation
 import AppKit
 
+// MARK: - Persistence helpers
+
+private func highlighterSaveColor(_ c: NSColor, _ key: String) {
+    let s = c.usingColorSpace(.sRGB) ?? c
+    UserDefaults.standard.set([Double(s.redComponent), Double(s.greenComponent), Double(s.blueComponent), Double(s.alphaComponent)], forKey: key)
+}
+
+private func highlighterLoadColor(_ key: String, _ fallback: NSColor) -> NSColor {
+    guard let a = UserDefaults.standard.array(forKey: key) as? [Double], a.count == 4 else { return fallback }
+    return NSColor(srgbRed: CGFloat(a[0]), green: CGFloat(a[1]), blue: CGFloat(a[2]), alpha: CGFloat(a[3]))
+}
+
 @MainActor
 final class MouseHighlighterModel: ObservableObject {
     // MARK: - Settings
@@ -9,11 +21,21 @@ final class MouseHighlighterModel: ObservableObject {
             if isEnabled { startMonitoring() } else { deactivate() }
         }
     }
-    @Published var primaryButtonColor: NSColor = NSColor.systemYellow
-    @Published var secondaryButtonColor: NSColor = NSColor.systemBlue
-    @Published var highlightRadius: CGFloat = 30
-    @Published var fadeDelayMs: Double = 300
-    @Published var fadeDurationMs: Double = 400
+    @Published var primaryButtonColor: NSColor = NSColor.systemYellow {
+        didSet { highlighterSaveColor(primaryButtonColor, "mouseHighlighter.primaryButtonColor") }
+    }
+    @Published var secondaryButtonColor: NSColor = NSColor.systemBlue {
+        didSet { highlighterSaveColor(secondaryButtonColor, "mouseHighlighter.secondaryButtonColor") }
+    }
+    @Published var highlightRadius: CGFloat = 30 {
+        didSet { UserDefaults.standard.set(Double(highlightRadius), forKey: "mouseHighlighter.highlightRadius") }
+    }
+    @Published var fadeDelayMs: Double = 300 {
+        didSet { UserDefaults.standard.set(fadeDelayMs, forKey: "mouseHighlighter.fadeDelayMs") }
+    }
+    @Published var fadeDurationMs: Double = 400 {
+        didSet { UserDefaults.standard.set(fadeDurationMs, forKey: "mouseHighlighter.fadeDurationMs") }
+    }
 
     // MARK: - Private
     private var globalLeftMonitor: Any?
@@ -28,6 +50,12 @@ final class MouseHighlighterModel: ObservableObject {
     private let leftOptionKeyCode: UInt16 = 0x3A
 
     init() {
+        let d = UserDefaults.standard
+        primaryButtonColor = highlighterLoadColor("mouseHighlighter.primaryButtonColor", primaryButtonColor)
+        secondaryButtonColor = highlighterLoadColor("mouseHighlighter.secondaryButtonColor", secondaryButtonColor)
+        if d.object(forKey: "mouseHighlighter.highlightRadius") != nil { highlightRadius = CGFloat(d.double(forKey: "mouseHighlighter.highlightRadius")) }
+        if d.object(forKey: "mouseHighlighter.fadeDelayMs") != nil { fadeDelayMs = d.double(forKey: "mouseHighlighter.fadeDelayMs") }
+        if d.object(forKey: "mouseHighlighter.fadeDurationMs") != nil { fadeDurationMs = d.double(forKey: "mouseHighlighter.fadeDurationMs") }
         startShortcutMonitoring()
     }
 

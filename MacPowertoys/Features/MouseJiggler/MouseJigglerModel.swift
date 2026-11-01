@@ -10,6 +10,7 @@ final class MouseJigglerModel: ObservableObject {
     }
     @Published var jiggleIntervalSeconds: Int = 30 {
         didSet {
+            UserDefaults.standard.set(jiggleIntervalSeconds, forKey: "mouseJiggler.jiggleIntervalSeconds")
             if isEnabled {
                 stopMonitoring()
                 startMonitoring()
@@ -19,6 +20,12 @@ final class MouseJigglerModel: ObservableObject {
 
     private var jiggleTimer: Timer?
     private var jiggleOffset: Bool = false
+
+    init() {
+        // isEnabled stays false here, so the didSet never restarts the timer.
+        let v = UserDefaults.standard.integer(forKey: "mouseJiggler.jiggleIntervalSeconds")
+        if v > 0 { jiggleIntervalSeconds = v }
+    }
 
     func startMonitoring() {
         guard isEnabled else { return }

@@ -9,9 +9,15 @@ final class CursorWrapModel: ObservableObject {
             if isEnabled { startMonitoring() } else { stopMonitoring() }
         }
     }
-    @Published var wrapHorizontal: Bool = true
-    @Published var wrapVertical: Bool = true
-    @Published var edgeMargin: CGFloat = 2
+    @Published var wrapHorizontal: Bool = true {
+        didSet { UserDefaults.standard.set(wrapHorizontal, forKey: "cursorWrap.wrapHorizontal") }
+    }
+    @Published var wrapVertical: Bool = true {
+        didSet { UserDefaults.standard.set(wrapVertical, forKey: "cursorWrap.wrapVertical") }
+    }
+    @Published var edgeMargin: CGFloat = 2 {
+        didSet { UserDefaults.standard.set(Double(edgeMargin), forKey: "cursorWrap.edgeMargin") }
+    }
 
     // MARK: - Private
     private var trackingTimer: Timer?
@@ -27,6 +33,13 @@ final class CursorWrapModel: ObservableObject {
     private var edgeState = EdgeState()
     private var edgeTickCount: Int = 0
     private static let requiredEdgeTicks = 2
+
+    init() {
+        let d = UserDefaults.standard
+        if d.object(forKey: "cursorWrap.wrapHorizontal") != nil { wrapHorizontal = d.bool(forKey: "cursorWrap.wrapHorizontal") }
+        if d.object(forKey: "cursorWrap.wrapVertical") != nil { wrapVertical = d.bool(forKey: "cursorWrap.wrapVertical") }
+        if d.object(forKey: "cursorWrap.edgeMargin") != nil { edgeMargin = CGFloat(d.double(forKey: "cursorWrap.edgeMargin")) }
+    }
 
     // MARK: - Monitoring
 

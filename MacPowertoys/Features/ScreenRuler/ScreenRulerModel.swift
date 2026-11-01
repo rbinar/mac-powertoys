@@ -65,6 +65,18 @@ struct EdgeDistances {
     var bottom: Int = 0
 }
 
+// MARK: - Persistence helpers
+
+private func rulerSaveColor(_ c: NSColor, _ key: String) {
+    let s = c.usingColorSpace(.sRGB) ?? c
+    UserDefaults.standard.set([Double(s.redComponent), Double(s.greenComponent), Double(s.blueComponent), Double(s.alphaComponent)], forKey: key)
+}
+
+private func rulerLoadColor(_ key: String, _ fallback: NSColor) -> NSColor {
+    guard let a = UserDefaults.standard.array(forKey: key) as? [Double], a.count == 4 else { return fallback }
+    return NSColor(srgbRed: CGFloat(a[0]), green: CGFloat(a[1]), blue: CGFloat(a[2]), alpha: CGFloat(a[3]))
+}
+
 // MARK: - Screen Ruler Model
 
 @MainActor
@@ -82,16 +94,32 @@ final class ScreenRulerModel: ObservableObject {
             }
         }
     }
-    @Published var measurementMode: MeasurementMode = .spacing
-    @Published var pixelTolerance: Double = 30
-    @Published var perChannelDetection: Bool = false
-    @Published var continuousCapture: Bool = false
-    @Published var extraUnit: ExtraUnit = .none
+    @Published var measurementMode: MeasurementMode = .spacing {
+        didSet { UserDefaults.standard.set(measurementMode.rawValue, forKey: "screenRuler.measurementMode") }
+    }
+    @Published var pixelTolerance: Double = 30 {
+        didSet { UserDefaults.standard.set(pixelTolerance, forKey: "screenRuler.pixelTolerance") }
+    }
+    @Published var perChannelDetection: Bool = false {
+        didSet { UserDefaults.standard.set(perChannelDetection, forKey: "screenRuler.perChannelDetection") }
+    }
+    @Published var continuousCapture: Bool = false {
+        didSet { UserDefaults.standard.set(continuousCapture, forKey: "screenRuler.continuousCapture") }
+    }
+    @Published var extraUnit: ExtraUnit = .none {
+        didSet { UserDefaults.standard.set(extraUnit.rawValue, forKey: "screenRuler.extraUnit") }
+    }
     @Published var lineColor: NSColor = NSColor.systemYellow {
-        didSet { updateOverlaySettings() }
+        didSet {
+            rulerSaveColor(lineColor, "screenRuler.lineColor")
+            updateOverlaySettings()
+        }
     }
     @Published var showFeet: Bool = true {
-        didSet { updateOverlaySettings() }
+        didSet {
+            UserDefaults.standard.set(showFeet, forKey: "screenRuler.showFeet")
+            updateOverlaySettings()
+        }
     }
 
     // MARK: - Runtime State
@@ -131,6 +159,14 @@ final class ScreenRulerModel: ObservableObject {
     private var hudWindow: NSWindow?
 
     init() {
+        let d = UserDefaults.standard
+        if let raw = d.string(forKey: "screenRuler.measurementMode"), let v = MeasurementMode(rawValue: raw) { measurementMode = v }
+        if d.object(forKey: "screenRuler.pixelTolerance") != nil { pixelTolerance = d.double(forKey: "screenRuler.pixelTolerance") }
+        if d.object(forKey: "screenRuler.perChannelDetection") != nil { perChannelDetection = d.bool(forKey: "screenRuler.perChannelDetection") }
+        if d.object(forKey: "screenRuler.continuousCapture") != nil { continuousCapture = d.bool(forKey: "screenRuler.continuousCapture") }
+        if let raw = d.string(forKey: "screenRuler.extraUnit"), let v = ExtraUnit(rawValue: raw) { extraUnit = v }
+        lineColor = rulerLoadColor("screenRuler.lineColor", lineColor)
+        if d.object(forKey: "screenRuler.showFeet") != nil { showFeet = d.bool(forKey: "screenRuler.showFeet") }
         installHotKeyHandler()
         isEnabled = UserDefaults.standard.bool(forKey: "screenRuler.isEnabled")
         if isEnabled { registerHotKey() }
