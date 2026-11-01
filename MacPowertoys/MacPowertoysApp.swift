@@ -11,12 +11,6 @@ struct MacPowerToysApp: App {
         DispatchQueue.main.async {
             NSColorPanel.shared.orderOut(nil)
         }
-
-        // Request Accessibility permissions for global shortcuts (only prompt if not already granted)
-        if !AXIsProcessTrusted() {
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-        }
     }
 
     var body: some Scene {

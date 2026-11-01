@@ -329,24 +329,36 @@ final class ZoomItModel: ObservableObject {
     }
     
     private func checkScreenRecordingPermission() -> Bool {
-        if !CGPreflightScreenCaptureAccess() {
+        if CGPreflightScreenCaptureAccess() { return true }
+        let requestedKey = "zoomIt.screenCaptureRequested"
+        if !UserDefaults.standard.bool(forKey: requestedKey) {
+            UserDefaults.standard.set(true, forKey: requestedKey)
             CGRequestScreenCaptureAccess()
-            DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = "Screen Recording Permission Required"
-                alert.informativeText = "MacPowerToys needs Screen Recording permission to zoom the screen. Please grant permission in System Settings > Privacy & Security > Screen Recording, then restart the app."
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: "Open System Settings")
-                alert.addButton(withTitle: "Cancel")
-                if alert.runModal() == .alertFirstButtonReturn {
-                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }
-            }
             return false
         }
-        return true
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = "Screen Recording Permission Required"
+            alert.informativeText = "Enable MacPowerToys in System Settings › Privacy & Security › Screen & System Audio Recording, then reopen the app."
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Quit & Reopen")
+            alert.addButton(withTitle: "Cancel")
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                    NSWorkspace.shared.open(url)
+                }
+            case .alertSecondButtonReturn:
+                let config = NSWorkspace.OpenConfiguration()
+                config.createsNewApplicationInstance = true
+                NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config)
+                NSApp.terminate(nil)
+            default:
+                break
+            }
+        }
+        return false
     }
     
     // MARK: - Screen Capture

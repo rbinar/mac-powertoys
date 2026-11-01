@@ -23,6 +23,26 @@ struct MouseJigglerView: View {
 
             Divider()
 
+            if !AXIsProcessTrusted() {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.shield")
+                        .foregroundStyle(.orange)
+                    Text("Needs Accessibility permission to move the cursor")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Grant…") {
+                        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+                        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .controlSize(.small)
+                }
+            }
+
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Mouse Jiggler", systemImage: "computermouse.fill")
                     .font(.system(.body, design: .rounded))

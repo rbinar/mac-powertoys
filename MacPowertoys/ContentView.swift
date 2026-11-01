@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 enum Feature: Hashable {
     case colorPicker
@@ -261,6 +262,8 @@ struct ContentView: View {
             ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 6) {
 
+            AccessibilityBanner()
+
             // Color Picker module - full width (has special controls)
             FeatureCardView(title: "Color Picker", action: {
                 withAnimation(.easeInOut(duration: 0.15)) {
@@ -341,6 +344,10 @@ struct ContentView: View {
 
             // Footer
             HStack {
+                LaunchAtLoginToggle()
+                Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(.tertiary)
                 Spacer()
                 Button {
                     showingQuitAlert = true
@@ -569,5 +576,88 @@ struct ContentView: View {
         case .shortBreak: return "Break \(pomodoroTimerModel.formattedRemaining)"
         case .longBreak: return "Break \(pomodoroTimerModel.formattedRemaining)"
         }
+    }
+}
+
+// MARK: - Accessibility Banner
+
+private struct AccessibilityBanner: View {
+    @State private var isTrusted = AXIsProcessTrusted()
+    @State private var timer: Timer?
+
+    var body: some View {
+        Group {
+            if !isTrusted {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.shield")
+                        .foregroundStyle(.orange)
+                    Text("Global shortcuts need Accessibility permission")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Grant…") {
+                        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+                        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .controlSize(.small)
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.12)))
+            }
+        }
+        .onAppear {
+            isTrusted = AXIsProcessTrusted()
+            startTimerIfNeeded()
+        }
+        .onDisappear { stopTimer() }
+    }
+
+    private func startTimerIfNeeded() {
+        stopTimer()
+        guard !isTrusted else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
+            Task { @MainActor in
+                isTrusted = AXIsProcessTrusted()
+                if isTrusted { stopTimer() }
+            }
+        }
+    }
+
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+}
+
+// MARK: - Launch at Login
+
+private struct LaunchAtLoginToggle: View {
+    @State private var isOn = false
+
+    var body: some View {
+        Toggle("Launch at Login", isOn: Binding(
+            get: { isOn },
+            set: { newValue in
+                do {
+                    if newValue {
+                        try SMAppService.mainApp.register()
+                    } else {
+                        try SMAppService.mainApp.unregister()
+                    }
+                    isOn = newValue
+                } catch {
+                    NSLog("[App] Launch at login failed: %@", error.localizedDescription)
+                    isOn = SMAppService.mainApp.status == .enabled
+                }
+            }
+        ))
+        .toggleStyle(.switch)
+        .controlSize(.mini)
+        .font(.system(.caption, design: .rounded))
+        .onAppear { isOn = SMAppService.mainApp.status == .enabled }
     }
 }

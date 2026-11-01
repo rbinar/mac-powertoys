@@ -142,7 +142,6 @@ final class QuickLaunchModel: ObservableObject {
         registerCarbonHotKey()
         scanApplications()
         startScanTimer()
-        requestNotificationPermission()
         panelController = QuickLaunchPanelController(model: self)
     }
 
@@ -466,10 +465,6 @@ final class QuickLaunchModel: ObservableObject {
 
     // MARK: - Error Notifications
 
-    private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
-    }
-
     private func sendErrorNotification(title: String, body: String) {
         let content = UNMutableNotificationContent()
         content.title = "Quick Launch — \(title)"
@@ -477,7 +472,10 @@ final class QuickLaunchModel: ObservableObject {
         content.sound = .default
         content.threadIdentifier = "quickLaunch"
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request) { _ in }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            UNUserNotificationCenter.current().add(request) { _ in }
+        }
     }
 
     // MARK: - Favicon
