@@ -72,7 +72,7 @@ struct ScreenCaptureView: View {
                 .padding(10)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(.white.opacity(0.08))
+                        .fill(Color.primary.opacity(0.08))
                 )
 
             Spacer()

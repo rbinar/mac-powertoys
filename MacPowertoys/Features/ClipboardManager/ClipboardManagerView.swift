@@ -49,7 +49,7 @@ struct ClipboardManagerView: View {
                         }
                     }
                     .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.1)))
                     
                     Menu {
                         Picker("History Limit", selection: $model.maxHistoryCount) {
@@ -224,7 +224,7 @@ struct ClipboardItemRow: View {
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isHovered ? Color.white.opacity(0.1) : Color.white.opacity(0.05))
+                .fill(isHovered ? Color.primary.opacity(0.1) : Color.primary.opacity(0.05))
         )
         .onHover { hovering in
             isHovered = hovering

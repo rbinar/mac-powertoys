@@ -76,10 +76,10 @@ struct GitHubNotifierView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(.orange)
                         Text("Token expired or revoked.")
                             .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(.orange)
                     }
                     tokenNotSetView
                 }
@@ -87,10 +87,10 @@ struct GitHubNotifierView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(.orange)
                         Text("Token missing required scopes. Needs 'repo' and 'read:org'.")
                             .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(.orange)
                     }
                     HStack(spacing: 12) {
                         Button("Remove Token") {
@@ -122,8 +122,8 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -160,7 +160,7 @@ struct GitHubNotifierView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Label("Authorization code expired. Please try again.", systemImage: "clock.badge.xmark")
                     .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(.orange)
                 loginWithGitHubButton
             }
         } else if case .error(let msg) = model.deviceFlowStatus {
@@ -370,8 +370,8 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -492,8 +492,8 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -586,8 +586,8 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
     }
 
     // MARK: - Recent Events Section
@@ -610,8 +610,8 @@ struct GitHubNotifierView: View {
             .frame(maxHeight: 200)
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -652,7 +652,7 @@ struct GitHubNotifierView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(8)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.1)))
+            .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.1)))
         }
         .buttonStyle(.plain)
     }

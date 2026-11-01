@@ -89,11 +89,11 @@ struct CompactFeatureCard: View {
                     .frame(width: 28, height: 28)
                     .background(
                         RoundedRectangle(cornerRadius: 7)
-                            .fill(.white.opacity(0.14))
+                            .fill(Color.primary.opacity(0.14))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 7)
-                            .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                            .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
                     )
                 Spacer()
                 if let binding = isEnabled {
@@ -276,11 +276,11 @@ struct ContentView: View {
                         .frame(width: 28, height: 28)
                         .background(
                             Circle()
-                                .fill(.white.opacity(0.14))
+                                .fill(Color.primary.opacity(0.14))
                         )
                         .overlay(
                             Circle()
-                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                                .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
                         )
                 }
                 .buttonStyle(.plain)
@@ -306,11 +306,11 @@ struct ContentView: View {
                         .frame(width: 28, height: 28)
                         .background(
                             Circle()
-                                .fill(.white.opacity(0.14))
+                                .fill(Color.primary.opacity(0.14))
                         )
                         .overlay(
                             Circle()
-                                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                                .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
                         )
                 }
                 .buttonStyle(.plain)
@@ -503,11 +503,11 @@ struct ContentView: View {
                 .frame(width: 28, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: 7)
-                        .fill(.white.opacity(0.14))
+                        .fill(Color.primary.opacity(0.14))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 7)
-                        .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
                 )
 
             Button {

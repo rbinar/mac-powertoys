@@ -208,7 +208,7 @@ struct QuickLaunchPanelContent: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(model.selectedIndex == index ? .white.opacity(0.14) : .clear)
+                .fill(model.selectedIndex == index ? Color.primary.opacity(0.14) : .clear)
         )
         .contentShape(Rectangle())
         .onTapGesture {

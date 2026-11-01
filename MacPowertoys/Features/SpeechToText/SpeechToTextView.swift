@@ -91,12 +91,12 @@ struct SpeechToTextView: View {
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(
-                    model.isDragTargeted ? Color.accentColor : Color.white.opacity(0.15),
+                    model.isDragTargeted ? Color.accentColor : Color.primary.opacity(0.15),
                     style: StrokeStyle(lineWidth: 1.5, dash: [6])
                 )
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(model.isDragTargeted ? Color.accentColor.opacity(0.08) : Color.white.opacity(0.03))
+                        .fill(model.isDragTargeted ? Color.accentColor.opacity(0.08) : Color.primary.opacity(0.03))
                 )
         )
         .contentShape(Rectangle())
@@ -165,11 +165,11 @@ struct SpeechToTextView: View {
             .padding(8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(.white.opacity(0.06))
+                    .fill(Color.primary.opacity(0.06))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(.white.opacity(0.15), lineWidth: 0.8)
+                    .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
             )
 
             HStack(spacing: 8) {
@@ -185,7 +185,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 7)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.08))
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(.plain)
@@ -202,7 +202,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 7)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.08))
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(.plain)
@@ -219,7 +219,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 7)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.08))
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(.plain)
@@ -253,7 +253,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 7)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.08))
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(.plain)
@@ -270,7 +270,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 7)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.08))
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(.plain)

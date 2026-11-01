@@ -241,7 +241,7 @@ struct PdfToolsWindowView: View {
                     }
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
             }
 
             if model.selectedFileURL != nil {
@@ -295,7 +295,7 @@ struct PdfToolsWindowView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
 
                 actionArea(
                     canPerform: true,
@@ -353,7 +353,7 @@ struct PdfToolsWindowView: View {
                     }
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
 
                 actionArea(
                     canPerform: model.rotateAllPages || !model.rotatePageRangeText.trimmingCharacters(in: .whitespaces).isEmpty,
@@ -409,7 +409,7 @@ struct PdfToolsWindowView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
 
                 actionArea(
                     canPerform: true,
@@ -532,7 +532,7 @@ struct PdfToolsWindowView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
     }
 
     private func fileList(items: [MergeFileItem], onDelete: @escaping (IndexSet) -> Void, onMove: @escaping (IndexSet, Int) -> Void, showPageCount: Bool) -> some View {
@@ -600,8 +600,8 @@ struct PdfToolsWindowView: View {
                 }
             }
         }
-        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.1), lineWidth: 0.5))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.1), lineWidth: 0.5))
     }
 
     private func thumbnailView(for url: URL) -> some View {
@@ -622,7 +622,7 @@ struct PdfToolsWindowView: View {
     private func dropZone(message: String, types: [UTType], handler: @escaping ([NSItemProvider]) -> Bool) -> some View {
         RoundedRectangle(cornerRadius: 10)
             .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6]))
-            .foregroundStyle(.white.opacity(0.18))
+            .foregroundStyle(Color.primary.opacity(0.18))
             .frame(height: 80)
             .overlay(
                 VStack(spacing: 6) {
@@ -673,7 +673,7 @@ struct PdfToolsWindowView: View {
                     .foregroundStyle(.red)
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
 
         case .completed(let result):
             VStack(alignment: .leading, spacing: 8) {

@@ -57,11 +57,11 @@ struct QuickLaunchView: View {
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(.white.opacity(0.1))
+                        .fill(Color.primary.opacity(0.1))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                        .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
                 )
         }
     }
@@ -188,7 +188,7 @@ struct CustomEntryRow: View {
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isHovered ? .white.opacity(0.12) : .white.opacity(0.07))
+                .fill(isHovered ? Color.primary.opacity(0.12) : Color.primary.opacity(0.07))
         )
         .onHover { hovering in isHovered = hovering }
         .accessibilityAction(named: "Edit") { model.editingEntry = entry }
@@ -257,7 +257,7 @@ struct CustomEntryRow: View {
             .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.white.opacity(0.1))
+                    .fill(Color.primary.opacity(0.1))
             )
     }
 }
@@ -345,11 +345,11 @@ struct EntryFormView: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(.white.opacity(0.1))
+                .fill(Color.primary.opacity(0.1))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(.white.opacity(0.18), lineWidth: 0.8)
+                .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
         )
         .onAppear {
             if let entry {

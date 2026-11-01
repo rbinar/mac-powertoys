@@ -58,7 +58,7 @@ struct PortManagerView: View {
                         }
                     }
                     .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.1)))
 
                     Menu {
                         // Sort
@@ -351,7 +351,7 @@ struct PortInfoRow: View {
         .padding(.horizontal, 6)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isHovered ? Color.white.opacity(0.06) : Color.clear)
+                .fill(isHovered ? Color.primary.opacity(0.06) : Color.clear)
         )
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {

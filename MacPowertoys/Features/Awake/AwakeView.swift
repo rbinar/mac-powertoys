@@ -92,11 +92,11 @@ struct AwakeView: View {
                                         .padding(.vertical, 4)
                                         .background(
                                             RoundedRectangle(cornerRadius: 6)
-                                                .fill(model.durationMinutes == minutes ? .white.opacity(0.15) : .white.opacity(0.05))
+                                                .fill(model.durationMinutes == minutes ? Color.primary.opacity(0.15) : Color.primary.opacity(0.05))
                                         )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 6)
-                                                .stroke(model.durationMinutes == minutes ? .white.opacity(0.3) : .clear, lineWidth: 0.8)
+                                                .stroke(model.durationMinutes == minutes ? Color.primary.opacity(0.3) : .clear, lineWidth: 0.8)
                                         )
                                 }
                                 .buttonStyle(.plain)

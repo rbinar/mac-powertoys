@@ -35,8 +35,8 @@ struct PdfToolsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.14)))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.18), lineWidth: 0.8))
+                .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 0.8))
             }
             .buttonStyle(.plain)
 
@@ -57,7 +57,7 @@ struct PdfToolsView: View {
                         .progressViewStyle(.linear)
                 }
                 .padding(10)
-                .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.08)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
             }
 
             // MARK: - Recent History
@@ -119,8 +119,8 @@ struct PdfToolsView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.08)))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.12), lineWidth: 0.5))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.12), lineWidth: 0.5))
         }
         .buttonStyle(.plain)
     }

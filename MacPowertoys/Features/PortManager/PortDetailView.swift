@@ -299,7 +299,7 @@ struct PortDetailView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.white.opacity(0.06))
+                            .fill(Color.primary.opacity(0.06))
                         RoundedRectangle(cornerRadius: 2)
                             .fill(fillColor.opacity(0.4))
                             .frame(width: geo.size.width * CGFloat(share))
@@ -315,7 +315,7 @@ struct PortDetailView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 6)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.03)))
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
         .opacity(ct.isActive ? 1 : 0.5)
         .contextMenu {
             Button(action: { copyText(displayEndpoint) }) {
@@ -417,7 +417,7 @@ struct PortDetailView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 6)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.03)))
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
         .contextMenu {
             Button(action: { copyText(conn.displayRemote) }) {
                 Label("Copy Remote Address", systemImage: "doc.on.doc")

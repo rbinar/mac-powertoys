@@ -36,11 +36,11 @@ struct MarkdownPreviewView: View {
                     .padding(.vertical, 8)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.1))
+                            .fill(Color.primary.opacity(0.1))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.15), lineWidth: 0.8)
+                            .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
                     )
                 }
                 .buttonStyle(.plain)
@@ -59,11 +59,11 @@ struct MarkdownPreviewView: View {
                     .padding(.vertical, 8)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.1))
+                            .fill(Color.primary.opacity(0.1))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(.white.opacity(0.15), lineWidth: 0.8)
+                            .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
                     )
                 }
                 .buttonStyle(.plain)

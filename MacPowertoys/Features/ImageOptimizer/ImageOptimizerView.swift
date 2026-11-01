@@ -56,10 +56,10 @@ struct ImageOptimizerView: View {
         Button { model.selectImages() } label: {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
-                .fill(model.isDragTargeted ? Color.accentColor.opacity(0.08) : Color.white.opacity(0.03))
+                .fill(model.isDragTargeted ? Color.accentColor.opacity(0.08) : Color.primary.opacity(0.03))
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(
-                    model.isDragTargeted ? Color.accentColor : Color.white.opacity(0.2),
+                    model.isDragTargeted ? Color.accentColor : Color.primary.opacity(0.2),
                     style: StrokeStyle(lineWidth: 1.5, dash: [6])
                 )
             VStack(spacing: 8) {
@@ -314,11 +314,11 @@ struct ImageOptimizerView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white.opacity(0.14))
+                .fill(Color.primary.opacity(0.14))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.18), lineWidth: 0.8)
+                .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
         )
     }
 
@@ -386,7 +386,7 @@ struct ImageOptimizerView: View {
                     .progressViewStyle(.linear)
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.08)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
         case .completed(let totalSaved, let fileCount):
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
@@ -408,17 +408,17 @@ struct ImageOptimizerView: View {
                 }
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.08)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
         case .failed(let message):
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(.orange)
                 Text(message)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.08)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
         }
     }
 
@@ -475,7 +475,7 @@ struct ImageOptimizerView: View {
                                     .background(
                                         Capsule().fill(previewItemID == pi.id
                                             ? Color.accentColor.opacity(0.3)
-                                            : Color.white.opacity(0.08))
+                                            : Color.primary.opacity(0.08))
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -491,7 +491,7 @@ struct ImageOptimizerView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 90)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1)))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1)))
                         Text("Before")
                             .font(.system(.caption2, design: .rounded))
                             .foregroundStyle(.tertiary)
@@ -512,7 +512,7 @@ struct ImageOptimizerView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 90)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1)))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1)))
                         }
                         Text("After")
                             .font(.system(.caption2, design: .rounded))
@@ -525,8 +525,8 @@ struct ImageOptimizerView: View {
                 }
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.06)))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.1)))
         }
     }
 }
@@ -545,7 +545,7 @@ private struct AsyncImageView: View {
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
             } else {
-                Color.white.opacity(0.04)
+                Color.primary.opacity(0.04)
             }
         }
         .task(id: url) {
