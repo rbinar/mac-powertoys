@@ -14,6 +14,10 @@ struct QuickLaunchView: View {
 
             hotkeyInfo
 
+            Text("⌃⌥Space opens the command palette: modules + your shortcuts")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+
             Divider()
 
             statsRow

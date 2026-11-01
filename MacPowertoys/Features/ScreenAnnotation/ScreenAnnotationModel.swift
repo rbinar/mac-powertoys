@@ -208,6 +208,9 @@ final class ScreenAnnotationModel: ObservableObject {
 
     // MARK: - Activation
 
+    /// Starts an annotation session without touching `isEnabled` (used by the command palette).
+    func startSession() { activate() }
+
     fileprivate func activate() {
         guard !isActive else { return }
         isActive = true

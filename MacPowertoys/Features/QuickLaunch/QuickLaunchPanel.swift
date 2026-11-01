@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 
 // MARK: - QuickLaunchPanelController
 
@@ -8,9 +9,18 @@ class QuickLaunchPanelController {
     private var model: QuickLaunchModel
     private var clickMonitor: Any?
     private var keyMonitor: Any?
+    private var screenObserver: AnyCancellable?
 
+    @MainActor
     init(model: QuickLaunchModel) {
         self.model = model
+        screenObserver = model.$activeScreen
+            .map { $0 != nil }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] showingScreen in
+                self?.applyLayout(showingScreen: showingScreen)
+            }
     }
 
     func showPanel() {
@@ -37,6 +47,8 @@ class QuickLaunchPanelController {
     }
 
     func cleanup() {
+        if let resizeObserver { NotificationCenter.default.removeObserver(resizeObserver) }
+        resizeObserver = nil
         removeMonitors()
         panel?.orderOut(nil)
         panel = nil
@@ -70,6 +82,45 @@ class QuickLaunchPanelController {
         panel.contentView = hostingView
 
         self.panel = panel
+
+        // The list panel's height follows its content; keep its top edge where
+        // positionPanel() put it so the search field doesn't jump while typing.
+        resizeObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResizeNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.pinTopEdge() }
+        }
+    }
+
+    /// Top edge for the list panel: chosen so the panel at its tallest (search + 420 pt list + footer)
+    /// sits in the vertical middle of the screen.
+    private var listTopY: CGFloat?
+    private static let tallestListHeight: CGFloat = 56 + 420 + 30
+    private var resizeObserver: NSObjectProtocol?
+
+    @MainActor
+    private func pinTopEdge() {
+        guard let panel, let top = listTopY, model.activeScreen == nil else { return }
+        let f = panel.frame
+        if abs(f.maxY - top) > 0.5 {
+            panel.setFrameOrigin(NSPoint(x: f.origin.x, y: top - f.height))
+        }
+    }
+
+    /// Module screens use a 380 x up-to-640 pt panel (the views are designed for a 340 pt popover).
+    private func applyLayout(showingScreen: Bool) {
+        guard let panel else { return }
+        if showingScreen {
+            let old = panel.frame
+            let visible = (panel.screen ?? NSScreen.main)?.visibleFrame ?? old
+            let width: CGFloat = 380
+            let height = min(640, visible.height - 40)
+            let y = visible.midY - height / 2
+            panel.setFrame(NSRect(x: visible.midX - width / 2, y: y, width: width, height: height), display: true)
+        } else {
+            panel.setContentSize(NSSize(width: 680, height: 56))
+            positionPanel()
+        }
     }
 
     private func positionPanel() {
@@ -77,8 +128,9 @@ class QuickLaunchPanelController {
         let screenFrame = screen.visibleFrame
         let panelWidth: CGFloat = 680
         let x = screenFrame.midX - panelWidth / 2
-        let y = screenFrame.origin.y + screenFrame.height * 0.65
-        panel.setFrameOrigin(NSPoint(x: x, y: y))
+        let top = min(screenFrame.maxY - 20, screenFrame.midY + Self.tallestListHeight / 2)
+        listTopY = top
+        panel.setFrameOrigin(NSPoint(x: x, y: top - panel.frame.height))
     }
 
     private func installMonitors() {
@@ -94,18 +146,28 @@ class QuickLaunchPanelController {
 
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
+            let isCommand = event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command)
+            // Local monitors run on the main thread.
+            let showingScreen = MainActor.assumeIsolated { self.model.activeScreen != nil }
             switch event.keyCode {
             case 53: // Escape
-                Task { @MainActor in self.hidePanel() }
+                Task { @MainActor in
+                    if showingScreen { self.model.closeScreen() } else { self.hidePanel() }
+                }
                 return nil
-            case 125: // Down Arrow
+            case 33 where isCommand && showingScreen: // ⌘[
+                Task { @MainActor in self.model.closeScreen() }
+                return nil
+            case 125 where !showingScreen: // Down Arrow
                 Task { @MainActor in self.model.moveSelectionDown() }
                 return nil
-            case 126: // Up Arrow
+            case 126 where !showingScreen: // Up Arrow
                 Task { @MainActor in self.model.moveSelectionUp() }
                 return nil
-            case 36: // Return
-                Task { @MainActor in self.model.launchSelected() }
+            case 36 where !showingScreen: // Return
+                Task { @MainActor in
+                    if isCommand { self.model.openSelectedScreen() } else { self.model.launchSelected() }
+                }
                 return nil
             default:
                 return event
@@ -132,17 +194,13 @@ struct QuickLaunchPanelContent: View {
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            searchBar
-
-            if !model.searchResults.isEmpty {
-                Divider()
-                    .padding(.horizontal, 12)
-                resultsList
+        Group {
+            if let command = model.activeScreen {
+                moduleScreen(command)
+            } else {
+                paletteList
             }
         }
-        .frame(width: 680)
-        .fixedSize(horizontal: false, vertical: true)
         .background(
             VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -153,6 +211,63 @@ struct QuickLaunchPanelContent: View {
         .onChange(of: model.isPanelVisible) { visible in
             if visible { isSearchFocused = true }
         }
+        .onChange(of: model.activeScreen == nil) { showingList in
+            if showingList { isSearchFocused = true }
+        }
+    }
+
+    // MARK: - Module screen
+
+    private func moduleScreen(_ command: PaletteCommand) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button {
+                    model.closeScreen()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text(command.title)
+                            .font(.system(.headline, design: .rounded))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back")
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+
+            Divider()
+
+            command.screen?()
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 380)
+        .frame(maxHeight: .infinity)
+    }
+
+    // MARK: - Palette list
+
+    private var paletteList: some View {
+        VStack(spacing: 0) {
+            searchBar
+
+            if !model.sections.isEmpty {
+                Divider()
+                    .padding(.horizontal, 12)
+                resultsList
+                Divider()
+                    .padding(.horizontal, 12)
+                Text("↑↓ navigate · ↩ run · ⌘↩ settings · esc close")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(.tertiary)
+                    .padding(.vertical, 6)
+            }
+        }
+        .frame(width: 680)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var searchBar: some View {
@@ -161,7 +276,7 @@ struct QuickLaunchPanelContent: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
 
-            TextField("Search apps, files, commands...", text: $model.searchText)
+            TextField("Search commands, apps, shortcuts...", text: $model.searchText)
                 .font(.system(size: 20, weight: .light, design: .rounded))
                 .textFieldStyle(.plain)
                 .focused($isSearchFocused)
@@ -171,17 +286,99 @@ struct QuickLaunchPanelContent: View {
     }
 
     private var resultsList: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                ForEach(Array(model.searchResults.prefix(QuickLaunchModel.maxVisibleResults).enumerated()), id: \.element.id) { index, entry in
-                    resultRow(entry: entry, index: index)
+        let sections = model.sections
+        return ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Array(sections.enumerated()), id: \.element.id) { sectionIndex, section in
+                        let base = sections.prefix(sectionIndex).reduce(0) { $0 + $1.items.count }
+                        if let title = section.title {
+                            Text(title.uppercased())
+                                .font(.system(.caption2, design: .rounded).weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 8)
+                                .padding(.bottom, 2)
+                        }
+                        ForEach(Array(section.items.enumerated()), id: \.element.id) { offset, item in
+                            row(item: item, index: base + offset)
+                                .id(item.id)
+                        }
+                    }
+                }
+            }
+            .frame(maxHeight: 420)
+            .onChange(of: model.selectedIndex) { index in
+                let items = model.flatItems
+                if items.indices.contains(index) {
+                    proxy.scrollTo(items[index].id)
                 }
             }
         }
-        .frame(maxHeight: 352)
     }
 
-    private func resultRow(entry: LaunchEntry, index: Int) -> some View {
+    @ViewBuilder
+    private func row(item: PaletteItem, index: Int) -> some View {
+        switch item {
+        case .command(let command, _):
+            commandRow(command, index: index, item: item)
+        case .entry(let entry):
+            entryRow(entry: entry, index: index, item: item)
+        }
+    }
+
+    private func commandRow(_ command: PaletteCommand, index: Int, item: PaletteItem) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: command.symbol)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(RoundedRectangle(cornerRadius: 8).fill(tint(for: command.group)))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(command.title)
+                    .font(.system(.body, design: .rounded))
+                    .lineLimit(1)
+                Text(command.subtitle)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            if let isOn = command.isOn {
+                let on = isOn()
+                Text(on ? "On" : "Off")
+                    .font(.system(.caption2, design: .rounded).weight(.semibold))
+                    .foregroundStyle(on ? Color.green : Color.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill((on ? Color.green : Color.secondary).opacity(0.18)))
+            }
+
+            if let shortcut = command.shortcut {
+                Text(shortcut)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.1)))
+            }
+        }
+        .modifier(RowChrome(selected: model.selectedIndex == index) { model.activate(item) })
+    }
+
+    private func tint(for group: PaletteCommand.Group) -> Color {
+        switch group {
+        case .screenTools: return .blue
+        case .modes: return .green
+        case .tools: return .orange
+        }
+    }
+
+    private func entryRow(entry: LaunchEntry, index: Int, item: PaletteItem) -> some View {
         HStack(spacing: 12) {
             entryIcon(for: entry)
                 .frame(width: 32, height: 32)
@@ -204,16 +401,7 @@ struct QuickLaunchPanelContent: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(model.selectedIndex == index ? Color.primary.opacity(0.14) : .clear)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture {
-            model.launchEntry(entry)
-        }
+        .modifier(RowChrome(selected: model.selectedIndex == index) { model.activate(item) })
     }
 
     @ViewBuilder
@@ -246,6 +434,25 @@ struct QuickLaunchPanelContent: View {
                 .font(.title2)
                 .foregroundStyle(.green)
         }
+    }
+}
+
+// MARK: - RowChrome
+
+private struct RowChrome: ViewModifier {
+    let selected: Bool
+    let onTap: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(selected ? Color.primary.opacity(0.14) : .clear)
+            )
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
     }
 }
 

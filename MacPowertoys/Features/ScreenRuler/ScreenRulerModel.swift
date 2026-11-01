@@ -219,6 +219,9 @@ final class ScreenRulerModel: ObservableObject {
 
     // MARK: - Activation
 
+    /// Starts a measuring session without touching `isEnabled` (used by the command palette).
+    func startSession() { activate() }
+
     fileprivate func activate() {
         guard !isActive else { return }
 

@@ -126,6 +126,20 @@ final class QuickLaunchModel: ObservableObject {
     @Published var isAddingEntry: Bool = false
     @Published var editingEntry: LaunchEntry? = nil
 
+    // MARK: - Command Palette State
+
+    /// Module commands, set once by AppRootView.
+    var commands: [PaletteCommand] = [] {
+        didSet { performSearch() }
+    }
+    @Published private(set) var recentCommandIDs: [String] = UserDefaults.standard.stringArray(forKey: "quickLaunch.recentCommands") ?? []
+    @Published private(set) var sections: [PaletteSection] = []
+    /// Non-nil while the panel shows a module's screen instead of the list.
+    @Published private(set) var activeScreen: PaletteCommand? = nil
+    static let maxRecentCommands = 5
+
+    var flatItems: [PaletteItem] { sections.flatMap(\.items) }
+
     // MARK: - Private Properties
 
     private var hotKeyRef: EventHotKeyRef?
@@ -198,6 +212,7 @@ final class QuickLaunchModel: ObservableObject {
     func hidePanel() {
         guard isPanelVisible else { return }
         isPanelVisible = false
+        activeScreen = nil
         searchText = ""
         selectedIndex = 0
         panelController?.hidePanelWindow()
@@ -334,6 +349,65 @@ final class QuickLaunchModel: ObservableObject {
             searchResults = Array(scored.prefix(Self.maxVisibleResults).map(\.entry))
         }
         selectedIndex = 0
+        buildSections()
+    }
+
+    private func buildSections() {
+        var result: [PaletteSection] = []
+        let query = searchText
+
+        if query.isEmpty {
+            // Modes that are currently on, so they can be switched off quickly.
+            let active = commands.filter { $0.group == .modes && ($0.isOn?() ?? false) }
+            if !active.isEmpty {
+                result.append(PaletteSection(
+                    id: "active", title: "Active",
+                    items: active.map { .command($0, rowID: "active." + $0.id) }
+                ))
+            }
+            let recents = recentCommandIDs.compactMap { id in commands.first { $0.id == id } }
+            if !recents.isEmpty {
+                result.append(PaletteSection(
+                    id: "recent", title: "Recent",
+                    items: recents.map { .command($0, rowID: "recent." + $0.id) }
+                ))
+            }
+            for group in PaletteCommand.Group.allCases {
+                let groupCommands = commands.filter { $0.group == group }
+                if !groupCommands.isEmpty {
+                    result.append(PaletteSection(
+                        id: "group." + group.rawValue, title: group.rawValue,
+                        items: groupCommands.map { .command($0, rowID: $0.id) }
+                    ))
+                }
+            }
+            if !searchResults.isEmpty {
+                result.append(PaletteSection(id: "shortcuts", title: "My Shortcuts", items: searchResults.map { .entry($0) }))
+            }
+        } else {
+            var scored: [(command: PaletteCommand, score: Int)] = []
+            for command in commands {
+                let candidates = [command.title, command.subtitle] + command.keywords
+                if let best = candidates.compactMap({ fuzzyScore(query, against: $0) }).max() {
+                    scored.append((command, best))
+                }
+            }
+            // sorted(by:) is not stable; break ties by original order.
+            let ordered = scored.enumerated().sorted { lhs, rhs in
+                if lhs.element.score != rhs.element.score { return lhs.element.score > rhs.element.score }
+                return lhs.offset < rhs.offset
+            }.map(\.element.command)
+            if !ordered.isEmpty {
+                result.append(PaletteSection(
+                    id: "commands", title: "Commands",
+                    items: ordered.prefix(Self.maxVisibleResults).map { .command($0, rowID: $0.id) }
+                ))
+            }
+            if !searchResults.isEmpty {
+                result.append(PaletteSection(id: "results", title: nil, items: searchResults.map { .entry($0) }))
+            }
+        }
+        sections = result
     }
 
     func fuzzyScore(_ query: String, against candidate: String) -> Int? {
@@ -596,21 +670,77 @@ final class QuickLaunchModel: ObservableObject {
         }
     }
 
+    // MARK: - Command Execution
+
+    func runCommand(_ command: PaletteCommand) {
+        recordRecent(command.id)
+
+        switch command.group {
+        case .screenTools:
+            hidePanel()
+            // Let the panel disappear before overlays / screenshots are created.
+            DispatchQueue.main.async { command.run() }
+        case .modes:
+            let selectedID = flatItems.indices.contains(selectedIndex) ? flatItems[selectedIndex].id : nil
+            command.run()
+            buildSections()
+            if let selectedID, let index = flatItems.firstIndex(where: { $0.id == selectedID }) {
+                selectedIndex = index
+            }
+            objectWillChange.send()
+        case .tools:
+            openScreen(of: command)
+        }
+    }
+
+    /// Switches the panel to the command's module screen (⌘↩ on any command).
+    func openScreen(of command: PaletteCommand) {
+        guard command.screen != nil else { return }
+        activeScreen = command
+    }
+
+    func closeScreen() {
+        activeScreen = nil
+    }
+
+    private func recordRecent(_ id: String) {
+        recentCommandIDs.removeAll { $0 == id }
+        recentCommandIDs.insert(id, at: 0)
+        recentCommandIDs = Array(recentCommandIDs.prefix(Self.maxRecentCommands))
+        UserDefaults.standard.set(recentCommandIDs, forKey: "quickLaunch.recentCommands")
+        buildSections()
+    }
+
     // MARK: - Keyboard Navigation
 
     func moveSelectionUp() {
-        guard !searchResults.isEmpty else { return }
+        guard !flatItems.isEmpty else { return }
         selectedIndex = max(0, selectedIndex - 1)
     }
 
     func moveSelectionDown() {
-        guard !searchResults.isEmpty else { return }
-        let visibleCount = min(searchResults.count, Self.maxVisibleResults)
-        selectedIndex = min(visibleCount - 1, selectedIndex + 1)
+        let count = flatItems.count
+        guard count > 0 else { return }
+        selectedIndex = min(count - 1, selectedIndex + 1)
+    }
+
+    func activate(_ item: PaletteItem) {
+        switch item {
+        case .command(let command, _): runCommand(command)
+        case .entry(let entry): launchEntry(entry)
+        }
     }
 
     func launchSelected() {
-        guard !searchResults.isEmpty, selectedIndex >= 0, selectedIndex < searchResults.count else { return }
-        launchEntry(searchResults[selectedIndex])
+        let items = flatItems
+        guard selectedIndex >= 0, selectedIndex < items.count else { return }
+        activate(items[selectedIndex])
+    }
+
+    func openSelectedScreen() {
+        let items = flatItems
+        guard selectedIndex >= 0, selectedIndex < items.count,
+              case .command(let command, _) = items[selectedIndex] else { return }
+        openScreen(of: command)
     }
 }
