@@ -722,7 +722,7 @@ struct PdfToolsWindowView: View {
                 Text(message)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
-                Button("Try Again") { cleanupAndReset() }
+                Button("Try Again") { model.resetState() }
                     .font(.system(.caption, design: .rounded))
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -799,6 +799,8 @@ struct PdfToolsWindowView: View {
     /// Deletes all temp copies currently held in both file lists, then calls `model.resetState()`.
     private func cleanupAndReset() {
         (model.mergeFiles + model.imageToPdfFiles).forEach { cleanupTempFile($0) }
+        model.mergeFiles.removeAll()
+        model.imageToPdfFiles.removeAll()
         model.resetState()
     }
 }

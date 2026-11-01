@@ -74,6 +74,7 @@ struct ValueRow: View {
     let title: String
     let value: String
     let onCopy: () -> Void
+    @State private var copied = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -87,8 +88,12 @@ struct ValueRow: View {
                 .font(.system(.body, design: .monospaced))
                 .disabled(true)
 
-            Button(action: onCopy) {
-                Image(systemName: "doc.on.doc")
+            Button {
+                onCopy()
+                copied = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { copied = false }
+            } label: {
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
             }
             .help("Copy")
         }

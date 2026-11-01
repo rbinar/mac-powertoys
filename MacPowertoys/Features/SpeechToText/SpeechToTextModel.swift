@@ -380,8 +380,8 @@ final class SpeechToTextModel: ObservableObject {
         }
     }
 
-    func copyTranscript() {
-        let text = !timestampedTranscriptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    func copyTranscript(timestamped: Bool = true) {
+        let text = timestamped && !timestampedTranscriptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? timestampedTranscriptText
             : transcriptText
 
@@ -396,8 +396,8 @@ final class SpeechToTextModel: ObservableObject {
         statusMessage = "Transcript copied to clipboard."
     }
 
-    func saveTimestampedTranscript() {
-        let text = !timestampedTranscriptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    func saveTimestampedTranscript(timestamped: Bool = true) {
+        let text = timestamped && !timestampedTranscriptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? timestampedTranscriptText
             : transcriptText
 

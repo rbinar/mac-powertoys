@@ -489,11 +489,8 @@ final class VideoConverterModel: ObservableObject {
                 )
                 conversionHistory.insert(historyItem, at: 0)
                 
-                // Reset for next conversion (keep settings)
-                inputFileURL = nil
-                inputMetadata = nil
-                conversionState = .idle
-                elapsedTime = 0
+                // Show completion UI; input/metadata are cleared by reset() ("New")
+                conversionState = .completed(outputPath: completedPath)
                 conversionTask = nil
             } catch is CancellationError {
                 stopElapsedTimer()

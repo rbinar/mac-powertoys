@@ -20,8 +20,6 @@ private func carbonHotKeyHandler(nextHandler: EventHandlerCallRef?, event: Event
 final class ColorModel: ObservableObject {
     @Published var nsColor: NSColor = NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1) {
         didSet {
-            // Automatically copy hex code to clipboard when color changes
-            copyHexToClipboard()
             // Add to color history
             addToHistory(nsColor)
         }
@@ -85,6 +83,7 @@ final class ColorModel: ObservableObject {
         sampler.show { [weak self] picked in
             guard let self, let picked else { return }
             self.nsColor = picked.usingColorSpace(.sRGB) ?? picked
+            self.copyHexToClipboard()
         }
     }
     
@@ -133,7 +132,7 @@ final class ColorModel: ObservableObject {
         colorPanel.setAction(nil)
     }
     
-    // Automatically copies hex code to clipboard
+    // Copies hex code to clipboard after a screen pick
     private func copyHexToClipboard() {
         copy(hexString)
     }
@@ -197,9 +196,8 @@ final class ColorModel: ObservableObject {
         pb.clearContents()
         pb.setString(text, forType: .string)
         
-        // Visual and audio feedback
+        // Haptic feedback
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-        NSSound.beep() // System sound effect
     }
 }
 

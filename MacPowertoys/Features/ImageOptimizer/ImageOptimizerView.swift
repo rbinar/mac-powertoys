@@ -201,7 +201,7 @@ struct ImageOptimizerView: View {
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
             Picker("", selection: $model.outputFormat) {
-                ForEach(ImageOutputFormat.allCases) { format in
+                ForEach(ImageOutputFormat.available) { format in
                     Text(format.rawValue).tag(format)
                 }
             }
@@ -378,7 +378,11 @@ struct ImageOptimizerView: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                Text("Saved \(ByteCountFormatter.string(fromByteCount: totalSaved, countStyle: .file)) across \(fileCount) image\(fileCount == 1 ? "" : "s")")
+                let failedCount = model.items.filter { $0.error != nil }.count
+                let saved = ByteCountFormatter.string(fromByteCount: totalSaved, countStyle: .file)
+                Text(failedCount > 0
+                     ? "Saved \(saved) · \(fileCount) of \(model.items.count) optimized · \(failedCount) failed"
+                     : "Saved \(saved) across \(fileCount) image\(fileCount == 1 ? "" : "s")")
                     .font(.system(.caption, design: .rounded))
                 Spacer()
                 if let outputURL = model.items.first(where: { $0.outputURL != nil })?.outputURL {
@@ -499,7 +503,7 @@ struct ImageOptimizerView: View {
                             .foregroundStyle(.tertiary)
                         Text(item.savingsDescription)
                             .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.green)
+                            .foregroundStyle((item.outputSize ?? 0) > item.originalSize ? .orange : .green)
                             .fontWeight(.medium)
                     }
                 }

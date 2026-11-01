@@ -14,6 +14,12 @@ enum ImageOutputFormat: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Formats ImageIO can actually write on this system (plus "Original").
+    static var available: [ImageOutputFormat] {
+        let writable = Set(CGImageDestinationCopyTypeIdentifiers() as? [String] ?? [])
+        return allCases.filter { $0.utType.map { writable.contains($0.identifier) } ?? true }
+    }
+
     var fileExtension: String? {
         switch self {
         case .original: return nil
@@ -67,7 +73,8 @@ struct ImageItem: Identifiable {
         let saved = originalSize - outSize
         guard originalSize > 0 else { return "\(original) → \(output)" }
         let percent = Int(round(Double(saved) / Double(originalSize) * 100))
-        return "\(original) → \(output) (-\(percent)%)"
+        let sign = percent < 0 ? "+" : "-"
+        return "\(original) → \(output) (\(sign)\(abs(percent))%)"
     }
 }
 
@@ -124,7 +131,8 @@ final class ImageOptimizerModel: ObservableObject {
 
     init() {
         if let raw = UserDefaults.standard.string(forKey: "imageOptimizer.outputFormat"),
-           let format = ImageOutputFormat(rawValue: raw) {
+           let format = ImageOutputFormat(rawValue: raw),
+           ImageOutputFormat.available.contains(format) {
             outputFormat = format
         } else {
             outputFormat = .original
@@ -276,7 +284,11 @@ final class ImageOptimizerModel: ObservableObject {
             }
 
             await MainActor.run {
-                self?.state = .completed(totalSaved: totalSaved, fileCount: successCount)
+                if successCount == 0 {
+                    self?.state = .failed(message: "No images could be optimized")
+                } else {
+                    self?.state = .completed(totalSaved: totalSaved, fileCount: successCount)
+                }
             }
         }
     }

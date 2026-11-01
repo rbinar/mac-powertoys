@@ -328,9 +328,9 @@ final class ScreenCaptureModel: ObservableObject {
         Task {
             // Wait 2 frames for overlay to fully disappear from screen compositor
             try? await Task.sleep(nanoseconds: 30_000_000)
-            await captureAndCopy(screenRect: screenRect)
+            let copied = await captureAndCopy(screenRect: screenRect)
             finishCapture()
-            showCopiedHUD()
+            showCopiedHUD(success: copied)
         }
     }
 
@@ -362,11 +362,11 @@ final class ScreenCaptureModel: ObservableObject {
 
     // MARK: - Screen Capture
 
-    private func captureAndCopy(screenRect: NSRect) async {
+    private func captureAndCopy(screenRect: NSRect) async -> Bool {
         do {
             guard let screen = primaryScreen(for: screenRect) else {
                 NSLog("[ScreenCapture] No screen found for rect \(screenRect)")
-                return
+                return false
             }
 
             let displayID = screenID(for: screen)
@@ -375,7 +375,7 @@ final class ScreenCaptureModel: ObservableObject {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             guard let scDisplay = content.displays.first(where: { $0.displayID == displayID }) else {
                 NSLog("[ScreenCapture] SCDisplay not found for displayID \(displayID)")
-                return
+                return false
             }
 
             let filter = SCContentFilter(display: scDisplay, excludingWindows: [])
@@ -413,7 +413,7 @@ final class ScreenCaptureModel: ObservableObject {
 
             guard !clampedRect.isNull, clampedRect.width > 0, clampedRect.height > 0 else {
                 NSLog("[ScreenCapture] Crop rect \(cropRect) lies outside captured image bounds \(imageBounds)")
-                return
+                return false
             }
 
             // If clamping materially shrank the rect, the selection likely crossed
@@ -426,22 +426,24 @@ final class ScreenCaptureModel: ObservableObject {
 
             guard let croppedImage = fullImage.cropping(to: clampedRect) else {
                 NSLog("[ScreenCapture] CGImage cropping failed for rect \(clampedRect)")
-                return
+                return false
             }
 
             let rep = NSBitmapImageRep(cgImage: croppedImage)
             guard let pngData = rep.representation(using: .png, properties: [:]) else {
                 NSLog("[ScreenCapture] PNG encoding failed")
-                return
+                return false
             }
 
             let pb = NSPasteboard.general
             pb.clearContents()
             pb.setData(pngData, forType: .png)
             NSLog("%@", "[ScreenCapture] Image copied: \(croppedImage.width)×\(croppedImage.height)px")
+            return true
 
         } catch {
             NSLog("[ScreenCapture] Capture failed: \(error.localizedDescription)")
+            return false
         }
     }
 
@@ -453,7 +455,7 @@ final class ScreenCaptureModel: ObservableObject {
 
     // MARK: - HUD
 
-    private func showCopiedHUD() {
+    private func showCopiedHUD(success: Bool = true) {
         let hudW: CGFloat = 220
         let hudH: CGFloat = 44
         guard let screen = NSScreen.main else { return }
@@ -470,7 +472,7 @@ final class ScreenCaptureModel: ObservableObject {
         effectView.layer?.cornerRadius = 12
         effectView.layer?.masksToBounds = true
 
-        let label = NSTextField(labelWithString: "✓  Copied to clipboard")
+        let label = NSTextField(labelWithString: success ? "✓  Copied to clipboard" : "✗  Capture failed")
         label.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         label.textColor = .white
         label.alignment = .center

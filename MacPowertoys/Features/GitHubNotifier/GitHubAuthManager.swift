@@ -181,8 +181,9 @@ final class GitHubAuthManager {
             }
         } catch {
             NSLog("[GitHubNotifier] Token validation failed: %@", error.localizedDescription)
-            // Original catch: tokenStatus = .invalid; scopes left untouched.
-            onTokenStatusChange?(.invalid, nil, nil)
+            // Network failure (e.g. offline at launch) says nothing about the token itself:
+            // keep trusting it instead of flagging a good token invalid. Other errors: invalid.
+            onTokenStatusChange?(error is URLError ? .valid : .invalid, nil, nil)
         }
     }
 

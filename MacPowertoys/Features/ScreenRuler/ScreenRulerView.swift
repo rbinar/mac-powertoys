@@ -31,16 +31,6 @@ struct ScreenRulerView: View {
             }
             .toggleStyle(.switch)
 
-            // Capture status (diagnostic)
-            if model.isActive {
-                Text("Edges: L=\(model.currentEdges.left) R=\(model.currentEdges.right) T=\(model.currentEdges.top) B=\(model.currentEdges.bottom)")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.orange)
-                Text("Measure: H=\(max(1, model.currentEdges.left + model.currentEdges.right)) V=\(max(1, model.currentEdges.top + model.currentEdges.bottom))")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.orange)
-            }
-
             if model.isEnabled {
                 Divider()
 

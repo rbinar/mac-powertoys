@@ -172,7 +172,7 @@ struct SpeechToTextView: View {
 
             HStack(spacing: 8) {
                 Button {
-                    model.copyTranscript()
+                    model.copyTranscript(timestamped: showTimestamped)
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.on.doc")
@@ -189,7 +189,7 @@ struct SpeechToTextView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    model.saveTimestampedTranscript()
+                    model.saveTimestampedTranscript(timestamped: showTimestamped)
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "square.and.arrow.down")

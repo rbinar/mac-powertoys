@@ -146,11 +146,9 @@ final class PomodoroTimerModel: ObservableObject {
 
             if completedSessions >= sessionsBeforeLongBreak {
                 sendNotification(title: "Long Break Time!", body: "You completed \(sessionsBeforeLongBreak) sessions. Take a long break.")
-                playSound()
                 startLongBreak()
             } else {
                 sendNotification(title: "Break Time!", body: "Session \(completedSessions)/\(sessionsBeforeLongBreak) done. Take a short break.")
-                playSound()
                 startShortBreak()
             }
         } else {
@@ -159,7 +157,6 @@ final class PomodoroTimerModel: ObservableObject {
                 completedSessions = 0
             }
             sendNotification(title: "Back to Work!", body: "Break is over. Time to focus.")
-            playSound()
             if autoStartFocus {
                 startFocus()
             } else {
@@ -223,16 +220,9 @@ final class PomodoroTimerModel: ObservableObject {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
+        content.sound = soundEnabled ? .default : nil
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { _ in }
-    }
-
-    // MARK: - Sound
-
-    private func playSound() {
-        guard soundEnabled else { return }
-        NSSound.beep()
     }
 
     // MARK: - Persistence

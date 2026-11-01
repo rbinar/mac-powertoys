@@ -193,9 +193,16 @@ final class GitHubNotifierModel: NSObject, ObservableObject, UNUserNotificationC
         processor.seed(with: events)
         wireHelpers()
         if auth.hasStoredToken() {
-            tokenStatus = .valid
+            // Validate before trusting the token; validation also loads the username.
+            tokenStatus = .validating
+            Task { [weak self] in
+                guard let self else { return }
+                await self.auth.validateToken()
+                if self.tokenStatus == .valid, self.isEnabled { self.startMonitoring() }
+            }
+        } else if isEnabled {
+            startMonitoring()
         }
-        if isEnabled { startMonitoring() }
     }
 
     /// Connects helper callbacks to this model's `@Published` state.
