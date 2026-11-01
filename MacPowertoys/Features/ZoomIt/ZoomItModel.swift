@@ -25,29 +25,18 @@ private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: Event
     NSLog("%@", "[ZoomIt] Hotkey pressed with ID: \(hotKeyID.id)")
     
     switch hotKeyID.id {
-    case ZoomItHotKey.toggleScreenZoom, ZoomItHotKey.toggleLiveZoom, ZoomItHotKey.close, 3:
+    case ZoomItHotKey.toggleScreenZoom, ZoomItHotKey.toggleLiveZoom, ZoomItHotKey.close:
         Task { @MainActor in
             switch hotKeyID.id {
             case ZoomItHotKey.toggleScreenZoom: // ⌃⌥Z toggle Screen Zoom
                 NSLog("%@", "[ZoomIt] Toggle Screen Zoom")
-                if model.isZooming {
-                    model.isEnabled = false
-                } else {
-                    model.isEnabled = true
-                }
+                if model.isZooming { model.deactivate() } else { model.activateScreenZoom() }
             case ZoomItHotKey.toggleLiveZoom: // ⌃⌥L toggle Live Zoom
                 NSLog("%@", "[ZoomIt] Toggle Live Zoom")
-                if model.isLiveZooming {
-                    model.liveZoomEnabled = false
-                } else {
-                    model.liveZoomEnabled = true
-                }
-            case ZoomItHotKey.close, 3: // ESC close (3 is ScreenRuler's ESC ID, we catch it too just in case)
+                if model.isLiveZooming { model.deactivate() } else { model.activateLiveZoom() }
+            case ZoomItHotKey.close: // ESC close
                 NSLog("%@", "[ZoomIt] ESC pressed")
-                if model.isZooming || model.isLiveZooming {
-                    model.isEnabled = false
-                    model.liveZoomEnabled = false
-                }
+                model.deactivate()
             default:
                 break
             }
@@ -61,17 +50,15 @@ private func zoomItHotKeyHandler(nextHandler: EventHandlerCallRef?, event: Event
 @MainActor
 final class ZoomItModel: ObservableObject {
     // MARK: - Settings
+    /// Arms the ⌃⌥Z / ⌃⌥L shortcuts. Zoom itself only starts from a shortcut.
     @Published var isEnabled: Bool = false {
         didSet {
-            guard !isMutatingState else { return }
+            UserDefaults.standard.set(isEnabled, forKey: "zoomIt.isEnabled")
             if isEnabled {
-                if !isZooming && !isLiveZooming {
-                    activateScreenZoom()
-                }
+                registerZoomHotKeys()
             } else {
-                if isZooming || isLiveZooming {
-                    deactivate()
-                }
+                deactivate()
+                unregisterZoomHotKeys()
             }
         }
     }
@@ -87,30 +74,12 @@ final class ZoomItModel: ObservableObject {
             }
         }
     }
-    @Published var liveZoomEnabled: Bool = false {
-        didSet {
-            guard !isMutatingState else { return }
-            if liveZoomEnabled {
-                if !isLiveZooming {
-                    activateLiveZoom()
-                }
-            } else {
-                if isLiveZooming {
-                    deactivate()
-                }
-            }
-        }
-    }
     
     // MARK: - Runtime State
     @Published private(set) var isZooming: Bool = false
     @Published private(set) var isLiveZooming: Bool = false
     
     // MARK: - Private
-    /// Set true while activate*/deactivate internally assign the @Published
-    /// settings vars, so their didSets ignore these self-induced writes and
-    /// only respond to genuine user/hotkey toggles.
-    private var isMutatingState = false
     /// Bumped on every activate/deactivate so in-flight activation tasks can detect they are stale.
     private var activationGeneration = 0
     private var overlayWindows: [(window: NSWindow, view: ZoomItOverlayView, displayID: UInt32, screen: NSScreen)] = []
@@ -138,7 +107,9 @@ final class ZoomItModel: ObservableObject {
     
     init() {
         NSLog("%@", "[ZoomIt] ZoomItModel initialized")
-        registerCarbonHotKeys()
+        installHotKeyHandler()
+        isEnabled = UserDefaults.standard.bool(forKey: "zoomIt.isEnabled")
+        if isEnabled { registerZoomHotKeys() }
     }
     
     func stopMonitoring() {
@@ -147,18 +118,20 @@ final class ZoomItModel: ObservableObject {
         if let eventHandlerRef {
             RemoveEventHandler(eventHandlerRef)
         }
-        if let zoomHotKeyRef { UnregisterEventHotKey(zoomHotKeyRef) }
-        if let liveZoomHotKeyRef { UnregisterEventHotKey(liveZoomHotKeyRef) }
+        unregisterZoomHotKeys()
         if let escHotKeyRef { UnregisterEventHotKey(escHotKeyRef) }
     }
     
     // MARK: - Global Shortcuts
     
-    private func registerCarbonHotKeys() {
+    private func installHotKeyHandler() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(GetApplicationEventTarget(), zoomItHotKeyHandler, 1, &eventType, selfPtr, &eventHandlerRef)
-        
+    }
+
+    private func registerZoomHotKeys() {
+        guard zoomHotKeyRef == nil else { return }
         let modifiers: UInt32 = UInt32(controlKey | optionKey)
         
         // ⌃⌥Z (keyCode kVK_ANSI_Z = 6)
@@ -168,6 +141,11 @@ final class ZoomItModel: ObservableObject {
         // ⌃⌥L (keyCode kVK_ANSI_L = 37)
         var liveZoomHotKeyID = EventHotKeyID(signature: ZoomItHotKey.signature, id: ZoomItHotKey.toggleLiveZoom)
         RegisterEventHotKey(UInt32(kVK_ANSI_L), modifiers, liveZoomHotKeyID, GetApplicationEventTarget(), 0, &liveZoomHotKeyRef)
+    }
+
+    private func unregisterZoomHotKeys() {
+        if let ref = zoomHotKeyRef { UnregisterEventHotKey(ref); zoomHotKeyRef = nil }
+        if let ref = liveZoomHotKeyRef { UnregisterEventHotKey(ref); liveZoomHotKeyRef = nil }
     }
 
     private func registerEscHotKey() {
@@ -192,15 +170,10 @@ final class ZoomItModel: ObservableObject {
         
         if !checkScreenRecordingPermission() { 
             NSLog("%@", "[ZoomIt] Screen recording permission denied")
-            isEnabled = false
             return 
         }
         
-        isMutatingState = true
         isZooming = true
-        isEnabled = true
-        liveZoomEnabled = false
-        isMutatingState = false
         addScreenParametersObserver()
         activationGeneration += 1
         let generation = activationGeneration
@@ -220,21 +193,16 @@ final class ZoomItModel: ObservableObject {
     }
     
     func activateLiveZoom() {
-        NSLog("%@", "[ZoomIt] activateLiveZoom called. isEnabled: \(isEnabled), liveZoomEnabled: \(liveZoomEnabled), isZooming: \(isZooming), isLiveZooming: \(isLiveZooming)")
+        NSLog("%@", "[ZoomIt] activateLiveZoom called. isEnabled: \(isEnabled), isZooming: \(isZooming), isLiveZooming: \(isLiveZooming)")
         if isZooming { deactivate() }
         guard !isLiveZooming else { return }
         
         if !checkScreenRecordingPermission() { 
             NSLog("%@", "[ZoomIt] Screen recording permission denied")
-            liveZoomEnabled = false
             return 
         }
         
-        isMutatingState = true
         isLiveZooming = true
-        isEnabled = true
-        liveZoomEnabled = true
-        isMutatingState = false
         addScreenParametersObserver()
         activationGeneration += 1
         let generation = activationGeneration
@@ -255,12 +223,8 @@ final class ZoomItModel: ObservableObject {
         guard isZooming || isLiveZooming else { return }
         activationGeneration += 1
         let wasZooming = isZooming
-        isMutatingState = true
         isZooming = false
         isLiveZooming = false
-        isEnabled = false
-        liveZoomEnabled = false
-        isMutatingState = false
 
         removeScreenParametersObserver()
         unregisterEscHotKey()
@@ -318,8 +282,6 @@ final class ZoomItModel: ObservableObject {
                     }
                 }
             }
-            // The synchronous caller (activateScreenZoom/activateLiveZoom) owns
-            // resetting isEnabled/liveZoomEnabled; don't duplicate it here.
             return false
         }
         return true
@@ -429,6 +391,9 @@ final class ZoomItModel: ObservableObject {
                 defer: false,
                 screen: screen
             )
+            // With `screen:` set, contentRect is taken relative to that screen's origin,
+            // which double-offsets non-main displays; pin the global frame explicitly.
+            window.setFrame(frame, display: false)
             window.contentView = view
             window.level = .screenSaver
             window.backgroundColor = .clear
