@@ -32,6 +32,9 @@ class FindMyMouseOverlayWindow {
             defer: false,
             screen: screen
         )
+        // With `screen:` set, contentRect is taken relative to that screen's origin,
+        // which double-offsets non-main displays; pin the global frame explicitly.
+        window.setFrame(frame, display: false)
 
         window.contentView = overlayView
         window.level = .screenSaver
