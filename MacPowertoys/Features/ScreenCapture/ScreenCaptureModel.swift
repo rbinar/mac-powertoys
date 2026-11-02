@@ -89,6 +89,7 @@ final class ScreenCaptureModel: ObservableObject {
 
     private var captureHotKeyRef: EventHotKeyRef?
     private var escHotKeyRef: EventHotKeyRef?
+    private var escMonitors: [Any] = []
     private var eventHandlerRef: EventHandlerRef?
 
     // MARK: - Init
@@ -176,6 +177,17 @@ final class ScreenCaptureModel: ObservableObject {
 
         createOverlayWindows()
         registerEscHotKey()
+        escMonitors = [
+            NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard event.keyCode == 53 else { return }
+                Task { @MainActor in self?.cancelCapture() }
+            },
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard event.keyCode == 53 else { return event }
+                Task { @MainActor in self?.cancelCapture() }
+                return nil
+            }
+        ].compactMap { $0 }
         // Display set changed mid-selection: overlays would be stale, so cancel.
         screenParamsObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -199,6 +211,8 @@ final class ScreenCaptureModel: ObservableObject {
         selectionEnd = nil
         if let o = screenParamsObserver { NotificationCenter.default.removeObserver(o); screenParamsObserver = nil }
         unregisterEscHotKey()
+        escMonitors.forEach { NSEvent.removeMonitor($0) }
+        escMonitors = []
         removeOverlayWindows()
     }
 

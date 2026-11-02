@@ -38,16 +38,7 @@ struct ImageOptimizerView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        HStack {
-            Button(action: onBack) {
-                Label("Back", systemImage: "chevron.left")
-                    .labelStyle(.iconOnly)
-            }
-            .buttonStyle(.plain)
-            Text("Image Optimizer")
-                .font(.system(.headline, design: .rounded))
-            Spacer()
-        }
+        FeatureHeader(title: "Image Optimizer", onBack: onBack)
     }
 
     // MARK: - Drop Zone
@@ -67,14 +58,14 @@ struct ImageOptimizerView: View {
                     .font(.system(size: 28))
                     .foregroundStyle(.secondary)
                 Text("Drop images here")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text("JPEG · PNG · WebP · HEIC")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 Text("or click to browse")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
             .padding(.vertical, 24)
         }
@@ -104,14 +95,12 @@ struct ImageOptimizerView: View {
     private var fileListSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Images (\(model.items.count))")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
+                SectionHeader("Images (\(model.items.count))")
                 Spacer()
                 Button("Clear All") { model.clearAll() }
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .buttonStyle(.plain)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
             ScrollView(.vertical) {
                 VStack(spacing: 4) {
@@ -135,21 +124,21 @@ struct ImageOptimizerView: View {
                             }
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(item.name)
-                                    .font(.system(.caption, design: .rounded))
+                                    .font(.caption)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                                 if let error = item.error {
                                     Text(error)
-                                        .font(.system(.caption2, design: .rounded))
+                                        .font(.caption2)
                                         .foregroundStyle(.red)
                                 } else if item.isProcessed {
                                     Text(item.savingsDescription)
-                                        .font(.system(.caption2, design: .rounded))
+                                        .font(.caption2)
                                         .foregroundStyle(.secondary)
                                 } else {
                                     Text(ByteCountFormatter.string(fromByteCount: item.originalSize, countStyle: .file))
-                                        .font(.system(.caption2, design: .rounded))
-                                        .foregroundStyle(.tertiary)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
                             Spacer()
@@ -173,7 +162,7 @@ struct ImageOptimizerView: View {
                                         .font(.caption)
                                 }
                                 .buttonStyle(.plain)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(.secondary)
                                 .accessibilityLabel("Remove \(item.name)")
                                 .help("Remove \(item.name)")
                             }
@@ -211,9 +200,7 @@ struct ImageOptimizerView: View {
     private var settingsCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Output Format
-            Text("Output Format")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Output Format")
             Picker("Output Format", selection: $model.outputFormat) {
                 ForEach(ImageOutputFormat.available) { format in
                     Text(format.rawValue).tag(format)
@@ -225,11 +212,11 @@ struct ImageOptimizerView: View {
             // Quality
             HStack {
                 Text("Quality")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(Int(model.compressionQuality * 100))%")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Slider(value: $model.compressionQuality, in: 0.1...1.0, step: 0.05)
@@ -238,17 +225,19 @@ struct ImageOptimizerView: View {
                 .accessibilityValue("\(Int(model.compressionQuality * 100)) percent")
             if model.outputFormat == .png {
                 Text("PNG is lossless — quality affects JPEG/WebP output")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
 
             // Resize toggle
             HStack {
-                Toggle("Resize images", isOn: $model.shouldResize)
-                    .toggleStyle(.switch)
-                    .controlSize(.mini)
-                    .font(.system(.caption, design: .rounded))
+                Text("Resize images")
+                    .font(.caption)
                 Spacer()
+                Toggle("Resize images", isOn: $model.shouldResize)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
 
             // Resize options
@@ -264,17 +253,17 @@ struct ImageOptimizerView: View {
                 if model.resizeMode == .pixels {
                     HStack(spacing: 8) {
                         Text("Width")
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                         TextField("1920", value: $model.resizeWidth, formatter: intFormatter)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 70)
                             .controlSize(.small)
                         Text("×")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                         Text("Height")
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                         TextField("1080", value: $model.resizeHeight, formatter: intFormatter)
                             .textFieldStyle(.roundedBorder)
@@ -282,25 +271,27 @@ struct ImageOptimizerView: View {
                             .controlSize(.small)
                     }
                     HStack {
-                        Toggle("Maintain aspect ratio", isOn: $model.maintainAspectRatio)
-                            .toggleStyle(.switch)
-                            .controlSize(.mini)
-                            .font(.system(.caption, design: .rounded))
+                        Text("Maintain aspect ratio")
+                            .font(.caption)
                         Spacer()
+                        Toggle("Maintain aspect ratio", isOn: $model.maintainAspectRatio)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
                     }
                     if model.maintainAspectRatio {
                         Text("Largest dimension will be used as the constraint")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 } else {
                     HStack {
                         Text("Scale")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(model.resizePercent)%")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     Slider(
@@ -318,14 +309,7 @@ struct ImageOptimizerView: View {
             }
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.primary.opacity(0.14))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
-        )
+        .cardBackground()
     }
 
     // MARK: - Estimated Output
@@ -338,7 +322,7 @@ struct ImageOptimizerView: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                 Text("Est. output: \(model.estimatedSavingsDescription)")
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
@@ -382,13 +366,13 @@ struct ImageOptimizerView: View {
         case .processing(let progress, let message):
             VStack(alignment: .leading, spacing: 4) {
                 Text(message)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 ProgressView(value: progress)
                     .progressViewStyle(.linear)
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
+            .cardBackground()
         case .completed(let totalSaved, let fileCount):
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
@@ -398,29 +382,29 @@ struct ImageOptimizerView: View {
                 Text(failedCount > 0
                      ? "Saved \(saved) · \(fileCount) of \(model.items.count) optimized · \(failedCount) failed"
                      : "Saved \(saved) across \(fileCount) image\(fileCount == 1 ? "" : "s")")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                 Spacer()
                 if let outputURL = model.items.first(where: { $0.outputURL != nil })?.outputURL {
                     Button("Open Output Folder") {
                         NSWorkspace.shared.open(outputURL.deletingLastPathComponent())
                     }
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
                 }
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
+            .cardBackground()
         case .failed(let message):
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
                 Text(message)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
+            .cardBackground()
         }
     }
 
@@ -471,7 +455,7 @@ struct ImageOptimizerView: View {
                                 Button { previewItemID = pi.id } label: {
                                 Text(pi.name)
                                     .lineLimit(1)
-                                    .font(.system(.caption2, design: .rounded))
+                                    .font(.caption2)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .background(
@@ -495,17 +479,17 @@ struct ImageOptimizerView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1)))
                         Text("Before")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                         Text(ByteCountFormatter.string(fromByteCount: item.originalSize, countStyle: .file))
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                             .fontWeight(.medium)
                     }
 
                     Image(systemName: "arrow.right")
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                         .padding(.top, 38)
 
                     VStack(spacing: 4) {
@@ -517,18 +501,17 @@ struct ImageOptimizerView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1)))
                         }
                         Text("After")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                         Text(item.savingsDescription)
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle((item.outputSize ?? 0) > item.originalSize ? .orange : .green)
                             .fontWeight(.medium)
                     }
                 }
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.1)))
+            .cardBackground()
         }
     }
 }

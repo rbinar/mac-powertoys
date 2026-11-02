@@ -148,7 +148,8 @@ class QuickLaunchPanelController {
     }
 
     private func positionPanel() {
-        guard let panel, let screen = NSScreen.main else { return }
+        let mouse = NSEvent.mouseLocation
+        guard let panel, let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main else { return }
         let screenFrame = screen.visibleFrame
         let panelWidth: CGFloat = 680
         let x = screenFrame.midX - panelWidth / 2
@@ -248,21 +249,7 @@ struct QuickLaunchPanelContent: View {
 
     private func moduleScreen(_ command: PaletteCommand) -> some View {
         VStack(spacing: 0) {
-            HStack {
-                Button {
-                    model.closeScreen()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text(command.title)
-                            .font(.system(.headline, design: .rounded))
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
-                Spacer()
-            }
+            FeatureHeader(title: command.title, onBack: { model.closeScreen() })
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
 
@@ -297,8 +284,8 @@ struct QuickLaunchPanelContent: View {
                 Divider()
                     .padding(.horizontal, 16)
                 Text("↑↓ navigate · ↩ run · ⌘↩ settings · esc close")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                     .padding(.vertical, 6)
             }
         }
@@ -312,7 +299,7 @@ struct QuickLaunchPanelContent: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
 
-            TextField("Search commands, apps, shortcuts...", text: $model.searchText)
+            TextField("Search commands, apps, shortcuts…", text: $model.searchText)
                 .font(.system(size: 22))
                 .textFieldStyle(.plain)
                 .focused($isSearchFocused)
@@ -329,9 +316,7 @@ struct QuickLaunchPanelContent: View {
                     ForEach(Array(sections.enumerated()), id: \.element.id) { sectionIndex, section in
                         let base = sections.prefix(sectionIndex).reduce(0) { $0 + $1.items.count }
                         if let title = section.title {
-                            Text(title.uppercased())
-                                .font(.system(.caption2, design: .rounded).weight(.semibold))
-                                .foregroundStyle(.secondary)
+                            SectionHeader(title)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
@@ -375,10 +360,10 @@ struct QuickLaunchPanelContent: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(command.title)
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
                     .lineLimit(1)
                 Text(command.subtitle)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -392,7 +377,7 @@ struct QuickLaunchPanelContent: View {
                         .fill(on ? Color.green : Color.secondary)
                         .frame(width: 6, height: 6)
                     Text(on ? "On" : "Off")
-                        .font(.system(.caption2, design: .rounded).weight(.semibold))
+                        .font(.caption2.weight(.semibold))
                         .foregroundStyle(.primary)
                 }
                 .padding(.horizontal, 8)
@@ -414,7 +399,7 @@ struct QuickLaunchPanelContent: View {
 
     private func tint(for group: PaletteCommand.Group) -> Color {
         switch group {
-        case .screenTools: return .blue
+        case .screenTools: return Color.accentColor
         case .modes: return .green
         case .tools: return .orange
         }
@@ -427,10 +412,10 @@ struct QuickLaunchPanelContent: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
                     .lineLimit(1)
                 Text(entry.subtitle)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -439,8 +424,8 @@ struct QuickLaunchPanelContent: View {
 
             if model.selectedIndex == index {
                 Text("↩")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .modifier(RowChrome(selected: model.selectedIndex == index) { model.activate(item) })
@@ -456,11 +441,11 @@ struct QuickLaunchPanelContent: View {
         case .file:
             Image(systemName: "doc.fill")
                 .font(.title2)
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
         case .folder:
             Image(systemName: "folder.fill")
                 .font(.title2)
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
         case .url:
             if let faviconData = entry.faviconData, let nsImage = NSImage(data: faviconData) {
                 Image(nsImage: nsImage)
@@ -469,7 +454,7 @@ struct QuickLaunchPanelContent: View {
             } else {
                 Image(systemName: "globe")
                     .font(.title2)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.tint)
             }
         case .shellCommand:
             Image(systemName: "terminal.fill")

@@ -7,19 +7,8 @@ struct TestDataGeneratorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
+            FeatureHeader(title: "Test Data Generator", onBack: onBack)
 
-                Text("Test Data Generator")
-                    .font(.system(.headline, design: .rounded))
-                
-                Spacer()
-            }
-            
             
             Divider()
             
@@ -37,12 +26,7 @@ struct TestDataGeneratorView: View {
                             .textSelection(.enabled)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(NSColor.controlBackgroundColor))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                            )
+                            .cardBackground()
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -52,9 +36,7 @@ struct TestDataGeneratorView: View {
                     // Actions
                     VStack(alignment: .leading, spacing: 16) {
                         Group {
-                            Text("Identifiers")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            SectionHeader("Identifiers")
                             
                             actionButton(title: "UUID", icon: "number") {
                                 model.generateUUID()
@@ -62,9 +44,7 @@ struct TestDataGeneratorView: View {
                         }
                         
                         Group {
-                            Text("Names & Dates")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            SectionHeader("Names & Dates")
                             
                             HStack(spacing: 12) {
                                 actionButton(title: "Random Name", icon: "person") {
@@ -78,9 +58,7 @@ struct TestDataGeneratorView: View {
                         }
                         
                         Group {
-                            Text("Lorem Ipsum")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            SectionHeader("Lorem Ipsum")
                             
                             HStack(spacing: 12) {
                                 actionButton(title: "Short", icon: "text.alignleft") {
@@ -115,12 +93,7 @@ struct TestDataGeneratorView: View {
             .padding(.vertical, 6)
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity)
-            .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-            )
+            .cardBackground()
         }
         .buttonStyle(.plain)
     }

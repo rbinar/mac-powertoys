@@ -7,18 +7,7 @@ struct ScreenRulerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Screen Ruler")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Screen Ruler", onBack: onBack)
 
             Divider()
 
@@ -27,12 +16,12 @@ struct ScreenRulerView: View {
 
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Screen Ruler", systemImage: "ruler")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
             }
             .toggleStyle(.switch)
 
             Text(model.isEnabled ? "Start: ⌃⌥R · ESC to exit" : "Enable to use ⌃⌥R")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
             Group {
@@ -41,7 +30,7 @@ struct ScreenRulerView: View {
                 // Default mode
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Default Mode")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Picker("Default Mode", selection: $model.measurementMode) {
                         ForEach(MeasurementMode.allCases, id: \.self) { mode in
@@ -56,12 +45,12 @@ struct ScreenRulerView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Pixel Tolerance")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.pixelTolerance))")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.pixelTolerance, in: 0...255, step: 1)
                         .accessibilityLabel("Pixel Tolerance")
@@ -69,33 +58,41 @@ struct ScreenRulerView: View {
                 }
 
                 // Per-channel edge detection
-                Toggle(isOn: $model.perChannelDetection) {
+                HStack {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Per-Channel Edge Detection")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                         Text("Test each color channel individually")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
+                    Spacer()
+                    Toggle("Per-Channel Edge Detection", isOn: $model.perChannelDetection)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
                 // Continuous capture
-                Toggle(isOn: $model.continuousCapture) {
+                HStack {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Continuous Capture")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                         Text("Uses more resources when enabled")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
+                    Spacer()
+                    Toggle("Continuous Capture", isOn: $model.continuousCapture)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
                 // Extra unit
                 HStack {
                     Text("Extra Unit")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Picker("Extra Unit", selection: $model.extraUnit) {
@@ -111,7 +108,7 @@ struct ScreenRulerView: View {
                 // Line color
                 HStack {
                     Text("Line Color")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     ColorPicker("Line Color", selection: Binding(
@@ -122,19 +119,21 @@ struct ScreenRulerView: View {
                 }
 
                 // Draw feet
-                Toggle(isOn: $model.showFeet) {
+                HStack {
                     Text("Draw Feet on Lines")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
+                    Spacer()
+                    Toggle("Draw Feet on Lines", isOn: $model.showFeet)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
                 Divider()
 
                 // Keyboard shortcuts info
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Shortcuts while active")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
+                    SectionHeader("Shortcuts while active")
                     Group {
                         shortcutRow("⌘1", "Bounds mode")
                         shortcutRow("⌘2", "Spacing mode")
@@ -158,7 +157,7 @@ struct ScreenRulerView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 60, alignment: .trailing)
             Text(desc)
-                .font(.system(.caption2, design: .rounded))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
     }

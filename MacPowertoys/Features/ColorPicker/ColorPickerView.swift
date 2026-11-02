@@ -7,21 +7,7 @@ struct ColorPickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button {
-                    onBack()
-                } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Color Picker")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Color Picker", onBack: onBack)
 
             Divider()
 
@@ -53,10 +39,10 @@ struct ColorPickerView: View {
             HStack(spacing: 4) {
                 Image(systemName: "keyboard")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                 Text("⌃⌥C to pick a color from the screen")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Divider()
@@ -89,7 +75,7 @@ struct ValueRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(.system(.subheadline, design: .rounded))
+                .font(.subheadline)
                 .frame(width: 44, alignment: .leading)
                 .foregroundStyle(.secondary)
 
@@ -149,7 +135,7 @@ struct ColorHistoryView: View {
     var body: some View {
         HStack(spacing: 4) {
             Label("History", systemImage: "clock")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .labelStyle(.iconOnly)
             

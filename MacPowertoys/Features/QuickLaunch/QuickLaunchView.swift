@@ -27,18 +27,7 @@ struct QuickLaunchView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack {
-            Button { onBack() } label: {
-                Label("Back", systemImage: "chevron.left")
-                    .labelStyle(.iconOnly)
-            }
-            .buttonStyle(.plain)
-
-            Text("Quick Launch")
-                .font(.system(.headline, design: .rounded))
-
-            Spacer()
-        }
+        FeatureHeader(title: "Quick Launch", onBack: onBack)
     }
 
     // MARK: - Hotkey Info
@@ -46,7 +35,7 @@ struct QuickLaunchView: View {
     private var hotkeyInfo: some View {
         HStack {
             Text("Activation Shortcut")
-                .font(.system(.subheadline, design: .rounded))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
             Text("⌃⌥Space")
@@ -69,14 +58,14 @@ struct QuickLaunchView: View {
     private var statsRow: some View {
         HStack {
             Label("\(model.indexedApps.count) apps", systemImage: "app.badge")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
             Text("·")
                 .foregroundStyle(.quaternary)
 
             Label("\(model.customEntries.count) shortcuts", systemImage: "star.fill")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }
@@ -86,9 +75,7 @@ struct QuickLaunchView: View {
     private var customEntriesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Custom Shortcuts")
-                    .font(.system(.subheadline, design: .rounded))
-                    .foregroundStyle(.secondary)
+                SectionHeader("Custom Shortcuts")
                 Spacer()
                 Button {
                     model.isAddingEntry = true
@@ -112,8 +99,8 @@ struct QuickLaunchView: View {
 
             if model.customEntries.isEmpty && !model.isAddingEntry {
                 Text("No custom shortcuts yet.\nAdd one to quickly launch apps, files, URLs, or commands.")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -147,12 +134,12 @@ struct CustomEntryRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .fontWeight(.medium)
                     .lineLimit(1)
                 Text(entry.subtitle)
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
 
@@ -224,10 +211,10 @@ struct CustomEntryRow: View {
                 .aspectRatio(contentMode: .fit)
         case .file:
             Image(systemName: "doc.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
         case .folder:
             Image(systemName: "folder.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
         case .url:
             if let faviconData = entry.faviconData, let nsImage = NSImage(data: faviconData) {
                 Image(nsImage: nsImage)
@@ -235,7 +222,7 @@ struct CustomEntryRow: View {
                     .aspectRatio(contentMode: .fit)
             } else {
                 Image(systemName: "globe")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.tint)
             }
         case .shellCommand:
             Image(systemName: "terminal.fill")
@@ -294,7 +281,7 @@ struct EntryFormView: View {
         VStack(alignment: .leading, spacing: 8) {
             TextField("Shortcut Name", text: $name)
                 .textFieldStyle(.roundedBorder)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
 
             Picker("Type", selection: $actionType) {
                 ForEach(ActionTypeOption.allCases, id: \.self) { option in
@@ -302,29 +289,29 @@ struct EntryFormView: View {
                 }
             }
             .pickerStyle(.menu)
-            .font(.system(.caption, design: .rounded))
-            .controlSize(.mini)
+            .font(.caption)
+            .controlSize(.small)
 
             HStack(spacing: 6) {
                 TextField(placeholderForType, text: $pathOrValue)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
 
                 if showBrowseButton {
                     Button("Choose…") { browseFile() }
                         .buttonStyle(.plain)
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.blue)
+                        .font(.caption)
+                        .foregroundStyle(.tint)
                 }
             }
 
             TextField("Keywords (comma separated)", text: $keywordsText)
                 .textFieldStyle(.roundedBorder)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
 
             if let validationError {
                 Text(validationError)
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .foregroundStyle(.red)
             }
 
@@ -342,14 +329,7 @@ struct EntryFormView: View {
             }
         }
         .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.primary.opacity(0.1))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
-        )
+        .cardBackground()
         .onAppear {
             if let entry {
                 name = entry.name
@@ -370,7 +350,7 @@ struct EntryFormView: View {
         case .app: return "/Applications/App.app"
         case .file: return "/path/to/file"
         case .folder: return "/path/to/folder"
-        case .url: return "https://..."
+        case .url: return "https://…"
         case .shellCommand: return "echo hello"
         }
     }

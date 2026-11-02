@@ -7,6 +7,7 @@ class ScreenAnnotationOverlayView: NSView {
     var currentAnnotation: Annotation? = nil
     var dimBackground: Bool = true
     var selectedAnnotationIndex: Int? = nil
+    var displayID: UInt32? = nil
 
     // The overlay consumes mouse input itself (no click-through); the model handles it.
     var onMouseDown: (@MainActor (NSEvent) -> Void)?
@@ -58,6 +59,7 @@ class ScreenAnnotationOverlayView: NSView {
 
         // Draw completed annotations
         for (index, annotation) in annotations.enumerated() {
+            if let display = annotation.displayID, display != displayID { continue }
             drawAnnotation(ctx, annotation: annotation)
             if index == selectedAnnotationIndex {
                 drawSelectionHighlight(ctx, annotation: annotation)
@@ -65,7 +67,7 @@ class ScreenAnnotationOverlayView: NSView {
         }
 
         // Draw in-progress annotation
-        if let current = currentAnnotation {
+        if let current = currentAnnotation, current.displayID == nil || current.displayID == displayID {
             drawAnnotation(ctx, annotation: current)
         }
     }

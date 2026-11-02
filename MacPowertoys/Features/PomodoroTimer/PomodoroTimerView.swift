@@ -3,31 +3,24 @@ import SwiftUI
 struct PomodoroTimerView: View {
     @EnvironmentObject var model: PomodoroTimerModel
     let onBack: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Pomodoro Timer")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Pomodoro Timer", onBack: onBack)
 
             Divider()
 
             // Enable toggle
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Enable Pomodoro", systemImage: "timer")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Enable Pomodoro", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             if model.isEnabled {
                 ScrollView(.vertical, showsIndicators: false) {
@@ -59,17 +52,17 @@ struct PomodoroTimerView: View {
                 .trim(from: 0, to: model.progress)
                 .stroke(phaseColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 1), value: model.progress)
+                .animation(reduceMotion ? nil : .linear(duration: 1), value: model.progress)
 
             // Center content
             VStack(spacing: 4) {
                 Text(model.currentPhase.rawValue)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
 
                 Text(model.formattedRemaining)
-                    .font(.system(size: 36, weight: .medium, design: .rounded))
+                    .font(.system(size: 36, weight: .medium, design: .rounded)) // style-ok: large timer numerals
                     .monospacedDigit()
             }
         }
@@ -150,13 +143,13 @@ struct PomodoroTimerView: View {
                 }
             }
             Text("Session \(model.completedSessions)/\(model.sessionsBeforeLongBreak)")
-                .font(.system(.caption2, design: .rounded))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
 
             if model.totalCompletedSessions > 0 {
                 Text("\(model.totalCompletedSessions) total sessions completed")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -165,9 +158,7 @@ struct PomodoroTimerView: View {
 
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Settings")
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.semibold)
+            SectionHeader("Settings")
 
             settingRow("Focus Duration", value: $model.focusMinutes, range: 5...60, step: 5, unit: "min")
             settingRow("Short Break", value: $model.shortBreakMinutes, range: 1...30, step: 1, unit: "min")
@@ -175,39 +166,48 @@ struct PomodoroTimerView: View {
 
             HStack {
                 Text("Sessions before long break")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                 Spacer()
                 Stepper("Sessions before long break", value: $model.sessionsBeforeLongBreak, in: 2...8)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .labelsHidden()
                 Text("\(model.sessionsBeforeLongBreak)")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .monospacedDigit()
                     .frame(width: 20, alignment: .trailing)
             }
 
             Divider()
 
-            Toggle(isOn: $model.autoStartBreaks) {
+            HStack {
                 Text("Auto-start breaks")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
+                Spacer()
+                Toggle("Auto-start breaks", isOn: $model.autoStartBreaks)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
-            .controlSize(.mini)
 
-            Toggle(isOn: $model.autoStartFocus) {
+            HStack {
                 Text("Auto-start focus after break")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
+                Spacer()
+                Toggle("Auto-start focus after break", isOn: $model.autoStartFocus)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
-            .controlSize(.mini)
 
-            Toggle(isOn: $model.soundEnabled) {
+            HStack {
                 Text("Sound notification")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
+                Spacer()
+                Toggle("Sound notification", isOn: $model.soundEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
-            .controlSize(.mini)
         }
     }
 
@@ -216,12 +216,12 @@ struct PomodoroTimerView: View {
     private func settingRow(_ label: String, value: Binding<Int>, range: ClosedRange<Int>, step: Int, unit: String) -> some View {
         HStack {
             Text(label)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
             Spacer()
             Stepper(label, value: value, in: range, step: step)
                 .labelsHidden()
             Text("\(value.wrappedValue) \(unit)")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .monospacedDigit()
                 .frame(width: 46, alignment: .trailing)
         }

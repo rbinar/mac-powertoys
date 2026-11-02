@@ -12,25 +12,17 @@ struct GitHubNotifierView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-                Text("GitHub Notifier")
-                    .font(.system(.headline, design: .rounded))
-                Spacer()
+            FeatureHeader(title: "GitHub Notifier", onBack: onBack) {
                 Toggle("Enable GitHub Notifier", isOn: $model.isEnabled)
                     .toggleStyle(.switch)
                     .labelsHidden()
-                    .controlSize(.mini)
+                    .controlSize(.small)
             }
             Divider()
 
             if !model.isEnabled {
                 Text("Enable to start monitoring GitHub events.")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             } else {
@@ -49,7 +41,6 @@ struct GitHubNotifierView: View {
                 }
             }
         }
-        .padding(16)
         .confirmationDialog("Remove GitHub token?", isPresented: $showRemoveTokenConfirm) {
             Button("Remove Token", role: .destructive) {
                 model.deleteToken()
@@ -62,9 +53,7 @@ struct GitHubNotifierView: View {
     @ViewBuilder
     private var tokenSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Authentication")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Authentication")
 
             switch model.tokenStatus {
             case .notSet:
@@ -72,9 +61,9 @@ struct GitHubNotifierView: View {
             case .validating:
                 HStack(spacing: 6) {
                     ProgressView()
-                        .controlSize(.mini)
+                        .controlSize(.small)
                     Text("Validating token…")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             case .valid:
@@ -85,7 +74,7 @@ struct GitHubNotifierView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text("Token expired or revoked.")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.orange)
                     }
                     tokenNotSetView
@@ -96,7 +85,7 @@ struct GitHubNotifierView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text("Token missing required scopes. Needs 'repo' and 'read:org'.")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.orange)
                     }
                     HStack(spacing: 12) {
@@ -104,7 +93,7 @@ struct GitHubNotifierView: View {
                             showRemoveTokenConfirm = true
                         }
                         .buttonStyle(.plain)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.red)
                         Button("Re-authenticate") {
                             model.deleteToken()
@@ -112,7 +101,7 @@ struct GitHubNotifierView: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                     }
                 }
             case .invalid:
@@ -121,7 +110,7 @@ struct GitHubNotifierView: View {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.red)
                         Text("Invalid token or network error.")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.red)
                     }
                     tokenNotSetView
@@ -129,8 +118,7 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
+        .cardBackground()
     }
 
     @ViewBuilder
@@ -141,13 +129,13 @@ struct GitHubNotifierView: View {
                 tokenInputView
                 Button("Hide") { showPATInput = false }
                     .buttonStyle(.plain)
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             } else {
                 Button("Use a personal access token instead") { showPATInput = true }
                     .buttonStyle(.plain)
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -156,9 +144,9 @@ struct GitHubNotifierView: View {
     private var deviceFlowSection: some View {
         if case .requestingCode = model.deviceFlowStatus {
             HStack(spacing: 6) {
-                ProgressView().controlSize(.mini)
+                ProgressView().controlSize(.small)
                 Text("Requesting code from GitHub\u{2026}")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         } else if case .awaitingVerification(let userCode, _) = model.deviceFlowStatus {
@@ -166,14 +154,14 @@ struct GitHubNotifierView: View {
         } else if case .expired = model.deviceFlowStatus {
             VStack(alignment: .leading, spacing: 6) {
                 Label("Authorization code expired. Please try again.", systemImage: "clock.badge.xmark")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.orange)
                 loginWithGitHubButton
             }
         } else if case .error(let msg) = model.deviceFlowStatus {
             VStack(alignment: .leading, spacing: 6) {
                 Label(msg, systemImage: "xmark.circle")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.red)
                 loginWithGitHubButton
             }
@@ -191,7 +179,7 @@ struct GitHubNotifierView: View {
                 Image(systemName: "person.badge.key")
                 Text("Login with GitHub")
             }
-            .font(.system(.subheadline, design: .rounded))
+            .font(.subheadline)
             .fontWeight(.medium)
         }
         .buttonStyle(.borderedProminent)
@@ -205,12 +193,12 @@ struct GitHubNotifierView: View {
                     .foregroundStyle(.green)
                     .font(.system(.caption))
                 Text("GitHub opened in your browser.")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text("Enter this code on GitHub:")
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     Text(userCode)
@@ -231,14 +219,14 @@ struct GitHubNotifierView: View {
                 }
             }
             HStack(spacing: 4) {
-                ProgressView().controlSize(.mini)
+                ProgressView().controlSize(.small)
                 Text("Waiting for authorization\u{2026}")
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
             Button("Cancel") { model.cancelDeviceFlow() }
                 .buttonStyle(.plain)
-                .font(.system(.caption2, design: .rounded))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
     }
@@ -256,12 +244,12 @@ struct GitHubNotifierView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .disabled(tokenInput.isEmpty)
                 Spacer()
                 Text("Create a token at github.com/settings/tokens")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -274,7 +262,7 @@ struct GitHubNotifierView: View {
                     .foregroundStyle(.green)
                 if let username = model.githubUsername {
                     Text("@\(username)")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .fontWeight(.medium)
                 }
                 Spacer()
@@ -282,13 +270,13 @@ struct GitHubNotifierView: View {
                     showRemoveTokenConfirm = true
                 }
                 .buttonStyle(.plain)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.red)
             }
 
             if let remaining = model.rateLimitRemaining {
                 Text(rateLimitDisplayText(remaining: remaining))
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .foregroundStyle(rateLimitDisplayColor(remaining: remaining))
             }
         }
@@ -299,9 +287,7 @@ struct GitHubNotifierView: View {
     @ViewBuilder
     private var watchItemsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Repositories & Organizations")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Repositories & Organizations")
 
             HStack(spacing: 8) {
                 Button {
@@ -314,13 +300,13 @@ struct GitHubNotifierView: View {
                 } label: {
                     HStack(spacing: 4) {
                         if isFetchingRepos {
-                            ProgressView().controlSize(.mini)
+                            ProgressView().controlSize(.small)
                         } else {
                             Image(systemName: "arrow.clockwise")
                         }
                         Text("Fetch Repos & Orgs")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -331,7 +317,7 @@ struct GitHubNotifierView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     TextField("Search repos…", text: $repoSearchText)
                         .textFieldStyle(.roundedBorder)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
 
                     VStack(spacing: 3) {
                         ForEach(filteredRepos, id: \.self) { repoName in
@@ -344,9 +330,7 @@ struct GitHubNotifierView: View {
 
             if !model.availableOrgs.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Organizations")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                    SectionHeader("Organizations")
 
                     VStack(spacing: 3) {
                         ForEach(model.availableOrgs, id: \.self) { orgName in
@@ -360,9 +344,7 @@ struct GitHubNotifierView: View {
             if !model.watchItems.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Watching")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                    SectionHeader("Watching")
 
                     ForEach(model.watchItems) { item in
                         watchItemRow(for: item)
@@ -371,8 +353,7 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
+        .cardBackground()
     }
 
     @ViewBuilder
@@ -391,15 +372,15 @@ struct GitHubNotifierView: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
-            .controlSize(.mini)
+            .controlSize(.small)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(repoName.components(separatedBy: "/").last ?? repoName)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .lineLimit(1)
                 Text(repoName)
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
 
@@ -423,14 +404,14 @@ struct GitHubNotifierView: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
-            .controlSize(.mini)
+            .controlSize(.small)
 
             Image(systemName: "building.2")
                 .font(.system(.caption))
                 .foregroundStyle(.secondary)
 
             Text(orgName)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .lineLimit(1)
 
             Spacer()
@@ -440,13 +421,13 @@ struct GitHubNotifierView: View {
     @ViewBuilder
     private func watchItemRow(for item: GitHubWatchItem) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: item.type == .repo ? "chevron.left.forwardslash.chevron.right" : "building.2")
+            Image(systemName: item.type == .repo ? "chevron.left.forwardslash.chevron.right" : "building.2") // style-ok: code-brackets repo icon, not a back button
                 .font(.system(.caption))
                 .foregroundStyle(.secondary)
                 .frame(width: 14, alignment: .center)
 
             Text(item.name)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .lineLimit(1)
 
             Spacer()
@@ -457,7 +438,7 @@ struct GitHubNotifierView: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
-            .controlSize(.mini)
+            .controlSize(.small)
 
             Button {
                 model.removeWatchItem(id: item.id)
@@ -482,9 +463,7 @@ struct GitHubNotifierView: View {
     @ViewBuilder
     private var eventFiltersSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Event Filters")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Event Filters")
 
             LazyVGrid(columns: [GridItem(.flexible())], spacing: 6) {
                 ForEach(GitHubEventType.allCases, id: \.rawValue) { eventType in
@@ -493,8 +472,7 @@ struct GitHubNotifierView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
+        .cardBackground()
     }
 
     @ViewBuilder
@@ -506,7 +484,7 @@ struct GitHubNotifierView: View {
                 .foregroundStyle(isOn ? .primary : .tertiary)
                 .frame(width: 12, alignment: .center)
             Text(eventType.displayName)
-                .font(.system(.caption2, design: .rounded))
+                .font(.caption2)
                 .foregroundStyle(isOn ? .primary : .tertiary)
                 .lineLimit(1)
             Spacer()
@@ -522,7 +500,7 @@ struct GitHubNotifierView: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
-            .controlSize(.mini)
+            .controlSize(.small)
         }
     }
 
@@ -531,13 +509,11 @@ struct GitHubNotifierView: View {
     @ViewBuilder
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Settings")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Settings")
 
             HStack {
                 Text("Polling Interval")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                 Spacer()
                 Picker("Polling Interval", selection: $model.pollingInterval) {
                     Text("1 min").tag(60)
@@ -547,17 +523,17 @@ struct GitHubNotifierView: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
-                .controlSize(.mini)
+                .controlSize(.small)
             }
 
             HStack {
                 Text("Notification Sound")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                 Spacer()
                 Toggle("Notification Sound", isOn: $model.notificationSound)
                     .toggleStyle(.switch)
                     .labelsHidden()
-                    .controlSize(.mini)
+                    .controlSize(.small)
             }
 
             HStack {
@@ -566,13 +542,13 @@ struct GitHubNotifierView: View {
                 } label: {
                     HStack(spacing: 4) {
                         if model.isPolling {
-                            ProgressView().controlSize(.mini)
+                            ProgressView().controlSize(.small)
                         } else {
                             Image(systemName: "arrow.clockwise")
                         }
                         Text("Poll Now")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -582,14 +558,13 @@ struct GitHubNotifierView: View {
 
                 if let lastPoll = model.lastPollDate {
                     Text("Last polled: \(relativeTime(from: lastPoll))")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
+        .cardBackground()
     }
 
     // MARK: - Recent Events Section
@@ -597,9 +572,7 @@ struct GitHubNotifierView: View {
     @ViewBuilder
     private var recentEventsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Recent Events")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Recent Events")
 
             VStack(spacing: 6) {
                 ForEach(model.events) { event in
@@ -609,8 +582,7 @@ struct GitHubNotifierView: View {
             .padding(.vertical, 2)
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 1))
+        .cardBackground()
     }
 
     @ViewBuilder
@@ -630,16 +602,16 @@ struct GitHubNotifierView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
                         Text(event.repoName)
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .fontWeight(.semibold)
                             .lineLimit(1)
                         Text("· \(event.actorLogin)")
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                     Text(event.summary)
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
@@ -647,8 +619,8 @@ struct GitHubNotifierView: View {
                 Spacer()
 
                 Text(relativeTime(from: event.createdAt))
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
             .padding(8)
             .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.1)))
@@ -668,7 +640,7 @@ struct GitHubNotifierView: View {
 
     private func rateLimitDisplayColor(remaining: Int) -> Color {
         if remaining < 10 { return .red }
-        if remaining < 100 { return .yellow }
+        if remaining < 100 { return .orange }
         return .secondary
     }
 

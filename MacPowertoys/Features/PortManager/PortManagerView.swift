@@ -10,6 +10,7 @@ struct PortManagerView: View {
     @State private var showKillError = false
     @State private var showCopiedToast = false
     @State private var selectedPort: PortInfo? = nil
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if let selected = selectedPort {
@@ -25,22 +26,11 @@ struct PortManagerView: View {
     private var portListView: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header
-            HStack {
-                Button(action: onBack) {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Port Manager")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-
+            FeatureHeader(title: "Port Manager", onBack: onBack) {
                 Toggle("Enable Port Manager", isOn: $model.isEnabled)
                     .labelsHidden()
                     .toggleStyle(.switch)
-                    .controlSize(.mini)
+                    .controlSize(.small)
             }
 
             Divider()
@@ -52,11 +42,11 @@ struct PortManagerView: View {
                     .font(.system(size: 32))
                     .foregroundColor(.secondary)
                 Text("Port Manager is disabled")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
                 Text("Enable it to list listening TCP ports")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 Spacer()
             }
@@ -138,7 +128,7 @@ struct PortManagerView: View {
                 // Status bar: count + active filters
                 HStack(spacing: 6) {
                     Text("\(model.filteredPorts.count) port\(model.filteredPorts.count == 1 ? "" : "s")")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
 
                     if model.categoryFilter != .all {
@@ -151,7 +141,7 @@ struct PortManagerView: View {
                     
                     if showCopiedToast {
                         Text("Copied!")
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.green)
                             .transition(.opacity)
                     }
@@ -165,11 +155,11 @@ struct PortManagerView: View {
                             .font(.system(size: 32))
                             .foregroundColor(.secondary)
                         Text("No listening ports found")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                         Text("No TCP ports are currently in LISTEN state")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
@@ -177,11 +167,11 @@ struct PortManagerView: View {
                     VStack(spacing: 8) {
                         Spacer()
                         Text("No matching ports")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                         if model.categoryFilter != .all {
                             Button("Clear Filter") { model.categoryFilter = .all }
-                                .font(.system(.caption, design: .rounded))
+                                .font(.caption)
                                 .buttonStyle(.plain)
                                 .foregroundColor(.accentColor)
                         }
@@ -262,10 +252,10 @@ struct PortManagerView: View {
     private func filterBadge(_ text: String, onRemove: @escaping () -> Void) -> some View {
         HStack(spacing: 3) {
             Text(text)
-                .font(.system(.caption2, design: .rounded))
+                .font(.caption2)
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 7, weight: .bold))
+                    .font(.caption2.weight(.bold))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Remove \(text) filter")
@@ -278,10 +268,10 @@ struct PortManagerView: View {
     }
     
     private func flashCopiedToast() {
-        withAnimation { showCopiedToast = true }
+        withAnimation(reduceMotion ? nil : .default) { showCopiedToast = true }
         Task {
             try? await Task.sleep(nanoseconds: 1_500_000_000)
-            withAnimation { showCopiedToast = false }
+            withAnimation(reduceMotion ? nil : .default) { showCopiedToast = false }
         }
     }
 }
@@ -295,6 +285,7 @@ struct PortInfoRow: View {
     let onCopy: (String) -> Void
     let onSelect: () -> Void
     @State private var isHovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 8) {
@@ -305,7 +296,7 @@ struct PortInfoRow: View {
                     .fontWeight(.semibold)
                 if let svc = portInfo.serviceName {
                     Text(svc)
-                        .font(.system(size: 9, design: .rounded))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -322,32 +313,32 @@ struct PortInfoRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {
                     Text(portInfo.command)
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .fontWeight(.medium)
                         .lineLimit(1)
                     if portInfo.isLocalOnly {
                         Text("local")
-                            .font(.system(size: 8, design: .rounded))
+                            .font(.caption2)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
                             .background(Capsule().fill(Color.blue.opacity(0.15)))
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.tint)
                     }
                 }
                 HStack(spacing: 4) {
                     Text("PID \(portInfo.pid)")
                         .font(.system(.caption2, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     Text("·")
                         .foregroundStyle(.quaternary)
                     Text(portInfo.address)
                         .font(.system(.caption2, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     Text("·")
                         .foregroundStyle(.quaternary)
                     Text(portInfo.user)
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -367,7 +358,7 @@ struct PortInfoRow: View {
             }
             
             Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.quaternary)
         }
         .padding(.vertical, 5)
@@ -377,7 +368,7 @@ struct PortInfoRow: View {
                 .fill(isHovered ? Color.primary.opacity(0.06) : Color.clear)
         )
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) {
                 isHovered = hovering
             }
         }

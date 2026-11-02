@@ -9,23 +9,11 @@ struct ClipboardManagerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
-            HStack {
-                Button(action: onBack) {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-                .help("Back")
-                
-                Text("Clipboard Manager")
-                    .font(.system(.headline, design: .rounded))
-                
-                Spacer()
-                
+            FeatureHeader(title: "Clipboard Manager", onBack: onBack) {
                 Toggle("Enable Clipboard Manager", isOn: $model.isEnabled)
                     .labelsHidden()
                     .toggleStyle(.switch)
-                    .controlSize(.mini)
+                    .controlSize(.small)
             }
             
             Divider()
@@ -83,11 +71,11 @@ struct ClipboardManagerView: View {
                             .font(.system(size: 32))
                             .foregroundColor(.secondary)
                         Text("Clipboard history is empty")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                         Text("Copy text or images to see them here")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
@@ -95,7 +83,7 @@ struct ClipboardManagerView: View {
                     VStack {
                         Spacer()
                         Text("No results found")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                         Spacer()
                     }
@@ -117,18 +105,17 @@ struct ClipboardManagerView: View {
                         .font(.system(size: 32))
                         .foregroundColor(.secondary)
                     Text("Clipboard Manager is disabled")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                     Text("Enable it to start saving your clipboard history")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding()
         .alert("Clear History", isPresented: $showingClearConfirm) {
             Button("Cancel", role: .cancel) { }
             Button("Clear", role: .destructive) {
@@ -145,13 +132,14 @@ struct ClipboardItemRow: View {
     let item: ClipboardItem
     @State private var isHovered = false
     @State private var showCopiedFeedback = false
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             // Content
             if item.type == .text, let text = item.textContent {
                 Text(text)
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if item.type == .image, let url = item.imageURL, let nsImage = NSImage(contentsOf: url) {
@@ -163,9 +151,9 @@ struct ClipboardItemRow: View {
                 
                 VStack(alignment: .leading) {
                     Text("Image")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                     Text("\(Int(nsImage.size.width)) × \(Int(nsImage.size.height))")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,17 +169,17 @@ struct ClipboardItemRow: View {
                     }
                     
                     Text(timeAgo(from: item.createdAt))
-                        .font(.system(size: 10, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
                 }
                 
                 HStack(spacing: 8) {
                         Button(action: {
                             model.copyItemToPasteboard(item)
-                            withAnimation { showCopiedFeedback = true }
+                            withAnimation(reduceMotion ? nil : .default) { showCopiedFeedback = true }
                             Task {
                                 try? await Task.sleep(nanoseconds: 1_500_000_000)
-                                withAnimation { showCopiedFeedback = false }
+                                withAnimation(reduceMotion ? nil : .default) { showCopiedFeedback = false }
                             }
                         }) {
                             Image(systemName: showCopiedFeedback ? "checkmark" : "doc.on.doc")
@@ -222,10 +210,7 @@ struct ClipboardItemRow: View {
             }
         }
         .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isHovered ? Color.primary.opacity(0.1) : Color.primary.opacity(0.05))
-        )
+        .cardBackground()
         .onHover { hovering in
             isHovered = hovering
         }

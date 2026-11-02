@@ -43,18 +43,7 @@ struct VideoConverterView: View {
     // MARK: - Header
     
     private var headerSection: some View {
-        HStack {
-            Button(action: onBack) {
-                Label("Back", systemImage: "chevron.left")
-                    .labelStyle(.iconOnly)
-            }
-            .buttonStyle(.plain)
-            
-            Text("Video Converter")
-                .font(.system(.headline, design: .rounded))
-            
-            Spacer()
-        }
+        FeatureHeader(title: "Video Converter", onBack: onBack)
     }
     
     // MARK: - FFmpeg Warning
@@ -68,16 +57,16 @@ struct VideoConverterView: View {
                         .controlSize(.regular)
                     
                     Text("Installing FFmpeg…")
-                        .font(.system(.headline, design: .rounded))
+                        .font(.headline)
                     
                     Text("This may take a few minutes")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                     
                     // Live log
                     ScrollView(.vertical, showsIndicators: true) {
                         Text(model.installLog)
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(.system(.caption2, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .textSelection(.enabled)
@@ -101,11 +90,11 @@ struct VideoConverterView: View {
                         .foregroundStyle(.green)
                     
                     Text("FFmpeg Installed!")
-                        .font(.system(.headline, design: .rounded))
+                        .font(.headline)
                     
                     if let version = model.ffmpegVersion {
                         Text(version)
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(.system(.caption2, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -117,10 +106,10 @@ struct VideoConverterView: View {
                     .foregroundStyle(.orange)
                 
                 Text("FFmpeg Not Found")
-                    .font(.system(.headline, design: .rounded))
+                    .font(.headline)
                 
                 Text("Video Converter requires FFmpeg to be installed on your system.")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 
@@ -139,12 +128,12 @@ struct VideoConverterView: View {
                         // Show log on failure
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Installation failed. Log:")
-                                .font(.system(.caption, design: .rounded))
+                                .font(.caption)
                                 .foregroundStyle(.red.opacity(0.8))
                             
                             ScrollView(.vertical, showsIndicators: true) {
                                 Text(model.installLog)
-                                    .font(.system(size: 9, design: .monospaced))
+                                    .font(.system(.caption2, design: .monospaced))
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .textSelection(.enabled)
@@ -165,12 +154,12 @@ struct VideoConverterView: View {
                     // No Homebrew — show manual instructions
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Homebrew not found. Install it first:")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                         
                         HStack {
                             Text(homebrewInstallCommand)
-                                .font(.system(size: 9, design: .monospaced))
+                                .font(.system(.caption2, design: .monospaced))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 6)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -197,7 +186,7 @@ struct VideoConverterView: View {
                         }
                         
                         Text("Then install FFmpeg:")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.top, 4)
                         
@@ -229,10 +218,7 @@ struct VideoConverterView: View {
                         }
                     }
                     .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.05))
-                    )
+                    .cardBackground()
                 }
                 
                 // Retry detection button
@@ -243,7 +229,7 @@ struct VideoConverterView: View {
                         Image(systemName: "arrow.clockwise")
                         Text("Retry Detection")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -265,12 +251,12 @@ struct VideoConverterView: View {
                 .foregroundStyle(.secondary)
             
             Text("Drop video here")
-                .font(.system(.subheadline, design: .rounded))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             
             Text("or click to browse")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 28)
@@ -300,10 +286,10 @@ struct VideoConverterView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: "film.fill")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.tint)
                 
                 Text(model.inputFileURL?.lastPathComponent ?? "")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 
@@ -326,7 +312,7 @@ struct VideoConverterView: View {
                     Label(metadata.codec, systemImage: "cpu")
                     Label(metadata.formattedDuration, systemImage: "clock")
                 }
-                .font(.system(size: 10, design: .rounded))
+                .font(.system(size: 10))
                 .foregroundStyle(.secondary)
                 
                 HStack(spacing: 12) {
@@ -336,36 +322,27 @@ struct VideoConverterView: View {
                         Label(metadata.audioCodec ?? "Audio", systemImage: "speaker.wave.2")
                     }
                 }
-                .font(.system(size: 10, design: .rounded))
+                .font(.system(size: 10))
                 .foregroundStyle(.secondary)
             } else if case .analyzing = model.conversionState {
                 HStack(spacing: 6) {
                     ProgressView()
                         .controlSize(.small)
                     Text("Analyzing…")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.primary.opacity(0.05))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
+        .cardBackground()
     }
     
     // MARK: - Format Section
     
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Output Format")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Output Format")
             
             // Category picker
             Picker("Category", selection: $model.selectedCategory) {
@@ -393,7 +370,7 @@ struct VideoConverterView: View {
             model.selectedFormat = format
         } label: {
             Text(format.rawValue)
-                .font(.system(size: 11, weight: model.selectedFormat == format ? .semibold : .regular, design: .rounded))
+                .font(.system(size: 11, weight: model.selectedFormat == format ? .semibold : .regular))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .frame(maxWidth: .infinity)
@@ -416,9 +393,7 @@ struct VideoConverterView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Quality
             VStack(alignment: .leading, spacing: 4) {
-                Text("Quality")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
+                SectionHeader("Quality")
                 
                 Picker("Quality", selection: $model.selectedQuality) {
                     ForEach(VideoQualityPreset.allCases) { preset in
@@ -431,9 +406,7 @@ struct VideoConverterView: View {
             
             // Resolution
             VStack(alignment: .leading, spacing: 4) {
-                Text("Resolution")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
+                SectionHeader("Resolution")
                 
                 Picker("Resolution", selection: $model.selectedResolution) {
                     ForEach(ResolutionPreset.allCases) { preset in
@@ -449,9 +422,7 @@ struct VideoConverterView: View {
     
     private var audioSettingsSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Audio Quality")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
+            SectionHeader("Audio Quality")
             
             Picker("Quality", selection: $model.selectedQuality) {
                 ForEach(VideoQualityPreset.allCases) { preset in
@@ -499,7 +470,7 @@ struct VideoConverterView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Converting…")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 
                 Spacer()
@@ -510,7 +481,7 @@ struct VideoConverterView: View {
                 
                 Text(model.formattedElapsedTime)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                 
                 Button {
                     model.cancelConversion()
@@ -527,10 +498,7 @@ struct VideoConverterView: View {
                 .progressViewStyle(.linear)
         }
         .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.primary.opacity(0.05))
-        )
+        .cardBackground()
     }
     
     private func completedSection(outputPath: String) -> some View {
@@ -539,18 +507,18 @@ struct VideoConverterView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                 Text("Conversion Complete")
-                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                    .font(.subheadline.weight(.medium))
             }
             
             let url = URL(fileURLWithPath: outputPath)
             Text(url.lastPathComponent)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             
             Text("Completed in \(model.formattedElapsedTime)")
-                .font(.system(size: 10, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
             
             HStack(spacing: 8) {
                 Button {
@@ -560,7 +528,7 @@ struct VideoConverterView: View {
                         Image(systemName: "folder")
                         Text("Show in Finder")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .background(
@@ -577,7 +545,7 @@ struct VideoConverterView: View {
                         Image(systemName: "arrow.counterclockwise")
                         Text("New")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .background(
@@ -605,11 +573,11 @@ struct VideoConverterView: View {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.red)
                 Text("Conversion Failed")
-                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                    .font(.subheadline.weight(.medium))
             }
             
             Text(message)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
             
             Button {
@@ -619,7 +587,7 @@ struct VideoConverterView: View {
                     Image(systemName: "arrow.counterclockwise")
                     Text("Try Again")
                 }
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
                 .background(
@@ -646,7 +614,7 @@ struct VideoConverterView: View {
                 Image(systemName: "exclamationmark.circle.fill")
                     .foregroundStyle(.orange)
                 Text("Conversion Cancelled")
-                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                    .font(.subheadline.weight(.medium))
             }
             
             HStack(spacing: 8) {
@@ -657,7 +625,7 @@ struct VideoConverterView: View {
                         Image(systemName: "arrow.counterclockwise")
                         Text("Try Again")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .background(
@@ -674,7 +642,7 @@ struct VideoConverterView: View {
                         Image(systemName: "arrow.counterclockwise")
                         Text("Reset")
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .background(
@@ -700,9 +668,7 @@ struct VideoConverterView: View {
     
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Recent Conversions")
-                .font(.system(.caption, design: .rounded).weight(.medium))
-                .foregroundStyle(.secondary)
+            SectionHeader("Recent Conversions")
             
             ForEach(model.conversionHistory) { item in
                 HStack(spacing: 8) {
@@ -712,13 +678,13 @@ struct VideoConverterView: View {
                     
                     VStack(alignment: .leading, spacing: 1) {
                         Text(item.inputName)
-                            .font(.system(size: 10, design: .rounded))
+                            .font(.system(size: 10))
                             .lineLimit(1)
                             .truncationMode(.middle)
                         
                         Text("\(item.outputFormat) · \(formatElapsed(item.elapsedTime))")
-                            .font(.system(size: 9, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Spacer()
@@ -738,10 +704,7 @@ struct VideoConverterView: View {
             }
         }
         .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.primary.opacity(0.03))
-        )
+        .cardBackground()
     }
     
     private func formatElapsed(_ time: TimeInterval) -> String {

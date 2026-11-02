@@ -15,42 +15,12 @@ struct PortDetailView: View {
     @State private var showForceKillConfirm = false
     @State private var showKillError = false
     @State private var showCopiedToast = false
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header
-            HStack {
-                Button(action: onBack) {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-                
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text(portInfo.command)
-                            .font(.system(.headline, design: .rounded))
-                            .lineLimit(1)
-                        Text(":\(portInfo.port)")
-                            .font(.system(.headline, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
-                    HStack(spacing: 4) {
-                        Text("PID \(portInfo.pid)")
-                            .font(.system(.caption2, design: .monospaced))
-                            .foregroundStyle(.tertiary)
-                        if let svc = portInfo.serviceName {
-                            Text("·")
-                                .foregroundStyle(.quaternary)
-                            Text(svc)
-                                .font(.system(.caption2, design: .rounded))
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
+            FeatureHeader(title: "\(portInfo.command) :\(portInfo.port)", onBack: onBack) {
                 Menu {
                     Button(role: .destructive) {
                         showKillConfirm = true
@@ -71,7 +41,20 @@ struct PortDetailView: View {
                 .accessibilityLabel("Process actions")
                 .help("Process actions")
             }
-            
+
+            HStack(spacing: 4) {
+                Text("PID \(portInfo.pid)")
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                if let svc = portInfo.serviceName {
+                    Text("·")
+                        .foregroundStyle(.quaternary) // style-ok: decorative separator dot
+                    Text(svc)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Divider()
             
             // Traffic Stats
@@ -97,12 +80,12 @@ struct PortDetailView: View {
         .overlay(alignment: .bottom) {
             if showCopiedToast {
                 Text("Copied!")
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.caption2)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(Capsule().fill(Color.green.opacity(0.2)))
                     .foregroundStyle(.green)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
                     .padding(.bottom, 8)
             }
         }
@@ -141,10 +124,7 @@ struct PortDetailView: View {
     
     private var trafficSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Network Traffic")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
+            SectionHeader("Network Traffic")
             
             HStack(spacing: 16) {
                 trafficCard(
@@ -180,7 +160,7 @@ struct PortDetailView: View {
                     .fontWeight(.semibold)
                 HStack(spacing: 4) {
                     Text(label)
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text("·")
                         .foregroundStyle(.quaternary)
@@ -190,11 +170,11 @@ struct PortDetailView: View {
                 }
                 HStack(spacing: 3) {
                     Image(systemName: "shippingbox")
-                        .font(.system(size: 8))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                     Text("\(TrafficStats.formatPackets(packets)) pkts")
                         .font(.system(.caption2, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -208,17 +188,14 @@ struct PortDetailView: View {
     private var trafficConnectionsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Connections by Traffic")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
+                SectionHeader("Connections by Traffic")
                 
                 Spacer()
                 
                 let activeCount = connectionTraffics.filter(\.isActive).count
                 Text("\(activeCount) / \(connectionTraffics.count)")
                     .font(.system(.caption2, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
             
             if isLoading {
@@ -259,7 +236,7 @@ struct PortDetailView: View {
                 
                 if let svc = ct.remoteServiceName {
                     Text(svc)
-                        .font(.system(size: 9, design: .rounded))
+                        .font(.caption2)
                         .fontWeight(.medium)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
@@ -272,26 +249,26 @@ struct PortDetailView: View {
             // Row 2: proto, download, upload, progress bar
             HStack(spacing: 6) {
                 Text(ct.proto)
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.secondary)
                     .fixedSize()
                 
                 HStack(spacing: 2) {
                     Image(systemName: "arrow.down")
-                        .font(.system(size: 8))
-                        .foregroundColor(.blue)
+                        .font(.caption2)
+                        .foregroundStyle(.tint)
                     Text(TrafficStats.formatBytes(ct.bytesIn))
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(.blue)
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundStyle(.tint)
                 }
                 .fixedSize()
                 
                 HStack(spacing: 2) {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: 8))
+                        .font(.caption2)
                         .foregroundColor(.orange)
                     Text(TrafficStats.formatBytes(ct.bytesOut))
-                        .font(.system(size: 9, design: .monospaced))
+                        .font(.system(.caption2, design: .monospaced))
                         .foregroundColor(.orange)
                 }
                 .fixedSize()
@@ -308,8 +285,8 @@ struct PortDetailView: View {
                 .frame(height: 6)
                 
                 Text("\(Int(share * 100))%")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.secondary)
                     .fixedSize()
             }
         }
@@ -336,16 +313,13 @@ struct PortDetailView: View {
     private var connectionsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Active Connections")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
+                SectionHeader("Active Connections")
                 
                 Spacer()
                 
                 Text("\(connections.count)")
                     .font(.system(.caption2, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
             
             if isLoading {
@@ -361,10 +335,10 @@ struct PortDetailView: View {
                     Spacer()
                     Image(systemName: "point.3.connected.trianglepath.dotted")
                         .font(.system(size: 24))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     Text("No active connections")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
@@ -385,7 +359,7 @@ struct PortDetailView: View {
         HStack(spacing: 6) {
             // State badge
             Text(conn.state)
-                .font(.system(size: 9, design: .monospaced))
+                .font(.system(.caption2, design: .monospaced))
                 .fontWeight(.medium)
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
@@ -404,16 +378,16 @@ struct PortDetailView: View {
                         .font(.system(.caption, design: .monospaced))
                         .lineLimit(1)
                     Text(":\(conn.localPort) → :\(conn.remotePort)")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundStyle(.secondary)
                 }
             }
             
             Spacer()
             
             Text(conn.protocolType)
-                .font(.system(size: 9, design: .monospaced))
-                .foregroundStyle(.quaternary)
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 6)
@@ -432,7 +406,7 @@ struct PortDetailView: View {
         switch state {
         case "ESTABLISHED": return .green
         case "CLOSE_WAIT", "LAST_ACK", "FIN_WAIT1", "FIN_WAIT2": return .orange
-        case "TIME_WAIT": return .yellow
+        case "TIME_WAIT": return .orange
         case "LISTEN": return .blue
         default: return .gray
         }
@@ -472,10 +446,10 @@ struct PortDetailView: View {
     
     private func copyText(_ text: String) {
         model.copyToClipboard(text)
-        withAnimation { showCopiedToast = true }
+        withAnimation(reduceMotion ? nil : .default) { showCopiedToast = true }
         Task {
             try? await Task.sleep(nanoseconds: 1_500_000_000)
-            withAnimation { showCopiedToast = false }
+            withAnimation(reduceMotion ? nil : .default) { showCopiedToast = false }
         }
     }
     

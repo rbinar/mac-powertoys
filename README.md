@@ -6,93 +6,160 @@ A collection of powerful utilities for macOS, accessible from your menu bar. Ins
 ![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
+![Mac PowerToys demo](docs/demo.gif)
+
+Twenty productivity tools, from a screen ruler and color picker to a clipboard manager, PDF toolkit and local speech-to-text, in a single menu-bar popover.
+
 ## ✨ Features
 
 ### 🎨 Color Picker
-- 🎯 **Screen Color Picker**: Use the eyedropper tool to pick any color from your screen (Global Shortcut: `⌃⌥C`)
-- 🎨 **Native Color Panel**: Access macOS's built-in color picker
-- 📋 **Auto-Copy**: Hex codes are automatically copied to clipboard
-- 🎨 **Multiple Formats**: Support for HEX, RGB, HSL, and HSV color formats
-- 📚 **Color History**: Keep track of your recently picked colors (up to 8)
-- 🌈 **Color Shades**: See color variations and shades
+- 🎯 **Screen Color Picker**: Pick any color from your screen with the eyedropper (Global Shortcut: `⌃⌥C`)
+- 🎨 **Native Color Panel**: Open the built-in macOS color panel
+- 🎨 **Multiple Formats**: HEX, RGB, HSL and HSV values, each one click to copy
+- 🌈 **Color Shades**: See variations of the selected color
+- 📚 **Color History**: Keep your last 8 picked colors
 
 ### 📏 Screen Ruler
-- 📐 **Measure Anything**: Measure pixels between elements on your screen (Global Shortcut: `⌃⌥R`)
-- 🎯 **Smart Edge Detection**: Automatically snaps to edges of windows and UI elements
-- 📏 **Multiple Modes**: Measure bounds, spacing, horizontal, or vertical distances
-- 📋 **Quick Copy**: Click to copy measurements to clipboard
+- 📐 **Measure Anything**: Measure distances on screen in real device pixels, Retina-aware (Global Shortcut: `⌃⌥R`)
+- 🎯 **Edge Detection**: Snaps to edges found in the screen contents, with adjustable pixel tolerance and optional per-channel detection
+- 📏 **Four Modes**: Bounds, Spacing, Horizontal and Vertical (switch with `⌘1`–`⌘4`)
+- 📎 **Physical Units**: Optionally show inches, centimeters or millimeters based on the display's reported physical size
+- 📋 **Quick Copy**: Click to copy the measurement to the clipboard
 
 ### 🔍 ZoomIt
-- 🔎 **Screen Zoom**: Statically magnify your screen and pan around smoothly (Global Shortcut: `⌃⌥Z`)
+- 🔎 **Screen Zoom**: Freeze and magnify the screen, then pan around (Global Shortcut: `⌃⌥Z`)
 - 🎥 **Live Zoom**: Real-time magnification that follows your cursor (Global Shortcut: `⌃⌥L`)
-- ⚙️ **Adjustable Zoom**: Use scroll wheel to adjust magnification level dynamically
+- ⚙️ **Adjustable Zoom**: 1.25x to 4x, adjustable with a slider or the scroll wheel
+- ✨ **Animated Zoom**: Optional smooth zoom-in and zoom-out transition
+
+### ✍️ Screen Annotation
+- 🖌️ **Draw on Screen**: Freehand, line, arrow, rectangle, ellipse and text tools (Global Shortcut: `⌃⌥D`)
+- 🎨 **Color & Width**: Pick a color and a line width from the on-screen toolbar
+- 🌑 **Dim Background**: Optionally darken the screen for better visibility
+- ↩️ **Undo & Edit**: `⌘Z` or right-click to undo; select an annotation to move it or delete it with `⌫`
+- 💾 **Save**: Save the annotated screen as a PNG to your Desktop
+
+### 📸 Screen Capture
+- ✂️ **Area Capture**: Press `⌃⌥4` and drag to select a region
+- 📋 **Clipboard First**: The captured image is copied to the clipboard as PNG
+- 🔐 **ScreenCaptureKit**: Uses the system capture API and guides you to Screen Recording permission if needed
 
 ### 🖱️ Mouse Utilities
-- 🔦 **Find My Mouse**: Dims the screen and spotlights your cursor (Double-tap `Left Control`)
-- 🖍️ **Mouse Highlighter**: Visual indicators for left and right mouse clicks (Double-tap `Left Option`)
-- ➕ **Mouse Crosshairs**: Full-screen crosshairs centered on your cursor (Double-tap `Right Option`)
-- 🔄 **Cursor Wrap**: Teleport your cursor to the opposite screen edge when hitting a boundary
+- 🔦 **Find My Mouse**: Dims the screen and spotlights your cursor (double-tap `Left Control`; `Right Control` selectable)
+- 🖍️ **Mouse Highlighter**: Visual indicators for left and right clicks (double-tap `Left Option`)
+- ➕ **Mouse Crosshairs**: Full-screen crosshairs centered on your cursor (double-tap `Right Option`)
+- 🔄 **Cursor Wrap**: Cursor jumps to the opposite screen edge, horizontally and/or vertically
+- 🎛️ **Customizable**: Colors, opacity, radius and timing are adjustable for each tool
 
 ### 📋 Clipboard Manager
-- 📝 **History Tracking**: Keeps a history of your copied text and images
-- 🔍 **Searchable**: Quickly find past clipboard items
-- 📌 **Pin Items**: Pin important items so they are never deleted
-- ⌨️ **Global Shortcut**: Access your clipboard history instantly with `⌃⌥V`
-- ⚙️ **Customizable Limit**: Choose how many items to keep in history (10, 25, 50, or 100)
+- 📝 **History Tracking**: Keeps text and image clips
+- 🔍 **Searchable**: Quickly find past clips
+- 📌 **Pin Items**: Pinned items survive "clear history"
+- 🔒 **Respects Password Managers**: Skips concealed, transient and auto-generated clipboard content
+- ⌨️ **Global Shortcut**: Open your history with `⌃⌥V`
+- ⚙️ **Customizable Limit**: Keep 10, 25, 50 or 100 items
+
+### ⚡ Quick Launch
+- 🔎 **Command Palette**: Press `⌃⌥Space` for a fuzzy-search palette that finds installed apps and every module's actions
+- 🚀 **Custom Shortcuts**: Add your own entries that open apps, files, folders, URLs or run shell commands
+- 📈 **Frecency Ranking**: Results are ranked by how often and how recently you use them
+- ⌨️ **Keyboard-Driven**: `↑↓` navigate, `↩` run, `⌘↩` open the module's settings, `Esc` close
 
 ### ☕ Awake
-- 🚫 **Prevent Sleep**: Keep your Mac awake indefinitely or for a specific duration
-- 🖥️ **Display Control**: Choose whether to keep the display on or just the system awake
-- ⏱️ **Timed Mode**: Set a timer (15m, 30m, 1h, 2h, 4h) to automatically allow sleep after the duration
+- 🚫 **Prevent Sleep**: Keep your Mac awake indefinitely or for a set time
+- 🖥️ **Display Control**: Keep the display on, or let only the system stay awake
+- ⏱️ **Timed Mode**: 15m, 30m, 1h, 2h or 4h
 
 ### 🖱️ Mouse Jiggler
-- 🏃 **Stay Active**: Simulates tiny, invisible mouse movements to prevent "Away" status in apps like Teams, Slack, and Zoom
-- ⚙️ **Adjustable Interval**: Customize how often the mouse jiggles (10s to 120s)
+- 🏃 **Stay Active**: Simulates tiny mouse movements to prevent "Away" status in apps like Teams, Slack and Zoom
+- ⚙️ **Adjustable Interval**: 10s to 120s
+- 🔐 **Accessibility**: Needs Accessibility permission to move the cursor
+
+### 🍅 Pomodoro Timer
+- ⏱️ **Focus Cycles**: Customizable focus (default 25 min), short break (5 min) and long break (15 min) lengths
+- 🔁 **Long Break Cycle**: Long break after 2–8 focus sessions (default 4)
+- 🔄 **Auto-Transitions**: Optionally auto-start breaks and the next focus session
+- 🔔 **Notifications & Sound**: macOS notification and optional sound at the end of each phase
+- 📊 **Session Tracking**: Counts completed focus sessions
 
 ### ⌨️ Markdown Preview
 - 👁️ **Live Preview**: Open and preview Markdown files in a resizable window with GitHub-flavored styling
-- 📄 **PDF Export**: Export your Markdown as PDF directly from the preview window toolbar
-- 📋 **Paste from Clipboard**: Preview Markdown content pasted from clipboard without opening a file
-- 🌗 **Theme Toggle**: Switch between light and dark themes for comfortable reading
-- 📂 **Recent Files**: Quick access to recently opened Markdown files
-- 🔄 **Auto-Reload**: Preview updates automatically when the file changes on disk
+- 🔄 **Auto-Reload**: Preview updates when the file changes on disk
+- 📋 **Paste from Clipboard**: Preview Markdown without opening a file
+- 📄 **PDF Export**: Export the rendered document as PDF from the window toolbar
+- 🌗 **Theme Toggle**: Switch between light and dark themes
+- 📂 **Recent Files**: Quick access to recently opened files
 
-### 🍅 Pomodoro Timer
-- ⏱️ **Focus Cycles**: Improve productivity with customizable focus and break sessions
-- 🔔 **Smart Notifications**: macOS notifications alert you when a phase completes
-- 🔄 **Auto-Transitions**: Optional automatic starts for breaks and subsequent focus sessions
-- 📊 **Session Tracking**: Track completed focus sessions and total daily progress
-- 🎨 **Visual Progress**: Clean UI with dynamic color-coded countdown ring
-- 🔊 **Sound Alerts**: Optional sound feedback at the end of each session
+### 📄 PDF Tools
+- 🧩 **Merge**: Combine multiple PDFs into one
+- ✂️ **Split**: By page ranges (e.g. `1-5, 8, 10-15`), every N pages, or every page
+- 🗜️ **Compress**: High, Medium or Low quality
+- 🔄 **Rotate**: Rotate pages of a PDF
+- 🖼️ **PDF to Images**: Export pages as PNG, JPEG or TIFF at 72, 150 or 300 DPI
+- 📑 **Images to PDF**: Build a PDF from images
+- 📜 **History**: Recent operations with "Reveal in Finder"
 
-### ✍️ Screen Annotation
-- 🖌️ **Draw on Screen**: Annotate your screen with freehand, lines, arrows, rectangles, ellipses, and text (Global Shortcut: `⌃⌥D`)
-- 🎨 **Color & Width**: Choose from preset colors and adjust line width on the fly
-- 🌑 **Dim Background**: Optionally dim the screen for better annotation visibility
-- ↩️ **Undo**: Undo drawings with `⌘Z` or right-click
-- ⌨️ **Text Tool**: Add text annotations directly on screen
+### 🖼️ Image Optimizer
+- 📥 **Batch Input**: Drop or browse JPEG, PNG, WebP and HEIC images
+- 🗜️ **Compress**: Adjustable quality; output as Original, JPEG, PNG or WebP
+- 📐 **Resize**: By pixel width and height (optionally keeping aspect ratio) or by percentage
+- 📊 **Estimate & Compare**: Estimated output size and a before/after preview
+- 🛡️ **Non-Destructive**: Saves `<name>_optimized.<ext>` next to the original
+
 ### 🎬 Video Converter
-- 🔄 **FFmpeg-Powered**: Convert between 16 formats — 9 video (MP4, MOV, M4V, MKV, WEBM, AVI, FLV, WMV, 3GP), 6 audio (MP3, AAC, WAV, FLAC, M4A, OGG), and animated GIF
-- 🎚️ **Quality Presets**: Choose from Low, Medium, High, or Highest quality with automatic codec tuning
-- 📐 **Resolution Options**: Original, 4K, 1440p, 1080p, 720p, 480p, or 360p output
-- 🎞️ **GIF Creation**: High-quality two-pass GIF generation with palette optimization
-- 🎵 **Audio Extraction**: Extract audio tracks from video files into MP3, AAC, FLAC, WAV, M4A, or OGG
-- 📊 **Real-time Progress**: Live progress bar parsed from FFmpeg output with elapsed time display
-- 📂 **Drag & Drop**: Drop files directly onto the converter or browse with a file picker
-- 🔍 **File Analysis**: Automatic metadata extraction (duration, resolution, codec, frame rate, file size)
-- 📜 **Conversion History**: View recent conversions with quick "Show in Finder" access
-- ⏹️ **Cancel Support**: Cancel running conversions at any time
-- 🍺 **One-Click FFmpeg Install**: Detects Homebrew and offers one-click FFmpeg installation with live progress
-- 💾 **Persistent Settings**: Selected format, quality, and resolution preferences are saved between sessions
+- 🔄 **FFmpeg-Powered**: Convert between 16 formats: 9 video (MP4, MOV, M4V, MKV, WEBM, AVI, FLV, WMV, 3GP), 6 audio (MP3, AAC, WAV, FLAC, M4A, OGG) and animated GIF
+- 🎚️ **Quality Presets**: Low, Medium, High or Highest
+- 📐 **Resolution Options**: Original, 4K, 1440p, 1080p, 720p, 480p or 360p
+- 🎵 **Audio Extraction**: Extract audio tracks from video files
+- 📊 **Real-time Progress**: Live progress with cancel support
+- 📂 **Drag & Drop**: Drop files onto the converter or browse
+- 🔍 **File Analysis**: Metadata extraction (duration, resolution, codec, frame rate, size)
+- 📜 **Conversion History**: Recent conversions with "Show in Finder"
+- 🍺 **One-Click FFmpeg Install**: Detects Homebrew and installs FFmpeg for you
+
+### 🎙️ Speech to Text
+- 🗣️ **Whisper Transcription**: Transcribe audio and video files with WhisperKit
+- 🧠 **Model Choice**: Tiny, Base, Small, Medium or Large v3
+- 🌍 **Languages**: Auto-detect or pick from 98 languages
+- 📝 **Output**: Plain or timestamped text; copy or save as a text file
+- 📂 **Drag & Drop**: Drop files or browse (MP3, WAV, AIFF, MP4, MOV and more)
+
+### 🔌 Port Manager
+- 📡 **Listening Ports**: Live list of TCP ports in LISTEN state, with process name and PID
+- 🔍 **Search, Sort & Filter**: By port, name or PID; filter System, User or Dynamic ports
+- 📈 **Per-Port Details**: Network traffic and active connections
+- 🛑 **Terminate**: Send SIGTERM or SIGKILL after confirmation
+- 📋 **Copy**: Copy port, PID, process name, details or a ready-made `lsof` command
+- ⏱️ **Refresh Interval**: 1, 2, 5 or 10 seconds
+
+### 📊 System Info
+- 🖥️ **Live Metrics**: CPU, memory, disk and network (up/down) usage
+- ⏱️ **Refresh Interval**: 1, 2 or 5 seconds
+
+### 🪄 Test Data Generator
+- 🔢 **UUID**: Random UUID
+- 👤 **Random Name** and 📅 **Random Date**
+- 📝 **Lorem Ipsum**: Short, medium or long
+- 📋 **Auto-Copy**: Every result goes straight to the clipboard
+
+### 🔔 GitHub Notifier
+- 🔐 **Secure Sign-in**: GitHub device-flow login or a personal access token, stored in the Keychain
+- 👀 **Watch What Matters**: Choose repositories and organizations to watch
+- 🎯 **Event Filters**: Pushes, pull requests, reviews, issues, comments, releases, forks, stars, branch/tag create and delete
+- ⏱️ **Polling**: Every 1, 2, 5 or 10 minutes, or "Poll Now"
+- 🔔 **Native Notifications**: macOS notifications with optional sound
 
 ### General
-- ⚡ **Menu Bar Integration**: Quick access from the menu bar with a Control Center style hub
-- 🔊 **Audio Feedback**: Haptic and sound feedback when colors are picked
-- 🧩 **Extensible Architecture**: Ready for new tools and utilities
+- ⚡ **Menu Bar Hub**: A 340×640 pt popover with a card grid, per-tool toggles and live status
+- 🔎 **Command Palette**: `⌃⌥Space` reaches any tool from anywhere (see Quick Launch)
+- 🚀 **Launch at Login**: One-click toggle in the hub
+- 💾 **Settings Persistence**: Tool settings are saved between launches
+- 🌗 **System Appearance**: Uses native SwiftUI controls and system colors
+- 🔐 **Permission Guidance**: Prompts for Accessibility (global shortcuts) and Screen Recording when needed
 
 ## 📋 Requirements
 
-- **macOS 15.5 or later** (Note: This is a significant update from the previous 11.0+ requirement)
+- **macOS 15.5 or later**
 - Apple Silicon or Intel Mac
 - **FFmpeg** (optional, required for Video Converter — installable via Homebrew from within the app)
 
@@ -120,56 +187,53 @@ open MacPowerToys.xcodeproj
 
 ## 🎯 Usage
 
-1. **Launch the app** - The wrench icon will appear in your menu bar
+1. **Launch the app** - A wrench-and-screwdriver icon appears in your menu bar
 2. **Click the menu bar icon** to open the Mac PowerToys feature hub
-3. **Select a tool** from the feature list or use global shortcuts:
-   - `⌃⌥C` (Control+Option+C): Launch Color Picker
-   - `⌃⌥R` (Control+Option+R): Toggle Screen Ruler
-   - `⌃⌥Z` (Control+Option+Z): Toggle Screen Zoom
-   - `⌃⌥L` (Control+Option+L): Toggle Live Zoom
-   - `⌃⌥V` (Control+Option+V): Open Clipboard Manager
-   - `⌃⌥D` (Control+Option+D): Toggle Screen Annotation
-   - `Double Left Control`: Find My Mouse
-   - `Double Left Option`: Mouse Highlighter
-   - `Double Right Option`: Mouse Crosshairs
-   - **Cursor Wrap**: Enable from the Mouse Utilities menu to teleport cursor across screen edges
-4. **Awake & Mouse Jiggler**:
-   - Enable **Awake** to prevent your Mac from sleeping (choose indefinite or set a timer)
-   - Enable **Mouse Jiggler** to simulate mouse movements and stay active in communication apps
-5. **Clipboard Manager**:
-   - Enable to start tracking your clipboard history
-   - Use `⌃⌥V` to quickly access your history from anywhere
-   - Click an item to copy it back to your clipboard
-   - Pin important items to keep them permanently
-6. **Color Picker**:
-   - Click the eyedropper button and use it on screen
-   - Click the color circle to open native color picker
-   - View HEX, RGB, HSL, and HSV representations
-   - Access previously picked colors from history
-7. **Screen Annotation**:
-   - Enable and press `⌃⌥D` to enter annotation mode
-   - Use the toolbar to switch between freehand, line, arrow, rectangle, ellipse, and text tools
-   - Right-click or `⌘Z` to undo, `Esc` to close
-8. **Pomodoro Timer**:
-   - Enable to start a 25-minute focus session
-   - Automatically transitions to a 5-minute break (customizable)
-   - Tracks your daily completed sessions with visual indicators
-9. **Video Converter**:
-   - Requires FFmpeg (one-click install via Homebrew if available)
-   - Drag & drop or browse for a video/audio file
-   - Select output format (video, audio, or GIF), quality, and resolution
-   - Choose save location and start conversion with real-time progress
-   - View conversion history and reveal output files in Finder
+3. **Select a tool** from the hub, or use global shortcuts (each tool must be enabled; shortcuts need Accessibility permission):
+
+   | Shortcut | Action |
+   |---|---|
+   | `⌃⌥Space` | Quick Launch command palette |
+   | `⌃⌥C` | Color Picker |
+   | `⌃⌥R` | Screen Ruler (`Esc` to exit) |
+   | `⌃⌥Z` | Screen Zoom (`Esc` to exit) |
+   | `⌃⌥L` | Live Zoom (`Esc` to exit) |
+   | `⌃⌥D` | Screen Annotation (`Esc` to exit) |
+   | `⌃⌥4` | Screen Capture to clipboard (`Esc` to cancel) |
+   | `⌃⌥V` | Clipboard Manager |
+   | Double-tap `Left Control` | Find My Mouse (`Right Control` selectable) |
+   | Double-tap `Left Option` | Mouse Highlighter |
+   | Double-tap `Right Option` | Mouse Crosshairs (`Esc` to turn off) |
+
+   (`⌃` Control, `⌥` Option, `⌘` Command)
+
+4. **Toggle-style tools**: Awake, Mouse Jiggler, Pomodoro Timer, Cursor Wrap, Port Manager, System Info and GitHub Notifier run when switched on from their hub card
+5. **File-based tools**: Markdown Preview, PDF Tools, Image Optimizer, Video Converter and Speech to Text work on files you open or drop in
+6. **Screen Ruler**: Press `⌘1`–`⌘4` while active to switch modes; scroll to adjust tolerance; click to copy
+7. **Screen Annotation**: Pick a tool in the toolbar; `⌘Z` or right-click to undo; `⌫` deletes the selected annotation
 
 ## 🛠️ Development
 
 This app is built with:
 - **SwiftUI** for the user interface
-- **AppKit** for macOS integration
-- **NSColorSampler** for screen color picking
-- **NSColorPanel** for native color selection
+- **AppKit** for macOS integration (overlay windows, event monitors, `NSColorSampler`, `NSColorPanel`)
+- **Carbon** hotkeys (`RegisterEventHotKey`) for global shortcuts
+- **ScreenCaptureKit** for ZoomIt and Screen Capture
+- **PDFKit** for PDF Tools
+- **ImageIO** for Image Optimizer
+- **WebKit** for Markdown Preview
 - **AVFoundation** for media file analysis
-- **FFmpeg** (via NSUserUnixTask) for video/audio conversion
+- **WhisperKit** (Swift Package) for Speech to Text
+- **FFmpeg** (via `NSUserUnixTask`) for video/audio conversion
+- **ServiceManagement** for Launch at Login, **UserNotifications** for alerts
+
+Build and test:
+```bash
+xcodebuild -project MacPowerToys.xcodeproj -scheme MacPowerToys -configuration Debug build
+xcodebuild -project MacPowerToys.xcodeproj -scheme MacPowerToys \
+  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO \
+  -only-testing:MacPowerToysTests test
+```
 
 ## 🤝 Contributing
 

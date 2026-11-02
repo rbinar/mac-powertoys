@@ -7,18 +7,7 @@ struct MarkdownPreviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
-            HStack {
-                Button(action: onBack) {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Markdown Preview")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Markdown Preview", onBack: onBack)
 
             Divider()
 
@@ -30,18 +19,11 @@ struct MarkdownPreviewView: View {
                         Image(systemName: "folder")
                             .font(.body.weight(.semibold))
                         Text("Open Markdown File")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.1))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
 
@@ -53,18 +35,11 @@ struct MarkdownPreviewView: View {
                         Image(systemName: "doc.on.clipboard")
                             .font(.body.weight(.semibold))
                         Text("Paste from Clipboard")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.1))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
 
@@ -73,13 +48,13 @@ struct MarkdownPreviewView: View {
                     Image(systemName: "circle.lefthalf.filled")
                         .foregroundStyle(.secondary)
                     Text("Dark Theme")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Toggle("Dark Theme", isOn: $model.isDarkTheme)
                         .labelsHidden()
                         .toggleStyle(.switch)
-                        .controlSize(.mini)
+                        .controlSize(.small)
                 }
                 .padding(.vertical, 2)
 
@@ -88,16 +63,13 @@ struct MarkdownPreviewView: View {
                 // Recent Files
                 if !model.recentFiles.isEmpty {
                     HStack {
-                        Text("Recent Files")
-                            .font(.system(.caption, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
+                        SectionHeader("Recent Files")
                         Spacer()
                         Button {
                             model.clearRecentFiles()
                         } label: {
                             Text("Clear")
-                                .font(.system(.caption2, design: .rounded))
+                                .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
@@ -113,17 +85,17 @@ struct MarkdownPreviewView: View {
                                     .foregroundStyle(.secondary)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(url.lastPathComponent)
-                                        .font(.system(.caption, design: .rounded))
+                                        .font(.caption)
                                         .lineLimit(1)
                                     Text(url.deletingLastPathComponent().path)
-                                        .font(.system(.caption2, design: .rounded))
-                                        .foregroundStyle(.tertiary)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(.secondary)
                             }
                             .contentShape(Rectangle())
                         }
@@ -136,10 +108,10 @@ struct MarkdownPreviewView: View {
                         VStack(spacing: 4) {
                             Image(systemName: "doc.richtext")
                                 .font(.title2)
-                                .foregroundStyle(.quaternary)
+                                .foregroundStyle(.tertiary) // style-ok: decorative empty-state icon
                             Text("No recent files")
-                                .font(.system(.caption, design: .rounded))
-                                .foregroundStyle(.quaternary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                     }

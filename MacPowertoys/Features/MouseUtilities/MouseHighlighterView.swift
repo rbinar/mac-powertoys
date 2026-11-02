@@ -6,38 +6,30 @@ struct MouseHighlighterView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Mouse Highlighter")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Mouse Highlighter", onBack: onBack)
 
             Divider()
 
             ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 12) {
 
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Enable Mouse Highlighter", systemImage: "hand.tap")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Enable Mouse Highlighter", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             HStack(spacing: 4) {
                 Image(systemName: "keyboard")
                     .font(.caption2)
                 Text("Toggle: Double Left ⌥")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
             }
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(.secondary)
 
             if model.isEnabled {
                 Divider()
@@ -45,7 +37,7 @@ struct MouseHighlighterView: View {
                 // Primary button color
                 HStack {
                     Text("Left Click Color")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     ColorPicker("Left Click Color", selection: Binding(
@@ -58,7 +50,7 @@ struct MouseHighlighterView: View {
                 // Secondary button color
                 HStack {
                     Text("Right Click Color")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     ColorPicker("Right Click Color", selection: Binding(
@@ -72,12 +64,12 @@ struct MouseHighlighterView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Highlight Radius")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.highlightRadius))px")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.highlightRadius, in: 10...80, step: 5)
                         .accessibilityLabel("Highlight Radius")
@@ -88,12 +80,12 @@ struct MouseHighlighterView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Fade Delay")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.fadeDelayMs))ms")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.fadeDelayMs, in: 50...2000, step: 50)
                         .accessibilityLabel("Fade Delay")
@@ -104,12 +96,12 @@ struct MouseHighlighterView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Fade Duration")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.fadeDurationMs))ms")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.fadeDurationMs, in: 100...2000, step: 50)
                         .accessibilityLabel("Fade Duration")

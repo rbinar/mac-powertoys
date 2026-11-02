@@ -8,6 +8,7 @@ struct PdfToolsWindowView: View {
     @State private var isMergeDragTargeted = false
     @State private var isImageDragTargeted = false
     @State private var isDropZoneTargeted = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationSplitView {
@@ -17,7 +18,7 @@ struct PdfToolsWindowView: View {
             contentArea
         }
         .frame(minWidth: 600, minHeight: 400)
-        .font(.system(.body, design: .rounded))
+        .font(.body)
     }
 
     // MARK: - Sidebar
@@ -37,14 +38,14 @@ struct PdfToolsWindowView: View {
             Section("History") {
                 if model.operationHistory.isEmpty {
                     Text("No history yet")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 } else {
                     ForEach(model.operationHistory.prefix(5)) { item in
                         historyRow(item)
                     }
                     Button("Clear History") { model.clearHistory() }
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.caption2)
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
                 }
@@ -62,13 +63,13 @@ struct PdfToolsWindowView: View {
             HStack(spacing: 6) {
                 Image(systemName: "clock")
                     .font(.system(.caption2))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(item.operation)
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.caption2)
                         .fontWeight(.medium)
                     Text(item.inputDescription)
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -109,7 +110,7 @@ struct PdfToolsWindowView: View {
                     model.selectFiles(multiple: true)
                 } label: {
                     Label("Add Files", systemImage: "plus.circle")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                 }
                 .buttonStyle(.bordered)
 
@@ -117,7 +118,7 @@ struct PdfToolsWindowView: View {
 
                 if !model.mergeFiles.isEmpty {
                     Text("\(model.mergeFiles.count) files, \(model.mergeFiles.reduce(0) { $0 + $1.pageCount }) pages")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -164,8 +165,7 @@ struct PdfToolsWindowView: View {
 
             if model.selectedFileURL != nil {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Split Mode")
-                        .font(.system(.subheadline, design: .rounded))
+                    SectionHeader("Split Mode")
                         .fontWeight(.medium)
 
                     Picker("Split Mode", selection: $model.splitMode) {
@@ -180,22 +180,22 @@ struct PdfToolsWindowView: View {
                     case .ranges:
                         TextField("e.g. 1-5, 8, 10-15", text: $model.splitRangeText)
                             .textFieldStyle(.roundedBorder)
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                     case .everyN:
                         HStack {
                             Text("Pages per file:")
-                                .font(.system(.subheadline, design: .rounded))
+                                .font(.subheadline)
                             Stepper("\(model.splitEveryN)", value: $model.splitEveryN, in: 1...(model.selectedFileMetadata?.pageCount ?? 1))
-                                .font(.system(.subheadline, design: .rounded))
+                                .font(.subheadline)
                         }
                     case .burst:
                         Text("Each page will become a separate PDF file.")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+                .cardBackground()
             }
 
             if model.selectedFileURL != nil {
@@ -231,8 +231,7 @@ struct PdfToolsWindowView: View {
 
             if model.selectedFileURL != nil {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Quality")
-                        .font(.system(.subheadline, design: .rounded))
+                    SectionHeader("Quality")
                         .fontWeight(.medium)
 
                     Picker("Compress Quality", selection: $model.compressQuality) {
@@ -244,11 +243,11 @@ struct PdfToolsWindowView: View {
                     .labelsHidden()
 
                     Text(compressQualityDescription)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+                .cardBackground()
 
                 actionArea(
                     canPerform: true,
@@ -281,8 +280,7 @@ struct PdfToolsWindowView: View {
 
             if model.selectedFileURL != nil {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Rotation")
-                        .font(.system(.subheadline, design: .rounded))
+                    SectionHeader("Rotation")
                         .fontWeight(.medium)
 
                     Picker("Rotation Angle", selection: $model.rotationAngle) {
@@ -293,19 +291,24 @@ struct PdfToolsWindowView: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
 
-                    Toggle("All pages", isOn: $model.rotateAllPages)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .font(.system(.subheadline, design: .rounded))
+                    HStack {
+                        Text("All pages")
+                            .font(.subheadline)
+                        Spacer()
+                        Toggle("All pages", isOn: $model.rotateAllPages)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
+                    }
 
                     if !model.rotateAllPages {
                         TextField("e.g. 1-5, 8, 10-15", text: $model.rotatePageRangeText)
                             .textFieldStyle(.roundedBorder)
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                     }
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+                .cardBackground()
 
                 actionArea(
                     canPerform: model.rotateAllPages || !model.rotatePageRangeText.trimmingCharacters(in: .whitespaces).isEmpty,
@@ -330,8 +333,7 @@ struct PdfToolsWindowView: View {
 
             if model.selectedFileURL != nil {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Format")
-                        .font(.system(.subheadline, design: .rounded))
+                    SectionHeader("Format")
                         .fontWeight(.medium)
 
                     Picker("Image Format", selection: $model.imageExportFormat) {
@@ -342,8 +344,7 @@ struct PdfToolsWindowView: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
 
-                    Text("DPI")
-                        .font(.system(.subheadline, design: .rounded))
+                    SectionHeader("DPI")
                         .fontWeight(.medium)
 
                     Picker("Export DPI", selection: $model.imageExportDPI) {
@@ -355,11 +356,11 @@ struct PdfToolsWindowView: View {
                     .labelsHidden()
 
                     Text(dpiDescription)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+                .cardBackground()
 
                 actionArea(
                     canPerform: true,
@@ -390,7 +391,7 @@ struct PdfToolsWindowView: View {
                     model.selectImagesForPdf()
                 } label: {
                     Label("Add Images", systemImage: "plus.circle")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                 }
                 .buttonStyle(.bordered)
 
@@ -398,7 +399,7 @@ struct PdfToolsWindowView: View {
 
                 if !model.imageToPdfFiles.isEmpty {
                     Text("\(model.imageToPdfFiles.count) images")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -436,10 +437,10 @@ struct PdfToolsWindowView: View {
     private func operationHeader(_ title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.system(.title2, design: .rounded))
+                .font(.title2)
                 .fontWeight(.semibold)
             Text(subtitle)
-                .font(.system(.subheadline, design: .rounded))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
     }
@@ -450,13 +451,13 @@ struct PdfToolsWindowView: View {
                 model.selectFiles(multiple: multiple)
             } label: {
                 Label(model.selectedFileURL == nil ? "Select PDF" : "Change PDF", systemImage: "doc.badge.plus")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
             }
             .buttonStyle(.bordered)
 
             if let url = model.selectedFileURL {
                 Text(url.lastPathComponent)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -472,18 +473,18 @@ struct PdfToolsWindowView: View {
                 Label(metadata.formattedFileSize, systemImage: "internaldrive")
                 Label("\(Int(metadata.pageWidth))x\(Int(metadata.pageHeight)) pt", systemImage: "aspectratio")
             }
-            .font(.system(.caption, design: .rounded))
+            .font(.caption)
             .foregroundStyle(.secondary)
 
             if metadata.isEncrypted {
                 Label("Encrypted", systemImage: "lock.fill")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.orange)
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+        .cardBackground()
     }
 
     private func fileList(items: [MergeFileItem], onDelete: @escaping (IndexSet) -> Void, onMove: @escaping (IndexSet, Int) -> Void, showPageCount: Bool) -> some View {
@@ -491,7 +492,7 @@ struct PdfToolsWindowView: View {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 HStack(spacing: 8) {
                     Image(systemName: "line.3.horizontal")
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                         .font(.caption2)
 
                     if showPageCount {
@@ -503,7 +504,7 @@ struct PdfToolsWindowView: View {
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(item.name)
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .lineLimit(1)
                         HStack(spacing: 8) {
                             if showPageCount {
@@ -511,7 +512,7 @@ struct PdfToolsWindowView: View {
                             }
                             Text(ByteCountFormatter.string(fromByteCount: item.fileSize, countStyle: .file))
                         }
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                     }
 
@@ -542,7 +543,8 @@ struct PdfToolsWindowView: View {
                         item: item,
                         items: items,
                         draggedItemID: $draggedItemID,
-                        onMove: onMove
+                        onMove: onMove,
+                        reduceMotion: reduceMotion
                     )
                 )
 
@@ -551,8 +553,7 @@ struct PdfToolsWindowView: View {
                 }
             }
         }
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.1), lineWidth: 0.5))
+        .cardBackground()
     }
 
     private func thumbnailView(for url: URL) -> some View {
@@ -578,10 +579,10 @@ struct PdfToolsWindowView: View {
             .overlay(
                 VStack(spacing: 6) {
                     Image(systemName: "arrow.down.doc")
-                        .font(.system(.title3, design: .rounded))
+                        .font(.title3)
                         .foregroundStyle(.secondary)
                     Text(message)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             )
@@ -613,7 +614,7 @@ struct PdfToolsWindowView: View {
             VStack(spacing: 6) {
                 HStack {
                     Text(description)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(Int(progress * 100))%")
@@ -622,19 +623,19 @@ struct PdfToolsWindowView: View {
                 ProgressView(value: progress)
                     .progressViewStyle(.linear)
                 Button("Cancel", role: .cancel) { model.cancelOperation() }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .buttonStyle(.bordered)
                     .keyboardShortcut(.cancelAction)
             }
             .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
+            .cardBackground()
 
         case .completed(let result):
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                     Text(result.message)
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                 }
 
                 if let inputSize = result.inputSize, let outputSize = result.outputSize {
@@ -645,25 +646,25 @@ struct PdfToolsWindowView: View {
                         Text(pct > 0 ? "-\(Int(pct))%" : "+\(Int(abs(pct)))%")
                             .foregroundStyle(pct > 0 ? .green : .orange)
                     }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 }
 
                 if let count = result.fileCount, count > 1 {
                     Text("\(count) files created")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 HStack {
                     if let path = result.outputPath ?? result.outputDirectory {
                         Button("Reveal in Finder") { model.revealInFinder(path) }
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
                     }
                     Button("New Operation") { cleanupAndReset() }
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                 }
@@ -677,14 +678,14 @@ struct PdfToolsWindowView: View {
                 HStack {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
                     Text("Error")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .fontWeight(.medium)
                 }
                 Text(message)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 Button("Try Again") { model.resetState() }
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .buttonStyle(.bordered)
                     .controlSize(.small)
             }
@@ -772,6 +773,7 @@ struct ReorderDropDelegate: DropDelegate {
     let items: [MergeFileItem]
     @Binding var draggedItemID: UUID?
     let onMove: (IndexSet, Int) -> Void
+    let reduceMotion: Bool
 
     func dropEntered(info: DropInfo) {
         guard let draggedId = draggedItemID, draggedId != item.id else { return }
@@ -779,7 +781,7 @@ struct ReorderDropDelegate: DropDelegate {
               let to = items.firstIndex(where: { $0.id == item.id }) else { return }
 
         if from != to {
-            withAnimation(.default) {
+            withAnimation(reduceMotion ? nil : .default) {
                 onMove(IndexSet(integer: from), to > from ? to + 1 : to)
             }
         }

@@ -36,18 +36,7 @@ struct SpeechToTextView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        HStack {
-            Button(action: onBack) {
-                Label("Back", systemImage: "chevron.left")
-                    .labelStyle(.iconOnly)
-            }
-            .buttonStyle(.plain)
-
-            Text("Speech to Text")
-                .font(.system(.headline, design: .rounded))
-
-            Spacer()
-        }
+        FeatureHeader(title: "Speech to Text", onBack: onBack)
     }
 
     private var pickersRow: some View {
@@ -94,12 +83,12 @@ struct SpeechToTextView: View {
                 .foregroundStyle(.secondary)
 
             Text("Drop audio or video here")
-                .font(.system(.subheadline, design: .rounded))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             Text("or click to browse")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 28)
@@ -134,15 +123,15 @@ struct SpeechToTextView: View {
             }
 
             Text(message)
-                .font(.system(.subheadline, design: .rounded))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             if model.progress > 0 {
                 ProgressView(value: model.progress)
                     .padding(.horizontal, 20)
                 Text("\(Int(model.progress * 100))%")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity)
@@ -156,9 +145,9 @@ struct SpeechToTextView: View {
             HStack {
                 HStack(spacing: 4) {
                     Image(systemName: "globe")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                     Text(model.detectedLanguage)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .fontWeight(.semibold)
                 }
 
@@ -177,20 +166,13 @@ struct SpeechToTextView: View {
 
             ScrollView(.vertical, showsIndicators: true) {
                 Text(showTimestamped ? model.timestampedTranscriptText : model.transcriptText)
-                    .font(.system(showTimestamped ? .caption : .caption, design: showTimestamped ? .monospaced : .rounded))
+                    .font(.system(showTimestamped ? .caption : .caption, design: showTimestamped ? .monospaced : .default))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
             }
             .frame(minHeight: 120, maxHeight: 200)
             .padding(8)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.primary.opacity(0.06))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.primary.opacity(0.15), lineWidth: 0.8)
-            )
+            .cardBackground()
 
             HStack(spacing: 8) {
                 Button {
@@ -199,14 +181,11 @@ struct SpeechToTextView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.on.doc")
                         Text("Copy")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.08))
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
 
@@ -216,14 +195,11 @@ struct SpeechToTextView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "square.and.arrow.down")
                         Text("Save")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.08))
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
 
@@ -233,14 +209,11 @@ struct SpeechToTextView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.badge.plus")
                         Text("New File")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.08))
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
             }
@@ -256,7 +229,7 @@ struct SpeechToTextView: View {
                 .foregroundStyle(.orange)
 
             Text(message)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -267,14 +240,11 @@ struct SpeechToTextView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.clockwise")
                         Text("Try Again")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.08))
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
 
@@ -284,14 +254,11 @@ struct SpeechToTextView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.badge.plus")
                         Text("New File")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.08))
-                    )
+                    .cardBackground()
                 }
                 .buttonStyle(.plain)
             }
@@ -304,7 +271,7 @@ struct SpeechToTextView: View {
 
     private var footerSection: some View {
         Text(model.statusMessage)
-            .font(.system(.caption, design: .rounded))
+            .font(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -7,22 +7,11 @@ struct SystemInfoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("System Info")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-
+            FeatureHeader(title: "System Info", onBack: onBack) {
                 Toggle("Enable System Info", isOn: $model.isEnabled)
                     .labelsHidden()
                     .toggleStyle(.switch)
-                    .controlSize(.mini)
+                    .controlSize(.small)
             }
 
             Divider()
@@ -58,7 +47,7 @@ struct SystemInfoView: View {
                     .frame(width: 16)
 
                 Text("Network")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
 
                 Spacer()
 
@@ -75,7 +64,7 @@ struct SystemInfoView: View {
             // Refresh Interval Picker
             HStack {
                 Text("Refresh Interval")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
 
                 Spacer()
 
@@ -97,11 +86,11 @@ struct SystemInfoView: View {
                     .font(.system(size: 32))
                     .foregroundColor(.secondary)
                 Text("System Info is disabled")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
                 Text("Enable it to see CPU, memory, disk and network usage")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 Spacer()
             }
@@ -124,12 +113,12 @@ private struct MetricRow: View {
                     .frame(width: 16)
 
                 Text(label)
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
 
                 Spacer()
 
                 Text(value)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -140,7 +129,7 @@ private struct MetricRow: View {
 
     private func colorForFraction(_ fraction: Double) -> Color {
         if fraction > 0.85 { return .red }
-        if fraction >= 0.6 { return .yellow }
+        if fraction >= 0.6 { return .orange }
         return .green
     }
 }

@@ -7,20 +7,7 @@ struct FindMyMouseView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button {
-                    onBack()
-                } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Find My Mouse")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Find My Mouse", onBack: onBack)
 
             Divider()
 
@@ -28,11 +15,15 @@ struct FindMyMouseView: View {
             VStack(alignment: .leading, spacing: 12) {
 
             // Enable toggle
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Enable Find My Mouse", systemImage: "cursorarrow.rays")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Enable Find My Mouse", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             HStack(spacing: 4) {
                 Image(systemName: "keyboard")
@@ -40,7 +31,7 @@ struct FindMyMouseView: View {
                 Text(model.isEnabled
                      ? "Double-tap \(model.activationMethod.rawValue.replacingOccurrences(of: "Double ", with: "")) to show · ESC or click to dismiss"
                      : "Enable to use the double-tap shortcut")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
             }
             .foregroundStyle(.secondary)
 
@@ -50,7 +41,7 @@ struct FindMyMouseView: View {
                 // Activation method
                 HStack {
                     Text("Activation")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Picker("Activation Method", selection: $model.activationMethod) {
@@ -66,12 +57,12 @@ struct FindMyMouseView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Overlay Opacity")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.overlayOpacity * 100))%")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.overlayOpacity, in: 0.1...1.0, step: 0.05)
                         .accessibilityLabel("Overlay Opacity")
@@ -81,7 +72,7 @@ struct FindMyMouseView: View {
                 // Background color
                 HStack {
                     Text("Background")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     ColorPicker("Background", selection: Binding(
@@ -95,12 +86,12 @@ struct FindMyMouseView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Spotlight Radius")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.spotlightRadius))px")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.spotlightRadius, in: 50...300, step: 10)
                         .accessibilityLabel("Spotlight Radius")
@@ -111,12 +102,12 @@ struct FindMyMouseView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Animation Duration")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.animationDurationMs))ms")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.animationDurationMs, in: 100...2000, step: 50)
                         .accessibilityLabel("Animation Duration")

@@ -7,33 +7,22 @@ struct ZoomItView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("ZoomIt")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "ZoomIt", onBack: onBack)
 
             Divider()
 
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable ZoomIt", systemImage: "magnifyingglass")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
             }
             .toggleStyle(.switch)
 
             Text(model.isEnabled ? "Screen Zoom: ⌃⌥Z · Live Zoom: ⌃⌥L · ESC to exit" : "Enable to use ⌃⌥Z (Screen Zoom) and ⌃⌥L (Live Zoom)")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
             Text("Screen Zoom freezes the screen; Live Zoom follows it in real time.")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
             Divider()
@@ -42,12 +31,12 @@ struct ZoomItView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Magnification Level")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text(String(format: "%.2fx", model.magnificationLevel))
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
                 Slider(value: $model.magnificationLevel, in: 1.25...4.0, step: 0.25)
                 .accessibilityLabel("Magnification Level")
@@ -55,16 +44,20 @@ struct ZoomItView: View {
             }
 
             // Animate Zoom
-            Toggle(isOn: $model.animateZoom) {
+            HStack {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Animate Zoom")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                     Text("Smooth transition when zooming in and out")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
+                Spacer()
+                Toggle("Animate Zoom", isOn: $model.animateZoom)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             Spacer()
         }

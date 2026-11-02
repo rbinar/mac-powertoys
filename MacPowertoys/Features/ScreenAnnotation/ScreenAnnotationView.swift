@@ -7,18 +7,7 @@ struct ScreenAnnotationView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Screen Annotation")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Screen Annotation", onBack: onBack)
 
             Divider()
 
@@ -27,12 +16,12 @@ struct ScreenAnnotationView: View {
 
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Screen Annotation", systemImage: "pencil.tip.crop.circle")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
             }
             .toggleStyle(.switch)
 
             Text(model.isEnabled ? "Start: ⌃⌥D · ESC to exit" : "Enable to use ⌃⌥D")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
             if model.isActive {
@@ -41,7 +30,7 @@ struct ScreenAnnotationView: View {
                         .foregroundColor(.green)
                         .font(.caption2)
                     Text("Annotation mode active — draw on screen")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -52,7 +41,7 @@ struct ScreenAnnotationView: View {
                 // Default color
                 HStack {
                 Text("Default Color")
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 ColorPicker("Default Color", selection: Binding(
@@ -66,12 +55,12 @@ struct ScreenAnnotationView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Default Line Width")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(Int(model.defaultLineWidth))px")
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
                 Slider(value: $model.defaultLineWidth, in: 1...12, step: 1)
                     .accessibilityLabel("Default Line Width")
@@ -79,24 +68,26 @@ struct ScreenAnnotationView: View {
             }
 
             // Dim background
-            Toggle(isOn: $model.dimBackground) {
+            HStack {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Dim Background")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                     Text("Slightly darkens the screen for better visibility")
-                        .font(.system(.caption2, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
+                Spacer()
+                Toggle("Dim Background", isOn: $model.dimBackground)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             Divider()
 
             // Shortcuts info
             VStack(alignment: .leading, spacing: 4) {
-                Text("Shortcuts")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
+                SectionHeader("Shortcuts")
                 Group {
                     shortcutRow("⌃⌥D", "Toggle annotation mode")
                     shortcutRow("⌘Z", "Undo last drawing")
@@ -107,9 +98,7 @@ struct ScreenAnnotationView: View {
 
             // Tools info
             VStack(alignment: .leading, spacing: 4) {
-                Text("Available Tools")
-                    .font(.system(.caption, design: .rounded))
-                    .foregroundStyle(.secondary)
+                SectionHeader("Available Tools")
                 Group {
                     toolRow("pencil", "Freehand drawing")
                     toolRow("line.diagonal", "Straight line")
@@ -133,7 +122,7 @@ struct ScreenAnnotationView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .trailing)
             Text(desc)
-                .font(.system(.caption2, design: .rounded))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
     }
@@ -145,8 +134,8 @@ struct ScreenAnnotationView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 20, alignment: .center)
             Text(desc)
-                .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(.tertiary)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 }

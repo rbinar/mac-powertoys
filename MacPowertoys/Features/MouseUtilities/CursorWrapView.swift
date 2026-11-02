@@ -6,57 +6,57 @@ struct CursorWrapView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Cursor Wrap")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Cursor Wrap", onBack: onBack)
 
             Divider()
 
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Enable Cursor Wrap", systemImage: "arrow.trianglehead.2.counterclockwise")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Enable Cursor Wrap", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             if model.isEnabled {
                 Divider()
 
                 Text("Cursor wraps around screen edges seamlessly")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Toggle(isOn: $model.wrapHorizontal) {
+                HStack {
                     Text("Horizontal Wrap")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
+                    Spacer()
+                    Toggle("Horizontal Wrap", isOn: $model.wrapHorizontal)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
-                Toggle(isOn: $model.wrapVertical) {
+                HStack {
                     Text("Vertical Wrap")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
+                    Spacer()
+                    Toggle("Vertical Wrap", isOn: $model.wrapVertical)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
                 // Edge margin
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Edge Margin")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.edgeMargin))px")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.edgeMargin, in: 0...10, step: 1)
                         .accessibilityLabel("Edge Margin")

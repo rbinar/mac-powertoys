@@ -20,6 +20,8 @@ struct Annotation {
     var lineWidth: CGFloat
     var text: String?
     var isFilled: Bool
+    /// Display the annotation was drawn on; points are local to that display.
+    var displayID: UInt32? = nil
 }
 
 // MARK: - Preset Colors
@@ -143,6 +145,7 @@ final class ScreenAnnotationModel: ObservableObject {
     private var textInputWindow: NSWindow?
     private var hudWindow: NSWindow?
     private var pendingTextPoint: NSPoint = .zero
+    private var pendingTextDisplayID: UInt32?
     private var elevatedWindows: [(window: NSWindow, level: NSWindow.Level)] = []
 
     // Key monitors. Global monitors never see events for this app's own windows, so a paired
@@ -277,6 +280,7 @@ final class ScreenAnnotationModel: ObservableObject {
             let frame = screen.frame
             let did = screenID(for: screen)
             let view = ScreenAnnotationOverlayView(frame: NSRect(origin: .zero, size: frame.size))
+            view.displayID = did
             view.dimBackground = dimBackground
             view.onMouseDown = { [weak self] event in self?.handleMouseDown(event) }
             view.onMouseDragged = { [weak self] event in self?.handleMouseDragged(event) }
@@ -460,10 +464,10 @@ final class ScreenAnnotationModel: ObservableObject {
             if entry.window.frame.contains(screenPoint) { return }
         }
 
-        guard let (localPoint, _) = screenPointToLocal(screenPoint) else { return }
+        guard let (localPoint, entry) = screenPointToLocal(screenPoint) else { return }
 
         // Try to select an existing annotation under the cursor (any tool)
-        if hitTestAndSelect(at: localPoint) {
+        if hitTestAndSelect(at: localPoint, displayID: entry.displayID) {
             return
         }
 
@@ -474,6 +478,7 @@ final class ScreenAnnotationModel: ObservableObject {
         }
 
         if currentTool == .text {
+            pendingTextDisplayID = entry.displayID
             showTextInput(at: screenPoint, localPoint: localPoint)
             return
         }
@@ -484,7 +489,8 @@ final class ScreenAnnotationModel: ObservableObject {
             color: currentColor,
             lineWidth: currentLineWidth,
             text: nil,
-            isFilled: false
+            isFilled: false,
+            displayID: entry.displayID
         )
 
         // For line/arrow/rect/ellipse, add second point (will be updated on drag)
@@ -497,14 +503,17 @@ final class ScreenAnnotationModel: ObservableObject {
 
     private func handleMouseDragged(_ event: NSEvent) {
         let screenPoint = NSEvent.mouseLocation
-        guard let (localPoint, _) = screenPointToLocal(screenPoint) else { return }
+        guard let (localPoint, entry) = screenPointToLocal(screenPoint) else { return }
 
         if isDraggingSelection {
+            if let idx = selectedAnnotationIndex, idx < annotations.count,
+               let display = annotations[idx].displayID, display != entry.displayID { return }
             handleSelectMouseDragged(to: localPoint)
             return
         }
 
         guard currentAnnotation != nil else { return }
+        if let display = currentAnnotation!.displayID, display != entry.displayID { return }
 
         switch currentAnnotation!.tool {
         case .freehand:
@@ -531,7 +540,8 @@ final class ScreenAnnotationModel: ObservableObject {
         let screenPoint = NSEvent.mouseLocation
 
         // Update final point
-        if let (localPoint, _) = screenPointToLocal(screenPoint) {
+        if let (localPoint, entry) = screenPointToLocal(screenPoint),
+           annotation.displayID == nil || annotation.displayID == entry.displayID {
             switch annotation.tool {
             case .freehand:
                 annotation.points.append(localPoint)
@@ -579,8 +589,9 @@ final class ScreenAnnotationModel: ObservableObject {
     // MARK: - Select / Move
 
     /// Hit-test all annotations and select the topmost one under the cursor. Returns true if something was hit.
-    private func hitTestAndSelect(at point: CGPoint) -> Bool {
+    private func hitTestAndSelect(at point: CGPoint, displayID: UInt32) -> Bool {
         for i in stride(from: annotations.count - 1, through: 0, by: -1) {
+            if let display = annotations[i].displayID, display != displayID { continue }
             if hitTest(annotation: annotations[i], point: point) {
                 selectedAnnotationIndex = i
                 let center = annotationCenter(annotations[i])
@@ -745,7 +756,8 @@ final class ScreenAnnotationModel: ObservableObject {
             color: currentColor,
             lineWidth: currentLineWidth,
             text: text,
-            isFilled: false
+            isFilled: false,
+            displayID: pendingTextDisplayID
         )
         undoStack.append(annotations)
         annotations.append(annotation)

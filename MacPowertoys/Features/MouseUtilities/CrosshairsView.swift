@@ -6,36 +6,28 @@ struct CrosshairsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Mouse Crosshairs")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Mouse Crosshairs", onBack: onBack)
 
             Divider()
 
             ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 12) {
 
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Enable Crosshairs", systemImage: "plus.circle")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Enable Crosshairs", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             HStack(spacing: 4) {
                 Image(systemName: "keyboard")
                     .font(.caption2)
                 Text("Toggle: double-tap right ⌥ · ESC to turn off")
-                    .font(.system(.caption, design: .rounded))
+                    .font(.caption)
             }
             .foregroundStyle(.secondary)
 
@@ -45,7 +37,7 @@ struct CrosshairsView: View {
                 // Crosshair color
                 HStack {
                     Text("Color")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     ColorPicker("Crosshair Color", selection: Binding(
@@ -59,12 +51,12 @@ struct CrosshairsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Opacity")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.crosshairOpacity * 100))%")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.crosshairOpacity, in: 0.1...1.0, step: 0.05)
                         .accessibilityLabel("Opacity")
@@ -75,12 +67,12 @@ struct CrosshairsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Center Radius")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.centerRadius))px")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.centerRadius, in: 5...60, step: 5)
                         .accessibilityLabel("Center Radius")
@@ -91,12 +83,12 @@ struct CrosshairsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Thickness")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.thickness))px")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.thickness, in: 1...10, step: 1)
                         .accessibilityLabel("Thickness")
@@ -106,7 +98,7 @@ struct CrosshairsView: View {
                 // Border color
                 HStack {
                     Text("Border Color")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     ColorPicker("Border Color", selection: Binding(
@@ -120,12 +112,12 @@ struct CrosshairsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Border Size")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(model.borderSize))px")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: $model.borderSize, in: 0...5, step: 1)
                         .accessibilityLabel("Border Size")

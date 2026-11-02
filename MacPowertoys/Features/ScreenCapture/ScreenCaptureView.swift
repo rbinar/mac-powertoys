@@ -7,24 +7,13 @@ struct ScreenCaptureView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Screen Capture")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Screen Capture", onBack: onBack)
 
             Divider()
 
             Toggle(isOn: $model.isEnabled) {
                 Label("Enable Screen Capture", systemImage: "camera.viewfinder")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
             }
             .toggleStyle(.switch)
 
@@ -32,10 +21,10 @@ struct ScreenCaptureView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "keyboard")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     Text("⌃⌥4 to start selection · ESC to cancel")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 if model.isCapturing {
@@ -44,7 +33,7 @@ struct ScreenCaptureView: View {
                             .fill(.orange)
                             .frame(width: 6, height: 6)
                         Text("Selecting area…")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -53,27 +42,22 @@ struct ScreenCaptureView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 6) {
-                    Text("How it works")
-                        .font(.system(.subheadline, design: .rounded))
-                        .foregroundStyle(.secondary)
+                    SectionHeader("How it works")
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label("Press ⌃⌥4 to enter selection mode", systemImage: "1.circle.fill")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                         Label("Drag to select a region on screen", systemImage: "2.circle.fill")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                         Label("Release to copy image to clipboard", systemImage: "3.circle.fill")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
                 .padding(10)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.primary.opacity(0.08))
-                )
+                .cardBackground()
 
             Spacer()
         }

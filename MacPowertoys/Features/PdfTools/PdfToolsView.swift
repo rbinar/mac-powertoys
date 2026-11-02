@@ -7,14 +7,7 @@ struct PdfToolsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // MARK: - Header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left").labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-                Text("PDF Tools").font(.system(.headline, design: .rounded))
-                Spacer()
-            }
+            FeatureHeader(title: "PDF Tools", onBack: onBack)
             Divider()
 
             // MARK: - Open Window Button
@@ -24,10 +17,10 @@ struct PdfToolsView: View {
                         .font(.title2)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Open PDF Tools")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .fontWeight(.semibold)
                         Text("Merge, split, compress, rotate & convert PDFs")
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -35,8 +28,7 @@ struct PdfToolsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.14)))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.18), lineWidth: 0.8))
+                .cardBackground()
             }
             .buttonStyle(.plain)
 
@@ -51,27 +43,25 @@ struct PdfToolsView: View {
             if case .processing(let progress, let desc) = pdfToolsModel.state {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(desc)
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                     ProgressView(value: progress)
                         .progressViewStyle(.linear)
                 }
                 .padding(10)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
+                .cardBackground()
             }
 
             // MARK: - Recent History
             if !pdfToolsModel.operationHistory.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text("Recent")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(.secondary)
+                        SectionHeader("Recent")
                         Spacer()
                         Button("Clear") { pdfToolsModel.clearHistory() }
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .buttonStyle(.plain)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     ForEach(pdfToolsModel.operationHistory.prefix(3)) { item in
                         HStack(spacing: 8) {
@@ -81,11 +71,11 @@ struct PdfToolsView: View {
                                 .frame(width: 20)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(item.inputDescription)
-                                    .font(.system(.caption, design: .rounded))
+                                    .font(.caption)
                                     .lineLimit(1)
                                 Text(item.completedAt, style: .relative)
-                                    .font(.system(.caption2, design: .rounded))
-                                    .foregroundStyle(.tertiary)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
                             Spacer()
                             if let path = item.outputPath ?? item.outputDirectory {
@@ -93,7 +83,7 @@ struct PdfToolsView: View {
                                     Image(systemName: "folder").font(.caption2)
                                 }
                                 .buttonStyle(.plain)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(.secondary)
                                 .accessibilityLabel("Reveal in Finder")
                                 .help("Reveal in Finder")
                             }
@@ -115,12 +105,11 @@ struct PdfToolsView: View {
         } label: {
             VStack(spacing: 4) {
                 Image(systemName: icon).font(.body)
-                Text(title).font(.system(.caption2, design: .rounded))
+                Text(title).font(.caption2)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.08)))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.12), lineWidth: 0.5))
+            .cardBackground()
         }
         .buttonStyle(.plain)
     }

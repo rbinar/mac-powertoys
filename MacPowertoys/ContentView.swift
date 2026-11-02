@@ -30,6 +30,7 @@ enum Feature: Hashable {
 }
 
 struct FeatureCardView<Content: View>: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let title: String
     let action: () -> Void
     @ViewBuilder let content: Content
@@ -44,7 +45,7 @@ struct FeatureCardView<Content: View>: View {
             } label: {
                 HStack {
                     Text(title)
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .fontWeight(.semibold)
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -70,7 +71,7 @@ struct FeatureCardView<Content: View>: View {
             }
         }
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
@@ -78,6 +79,7 @@ struct FeatureCardView<Content: View>: View {
 }
 
 struct CompactFeatureCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let title: String
     let icon: String
     let statusText: String
@@ -109,22 +111,22 @@ struct CompactFeatureCard: View {
                     Toggle("Enable \(title)", isOn: binding)
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .controlSize(.mini)
+                        .controlSize(.small)
                         .hidden()
                 } else {
                     Image(systemName: "chevron.right")
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.tertiary) // style-ok decorative chevron
                 }
             }
             
             Text(title)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .fontWeight(.semibold)
                 .lineLimit(1)
             
             Text(statusText)
-                .font(.system(size: 10, design: .rounded))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
@@ -139,7 +141,7 @@ struct CompactFeatureCard: View {
                 Toggle("Enable \(title)", isOn: binding)
                     .toggleStyle(.switch)
                     .labelsHidden()
-                    .controlSize(.mini)
+                    .controlSize(.small)
                     .frame(height: 28)
                     .padding(10)
             }
@@ -155,7 +157,7 @@ struct CompactFeatureCard: View {
         }
         .accessibilityElement(children: .contain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
@@ -171,6 +173,7 @@ private struct FeatureCardSpec {
 }
 
 struct ContentView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject var model: ColorModel
     @EnvironmentObject var findMyMouseModel: FindMyMouseModel
     @EnvironmentObject var mouseHighlighterModel: MouseHighlighterModel
@@ -205,13 +208,13 @@ struct ContentView: View {
         }
         .padding(12)
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowClipboardManager"))) { _ in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) {
                 activeFeature = .clipboardManager
             }
             NSApp.activate(ignoringOtherApps: true)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowImageOptimizer"))) { _ in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) {
                 activeFeature = .imageOptimizer
             }
             NSApp.activate(ignoringOtherApps: true)
@@ -251,7 +254,7 @@ struct ContentView: View {
             icon: spec.icon,
             statusText: spec.statusText,
             isEnabled: spec.isEnabled,
-            action: { withAnimation(.easeInOut(duration: 0.15)) { activeFeature = spec.feature } }
+            action: { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) { activeFeature = spec.feature } }
         )
     }
 
@@ -265,7 +268,7 @@ struct ContentView: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
                 Text("Mac PowerToys")
-                    .font(.system(.headline, design: .rounded))
+                    .font(.headline)
             }
 
             Divider()
@@ -277,7 +280,7 @@ struct ContentView: View {
 
             // Color Picker module - full width (has special controls)
             FeatureCardView(title: "Color Picker", action: {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) {
                     activeFeature = .colorPicker
                 }
             }) {
@@ -359,8 +362,8 @@ struct ContentView: View {
             HStack {
                 LaunchAtLoginToggle()
                 Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     NSApplication.shared.terminate(nil)
@@ -431,7 +434,7 @@ struct ContentView: View {
     }
 
     private func goBack(to feature: Feature? = nil) {
-        withAnimation(.easeInOut(duration: 0.15)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) {
             activeFeature = feature
         }
     }
@@ -441,22 +444,7 @@ struct ContentView: View {
     private var mouseUtilitiesHubView: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Navigation header
-            HStack {
-                Button { goBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                        .frame(minWidth: 24, minHeight: 24)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
-                .help("Back")
-
-                Text("Mouse Utilities")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Mouse Utilities", onBack: { goBack() })
 
             Divider()
 
@@ -523,21 +511,21 @@ struct ContentView: View {
                 )
 
             Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.15)) {
                     activeFeature = feature
                 }
             } label: {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
                         .fontWeight(.medium)
                     HStack(spacing: 4) {
                         Text(description)
-                            .font(.system(.caption2, design: .rounded))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                         if let shortcut {
                             Text("·")
-                                .font(.system(.caption2, design: .rounded))
+                                .font(.caption2)
                                 .foregroundStyle(.secondary)
                             Text(shortcut)
                                 .font(.system(.caption2, design: .monospaced))
@@ -554,7 +542,7 @@ struct ContentView: View {
             Toggle("Enable \(title)", isOn: isEnabled)
                 .toggleStyle(.switch)
                 .labelsHidden()
-                .controlSize(.mini)
+                .controlSize(.small)
         }
         .padding(.vertical, 4)
     }
@@ -597,7 +585,7 @@ private struct AccessibilityBanner: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .symbolRenderingMode(.multicolor)
                     Text("Global shortcuts need Accessibility permission")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
@@ -667,8 +655,8 @@ private struct LaunchAtLoginToggle: View {
             }
         ))
         .toggleStyle(.switch)
-        .controlSize(.mini)
-        .font(.system(.caption, design: .rounded))
+        .controlSize(.small)
+        .font(.caption)
         .onAppear { isOn = SMAppService.mainApp.status == .enabled }
     }
 }

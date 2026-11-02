@@ -7,20 +7,7 @@ struct MouseJigglerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-                .help("Back")
-
-                Text("Mouse Jiggler")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Mouse Jiggler", onBack: onBack)
 
             Divider()
 
@@ -29,7 +16,7 @@ struct MouseJigglerView: View {
                     Image(systemName: "exclamationmark.shield")
                         .foregroundStyle(.orange)
                     Text("Needs Accessibility permission to move the cursor")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.caption)
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
@@ -41,14 +28,18 @@ struct MouseJigglerView: View {
                 }
             }
 
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Enable Mouse Jiggler", systemImage: "computermouse.fill")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Enable Mouse Jiggler", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             Text("Simulates tiny mouse movements to stay active in Teams, Slack, etc.")
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .foregroundStyle(.secondary)
 
             if model.isEnabled {
@@ -57,12 +48,12 @@ struct MouseJigglerView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Jiggle Interval")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(model.jiggleIntervalSeconds)s")
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                     Slider(value: Binding(
                         get: { Double(model.jiggleIntervalSeconds) },

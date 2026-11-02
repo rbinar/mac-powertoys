@@ -3,32 +3,25 @@ import SwiftUI
 struct AwakeView: View {
     @EnvironmentObject var model: AwakeModel
     let onBack: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let durationPresets = [15, 30, 60, 120, 240]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Navigation header
-            HStack {
-                Button { onBack() } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-
-                Text("Awake")
-                    .font(.system(.headline, design: .rounded))
-
-                Spacer()
-            }
+            FeatureHeader(title: "Awake", onBack: onBack)
 
             Divider()
 
-            Toggle(isOn: $model.isEnabled) {
+            HStack {
                 Label("Keep Awake", systemImage: "cup.and.saucer.fill")
-                    .font(.system(.body, design: .rounded))
+                    .font(.body)
+                Spacer()
+                Toggle("Keep Awake", isOn: $model.isEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
-            .toggleStyle(.switch)
 
             if model.isEnabled {
                 Divider()
@@ -37,11 +30,11 @@ struct AwakeView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "cup.and.saucer.fill")
                         .foregroundStyle(.green)
-                        .symbolEffect(.pulse, isActive: true)
+                        .symbolEffect(.pulse, isActive: !reduceMotion)
 
                     if model.isIndefinite {
                         Text("Keeping Mac awake indefinitely")
-                            .font(.system(.caption, design: .rounded))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
                         Text("Remaining: \(model.formattedRemaining)")
@@ -53,31 +46,39 @@ struct AwakeView: View {
                 Divider()
 
                 // Keep Display On toggle
-                Toggle(isOn: $model.keepDisplayOn) {
+                HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Keep Display On")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                         Text(model.keepDisplayOn ? "Screen and system stay awake" : "Only system stays awake")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(.tertiary)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
+                    Spacer()
+                    Toggle("Keep Display On", isOn: $model.keepDisplayOn)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
                 Divider()
 
                 // Mode selection
-                Toggle(isOn: $model.isIndefinite) {
+                HStack {
                     Text("Indefinite")
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
+                    Spacer()
+                    Toggle("Indefinite", isOn: $model.isIndefinite)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
                 }
-                .toggleStyle(.switch)
 
                 if !model.isIndefinite {
                     // Duration presets
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Duration")
-                            .font(.system(.subheadline, design: .rounded))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         Picker("Duration", selection: $model.durationMinutes) {
