@@ -66,6 +66,8 @@ xcodebuild -exportArchive \
            -exportPath "$EXPORT_PATH" \
            -exportOptionsPlist ExportOptions.plist
 
+rm -f "$EXPORT_PATH/DistributionSummary.plist" "$EXPORT_PATH/ExportOptions.plist" "$EXPORT_PATH/Packaging.log"
+
 # ── Step 4: Verify code signature ────────────────────────────────────────────
 echo "🔐 Verifying code signature..."
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"

@@ -45,6 +45,8 @@ brew install --cask mac-powertoys
 2. Open the DMG and drag `MacPowerToys.app` to your Applications folder
 3. Launch it; a wrench-and-screwdriver icon appears in your menu bar
 
+> **First launch:** this build is signed but not yet notarized by Apple, so macOS blocks it the first time. Try to open the app, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
 ## 🔗 Links
 
 - [Source Code](https://github.com/rbinar/mac-powertoys)

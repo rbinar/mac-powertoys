@@ -178,6 +178,8 @@ brew install --cask mac-powertoys
 3. Drag `MacPowerToys.app` to your Applications folder
 4. Launch from Applications or Spotlight
 
+> **First launch:** this build is signed but not yet notarized by Apple, so macOS blocks it the first time. Try to open the app, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
 ### Build from Source
 ```bash
 git clone https://github.com/rbinar/mac-powertoys.git
