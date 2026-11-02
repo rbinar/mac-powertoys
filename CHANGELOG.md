@@ -4,6 +4,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-02
+
+### Added
+- Command palette (⌃⌥Space) for tools, modes, installed apps and custom shortcuts.
+- Launch at Login toggle; tool settings persist across launches.
+- New app icon and shared UI components (module header, section header, card background); system font, Reduce Motion support and accessibility improvements.
+
+### Changed
+- Screen Ruler shows real device pixels and optional physical units.
+
+### Fixed
+- Global shortcuts were inactive until the menu bar popover was opened.
+- Overlays landed on the wrong display on multi-monitor setups.
+- Screen Annotation drawings appeared on every display.
+- Screen Capture selection could not be cancelled with Esc.
+- Command palette opened on the main display instead of the screen under the cursor.
+- Light mode surface colors.
+
 ### Removed
 - Webhook Notifier module removed; it depended on a third-party/self-hosted ntfy relay server. 2026-11-01 00:00
 

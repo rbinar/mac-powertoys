@@ -173,7 +173,7 @@ brew install --cask mac-powertoys
 ```
 
 ### Download from Releases
-1. Download the latest `MacPowerToys.dmg` from [Releases](https://github.com/rbinar/mac-powertoys/releases)
+1. Download the latest `MacPowerToys-v*.dmg` from [Releases](https://github.com/rbinar/mac-powertoys/releases)
 2. Open the DMG file
 3. Drag `MacPowerToys.app` to your Applications folder
 4. Launch from Applications or Spotlight

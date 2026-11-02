@@ -82,7 +82,7 @@ rm -f "$DMG_NAME"
 
 create-dmg \
     --volname "Mac PowerToys" \
-    --volicon "MacPowerToys/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" \
+    --volicon "MacPowerToys/Assets.xcassets/AppIcon.appiconset/icon_512.png" \
     --window-pos 200 120 \
     --window-size 800 400 \
     --icon-size 128 \

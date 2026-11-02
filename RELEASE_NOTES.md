@@ -1,48 +1,49 @@
-# ⚙️ Mac PowerToys v2.1.0
+# ⚙️ Mac PowerToys v2.2.0
 
-A collection of powerful utilities for macOS, accessible from your menu bar. 21 feature modules and counting.
+A collection of utilities for macOS, accessible from your menu bar.
 
-## ✨ What's New in v2.1.0
+## ✨ What's New in v2.2.0
 
-### New Modules
-- **GitHub Notifier** — Monitor GitHub repos and organizations for events (push, pull request, issues, stars, forks, releases) and receive native macOS notifications. Supports GitHub OAuth device-flow authentication for private repos.
-- **Image Optimizer** — Batch-compress and convert images to JPEG, PNG, or WebP with optional pixel/percent resize. Drag-and-drop input, per-file size savings, and direct Finder reveal.
-- **Screen Capture** — Press ⌃⌥4 to select a screen region and copy it directly to the clipboard — no file saved to desktop.
+### New
+- **Command palette**: press `⌃⌥Space` to search tools, modes, installed apps and your own shortcuts.
+- **Launch at Login** toggle in the hub.
+- **Settings persistence**: tool settings are kept between launches.
+- **New app icon** and a refreshed interface: system font, consistent module headers (the whole "‹ Title" is the back button, `⌘[` also goes back), Reduce Motion support and accessibility improvements.
 
 ### Improvements
-- **Speech-to-Text**: Transcription tasks are now cancellable; switching files mid-transcription cancels the previous task cleanly.
-- **Markdown Preview**: PDF export upgraded to native async/await for more reliable generation.
-- App initialization refactored to eliminate side-effects (permission prompts, background timers) during non-app contexts.
+- **Screen Ruler** shows real device pixels on Retina displays and can show inches, centimeters or millimeters.
+- Light mode colors are fixed.
 
 ### Bug Fixes
-- Screen Ruler no longer disables itself on transient capture failures
-- ZoomIt properly releases Escape key when disabled
-- Webhook Notifier correctly buffers streaming data
-- Clipboard Manager releases global hotkey on termination
-- Screen Annotation captures all connected displays
+- Global shortcuts no longer stay inactive until the menu bar popover is opened.
+- Overlays appear on the correct display on multi-monitor setups.
+- **Screen Annotation**: drawings stay on the display they were drawn on.
+- **Screen Capture**: `Esc` cancels the selection.
+- **Command palette** opens on the screen under the cursor.
+- Many smaller behavior and stability fixes.
+
+### Removed
+- **Webhook Notifier**: it depended on a third-party or self-hosted relay server.
 
 ## 📋 Requirements
 
 - **macOS 15.5 or later**
 - Apple Silicon or Intel Mac
-- FFmpeg (optional, for Video Converter — installable via Homebrew from within the app)
+- FFmpeg (optional, for Video Converter; installable via Homebrew from within the app)
 
 ## 🚀 Installation
 
-1. Download `MacPowerToys-v2.0.0.dmg` from the assets below
-2. Open the DMG file
-3. Drag `MacPowerToys.app` to your Applications folder
-4. Launch from Applications or Spotlight
+**Homebrew**
+```bash
+brew tap rbinar/tap
+brew trust rbinar/tap   # newer Homebrew versions require trusting third-party taps
+brew install --cask mac-powertoys
+```
 
-## 🎯 Usage
-
-1. Click the wrench icon in your menu bar
-2. Select a tool from the feature grid
-3. Each module has its own settings and controls
-
-## 🐛 Known Issues
-
-None at this time.
+**DMG**
+1. Download `MacPowerToys-v2.2.0.dmg` from the assets below
+2. Open the DMG and drag `MacPowerToys.app` to your Applications folder
+3. Launch it; a wrench-and-screwdriver icon appears in your menu bar
 
 ## 🔗 Links
 
