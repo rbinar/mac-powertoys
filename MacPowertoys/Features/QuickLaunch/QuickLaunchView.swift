@@ -27,7 +27,9 @@ struct QuickLaunchView: View {
     // MARK: - Header
 
     private var header: some View {
-        FeatureHeader(title: "Quick Launch", onBack: onBack)
+        // The entry form's Cancel button owns Esc while the form is open.
+        FeatureHeader(title: "Quick Launch", onBack: onBack,
+                      escapeGoesBack: !model.isAddingEntry && model.editingEntry == nil) { EmptyView() }
     }
 
     // MARK: - Hotkey Info

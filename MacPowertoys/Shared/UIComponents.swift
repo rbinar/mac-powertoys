@@ -5,6 +5,7 @@ import SwiftUI
 struct FeatureHeader<Trailing: View>: View {
     let title: String
     let onBack: () -> Void
+    var escapeGoesBack = true                // false while the screen shows its own Esc-cancel form
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
@@ -27,6 +28,15 @@ struct FeatureHeader<Trailing: View>: View {
             .help("Back")
             .accessibilityLabel("Back")
             .accessibilityHint(title)
+            .background {
+                // Esc also goes back; a button holds only one shortcut, so this one is invisible.
+                if escapeGoesBack {
+                    Button("Back", action: onBack)
+                        .keyboardShortcut(.cancelAction)
+                        .opacity(0)
+                        .accessibilityHidden(true)
+                }
+            }
 
             Spacer(minLength: 0)
 
