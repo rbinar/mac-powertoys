@@ -29,6 +29,7 @@ enum ModuleCatalog {
         TextExtractorModule.module,
         FileLocksmithModule.module,
         AdvancedPasteModule.module,
+        PowerRenameModule.module,
     ]
 
     /// Palette order shipped in 2.2.0, kept stable. Modules missing here follow in catalog order.
