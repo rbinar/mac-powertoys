@@ -31,6 +31,7 @@ enum ModuleCatalog {
         AdvancedPasteModule.module,
         PowerRenameModule.module,
         ArchiveModule.module,
+        DownloadManagerModule.module,
     ]
 
     /// Palette order shipped in 2.2.0, kept stable. Modules missing here follow in catalog order.
