@@ -50,6 +50,9 @@ final class ClipboardManagerModel: ObservableObject {
     private var pollTimer: Timer?
     private var lastChangeCount: Int = 0
     private var isInternalCopy: Bool = false
+    /// Last app other than ours that became active; paste goes there after the palette/popover closes.
+    private var previousApp: NSRunningApplication?
+    private var activationObserver: NSObjectProtocol?
     
     private let itemsKey = "clipboardManager.items"
     private let historyDir: URL
@@ -72,6 +75,7 @@ final class ClipboardManagerModel: ObservableObject {
 
         loadItems()
         setupGlobalHotKey()
+        trackPreviousApp()
 
         if isEnabled {
             startMonitoring()
@@ -90,6 +94,16 @@ final class ClipboardManagerModel: ObservableObject {
         }
     }
     
+    /// Palette order: pinned first, then newest first. A non-empty query keeps text items containing it (case-insensitive).
+    static func ordered(_ items: [ClipboardItem], matching query: String) -> [ClipboardItem] {
+        let matches = query.isEmpty ? items : items.filter { item in
+            guard item.type == .text, let text = item.textContent else { return false }
+            return text.localizedCaseInsensitiveContains(query)
+        }
+        let newestFirst = matches.sorted { $0.createdAt > $1.createdAt }
+        return newestFirst.filter(\.isPinned) + newestFirst.filter { !$0.isPinned }
+    }
+
     // MARK: - Monitoring
     
     func startMonitoring() {
@@ -194,11 +208,12 @@ final class ClipboardManagerModel: ObservableObject {
     
     // MARK: - Actions
     
-    func copyItemToPasteboard(_ item: ClipboardItem) {
-        let pb = NSPasteboard.general
+    /// Text items are written as plain `.string` only (history never stores RTF/HTML), so this is also the plain-text path.
+    func copyItemToPasteboard(_ item: ClipboardItem, to pb: NSPasteboard = .general) {
+        let isGeneral = pb === NSPasteboard.general
 
         if item.type == .text, let text = item.textContent {
-            isInternalCopy = true
+            isInternalCopy = isGeneral
             pb.clearContents()
             pb.setString(text, forType: .string)
         } else if item.type == .image, let url = item.imageURL {
@@ -207,12 +222,51 @@ final class ClipboardManagerModel: ObservableObject {
                 NSLog("[ClipboardManager] copyItemToPasteboard: image file missing at %@", url.path)
                 return
             }
-            isInternalCopy = true
+            isInternalCopy = isGeneral
             pb.clearContents()
             pb.writeObjects([image])
         }
 
-        lastChangeCount = pb.changeCount
+        if isGeneral { lastChangeCount = pb.changeCount }
+    }
+
+    // MARK: - Paste into the previous app
+
+    /// ⌘V key-down and key-up (virtual key 9). Not posted here so it can be unit-tested.
+    static func pasteKeyEvents(source: CGEventSource? = nil) -> [CGEvent] {
+        [true, false].compactMap { keyDown in
+            let event = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: keyDown)
+            event?.flags = .maskCommand
+            return event
+        }
+    }
+
+    /// Puts the item on the pasteboard, closes the host (palette panel or popover), returns focus to the app
+    /// that was active before and sends it ⌘V. Needs the Accessibility permission the app already requests.
+    func paste(_ item: ClipboardItem, closeHost: () -> Void) {
+        copyItemToPasteboard(item)
+        closeHost()
+        if let app = previousApp, !app.isTerminated {
+            NSApp.yieldActivation(to: app)
+            app.activate()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            for event in Self.pasteKeyEvents() { event.post(tap: .cghidEventTap) }
+        }
+    }
+
+    private func trackPreviousApp() {
+        let ownID = Bundle.main.bundleIdentifier
+        if let front = NSWorkspace.shared.frontmostApplication, front.bundleIdentifier != ownID {
+            previousApp = front
+        }
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier != ownID else { return }
+            MainActor.assumeIsolated { self?.previousApp = app }
+        }
     }
     
     func deleteItem(_ item: ClipboardItem, saveAfter: Bool = true) {
@@ -312,7 +366,7 @@ final class ClipboardManagerModel: ObservableObject {
                 GetEventParameter(theEvent, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &firedID)
                 guard firedID.signature == UTGetOSTypeFromString("CBMG" as CFString) else { return OSStatus(eventNotHandledErr) }
                 Task { @MainActor in
-                    NotificationCenter.default.post(name: ModuleNotifications.show, object: "clipboardManager")
+                    NotificationCenter.default.post(name: ModuleNotifications.openPaletteScreen, object: "clipboardManager.open")
                 }
                 return noErr
             }
@@ -324,6 +378,10 @@ final class ClipboardManagerModel: ObservableObject {
     func stopMonitoring() {
         stopPollingTimer()
         removeGlobalHotKey()
+        if let activationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(activationObserver)
+            self.activationObserver = nil
+        }
     }
     
     private func removeGlobalHotKey() {

@@ -20,6 +20,7 @@ struct PaletteCommand: Identifiable {
     let isOn: (() -> Bool)?   // Modes only
     let run: () -> Void       // Screen Tools: start immediately; Modes: toggle
     var screen: ((_ onBack: @escaping () -> Void) -> AnyView)? // Tools: the module's view (filled in by the registry); also used by ⌘↩ for every command
+    var screenWidth: CGFloat? = nil // set = wide palette-style screen: this width, no header, Esc closes the panel
 
     init(
         id: String,
@@ -31,7 +32,8 @@ struct PaletteCommand: Identifiable {
         keywords: [String] = [],
         isOn: (() -> Bool)? = nil,
         run: @escaping () -> Void = {},
-        screen: ((_ onBack: @escaping () -> Void) -> AnyView)? = nil
+        screen: ((_ onBack: @escaping () -> Void) -> AnyView)? = nil,
+        screenWidth: CGFloat? = nil
     ) {
         self.id = id
         self.title = title
@@ -43,6 +45,7 @@ struct PaletteCommand: Identifiable {
         self.isOn = isOn
         self.run = run
         self.screen = screen
+        self.screenWidth = screenWidth
     }
 }
 

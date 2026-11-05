@@ -11,7 +11,9 @@ enum ClipboardManagerModule {
         toggle: \.isEnabled,
         view: { AnyView(ClipboardManagerView(onBack: $0)) },
         commands: { m in [
-            PaletteCommand(id: "clipboardManager.open", title: "Clipboard Manager", subtitle: "Clipboard history", symbol: "list.clipboard", group: .tools, shortcut: "⌃⌥V", keywords: ["paste", "history"])
+            PaletteCommand(id: "clipboardManager.open", title: "Clipboard Manager", subtitle: "Clipboard history", symbol: "list.clipboard", group: .tools, shortcut: "⌃⌥V", keywords: ["paste", "history"],
+                           screen: { _ in AnyView(ClipboardPaletteView().environmentObject(m)) },
+                           screenWidth: ClipboardPaletteView.width)
         ] }
     ).erased()
 }

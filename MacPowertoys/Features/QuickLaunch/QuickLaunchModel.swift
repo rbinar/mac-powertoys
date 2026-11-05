@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Combine
 import Carbon.HIToolbox
 import UserNotifications
 
@@ -148,6 +149,7 @@ final class QuickLaunchModel: ObservableObject {
 
     private var scanTimer: Timer?
     private(set) var panelController: QuickLaunchPanelController?
+    private var paletteRequests = Set<AnyCancellable>()
 
     // MARK: - Lifecycle
 
@@ -157,12 +159,14 @@ final class QuickLaunchModel: ObservableObject {
         scanApplications()
         startScanTimer()
         panelController = QuickLaunchPanelController(model: self)
+        observePaletteRequests()
     }
 
     func stopMonitoring() {
         unregisterCarbonHotKey()
         stopScanTimer()
         panelController?.cleanup()
+        paletteRequests.removeAll()
 
     }
 
@@ -207,6 +211,27 @@ final class QuickLaunchModel: ObservableObject {
         }
         performSearch()
         panelController?.showPanel()
+    }
+
+    /// Other modules ask the palette to open one of their screens (ModuleNotifications.openPaletteScreen / hidePalette).
+    private func observePaletteRequests() {
+        NotificationCenter.default.publisher(for: ModuleNotifications.openPaletteScreen)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] note in
+                guard let id = note.object as? String else { return }
+                MainActor.assumeIsolated { self?.openPaletteScreen(commandID: id) }
+            }
+            .store(in: &paletteRequests)
+        NotificationCenter.default.publisher(for: ModuleNotifications.hidePalette)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in MainActor.assumeIsolated { self?.hidePanel() } }
+            .store(in: &paletteRequests)
+    }
+
+    func openPaletteScreen(commandID: String) {
+        guard let command = commands.first(where: { $0.id == commandID }), command.screen != nil else { return }
+        openScreen(of: command)  // before showPanel so the panel opens at the screen's size
+        if !isPanelVisible { showPanel() }
     }
 
     func hidePanel() {

@@ -16,11 +16,11 @@ class QuickLaunchPanelController {
     init(model: QuickLaunchModel) {
         self.model = model
         screenObserver = model.$activeScreen
-            .map { $0 != nil }
+            .map { $0.map { $0.screenWidth ?? 380 } }
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] showingScreen in
-                self?.applyLayout(showingScreen: showingScreen)
+            .sink { [weak self] screenWidth in
+                self?.applyLayout(screenWidth: screenWidth)
             }
     }
 
@@ -29,6 +29,10 @@ class QuickLaunchPanelController {
             createPanel()
         }
         positionPanel()
+        // Opened straight into a screen: size the panel now instead of a tick later.
+        if let width = MainActor.assumeIsolated({ model.activeScreen.map { $0.screenWidth ?? 380 } }) {
+            applyLayout(screenWidth: width)
+        }
         NSApp.activate(ignoringOtherApps: true)
         panel?.makeKeyAndOrderFront(nil)
         installMonitors()
@@ -129,14 +133,14 @@ class QuickLaunchPanelController {
         panel.invalidateShadow()
     }
 
-    /// Module screens use a 380 x up-to-640 pt panel (the views are designed for a 340 pt popover).
-    private func applyLayout(showingScreen: Bool) {
+    /// Module screens use a 380 x up-to-640 pt panel (the views are designed for a 340 pt popover);
+    /// wide palette-style screens (`PaletteCommand.screenWidth`) are up to 480 pt tall.
+    private func applyLayout(screenWidth: CGFloat?) {
         guard let panel else { return }
-        if showingScreen {
+        if let width = screenWidth {
             let old = panel.frame
             let visible = (panel.screen ?? NSScreen.main)?.visibleFrame ?? old
-            let width: CGFloat = 380
-            let height = min(640, visible.height - 40)
+            let height = min(width > 380 ? 480 : 640, visible.height - 40)
             let y = visible.midY - height / 2
             panel.setFrame(NSRect(x: visible.midX - width / 2, y: y, width: width, height: height), display: true)
             panel.invalidateShadow()
@@ -176,8 +180,9 @@ class QuickLaunchPanelController {
             let showingScreen = MainActor.assumeIsolated { self.model.activeScreen != nil }
             switch event.keyCode {
             case 53: // Escape
+                let wideScreen = MainActor.assumeIsolated { self.model.activeScreen?.screenWidth != nil }
                 Task { @MainActor in
-                    if showingScreen { self.model.closeScreen() } else { self.hidePanel() }
+                    if showingScreen && !wideScreen { self.model.closeScreen() } else { self.hidePanel() }
                 }
                 return nil
             case 33 where isCommand && showingScreen: // ⌘[
@@ -247,7 +252,11 @@ struct QuickLaunchPanelContent: View {
 
     // MARK: - Module screen
 
+    @ViewBuilder
     private func moduleScreen(_ command: PaletteCommand) -> some View {
+        if command.screenWidth != nil {
+            command.screen?({ model.closeScreen() })
+        } else {
         VStack(spacing: 0) {
             FeatureHeader(title: command.title, onBack: { model.closeScreen() })
             .padding(.horizontal, 14)
@@ -261,6 +270,7 @@ struct QuickLaunchPanelContent: View {
         }
         .frame(width: 380)
         .frame(maxHeight: .infinity)
+        }
     }
 
     // MARK: - Palette list

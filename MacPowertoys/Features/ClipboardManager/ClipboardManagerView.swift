@@ -214,6 +214,13 @@ struct ClipboardItemRow: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            model.paste(item) {
+                // Hide the menu-bar popover so the previous app can take focus back.
+                NSApp.windows.first { String(describing: type(of: $0)).contains("MenuBarExtraWindow") }?.close()
+            }
+        }
         .accessibilityAction(named: "Copy") { model.copyItemToPasteboard(item) }
         .accessibilityAction(named: item.isPinned ? "Unpin" : "Pin") { model.togglePin(item) }
         .accessibilityAction(named: "Delete") { model.deleteItem(item) }

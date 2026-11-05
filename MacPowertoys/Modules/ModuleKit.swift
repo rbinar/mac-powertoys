@@ -20,6 +20,10 @@ struct HubGroup: Hashable {
 enum ModuleNotifications {
     /// Posted with the module id as `object`; the hub navigates to that module's screen.
     static let show = Notification.Name("MacPowerToys.showModule")
+    /// Posted with a palette command id as `object`; Quick Launch shows the panel and opens that command's screen.
+    static let openPaletteScreen = Notification.Name("MacPowerToys.openPaletteScreen")
+    /// Posted without an object; Quick Launch hides its panel.
+    static let hidePalette = Notification.Name("MacPowerToys.hidePalette")
 }
 
 struct ModuleContext {
@@ -101,7 +105,7 @@ extension ModuleDescriptor {
                 toggle: toggle.map { kp in Binding(get: { m[keyPath: kp] }, set: { m[keyPath: kp] = $0 }) },
                 screen: screen,
                 card: { open in AnyView(HubCardHost(model: m, descriptor: self, open: open)) },
-                commands: { commands(m).map { var c = $0; c.screen = screen; return c } },
+                commands: { commands(m).map { var c = $0; if c.screen == nil { c.screen = screen }; return c } },
                 stop: { stop(m) },
                 attachment: attach(m, ctx))
         }
