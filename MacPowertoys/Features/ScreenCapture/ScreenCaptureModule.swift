@@ -5,7 +5,10 @@ extension ScreenCaptureModel: ModuleModel {}
 enum ScreenCaptureModule {
     @MainActor static let module = ModuleDescriptor(
         id: "screenCapture",
+        title: "Screen Capture", icon: "camera.viewfinder",
         make: { ScreenCaptureModel() },
+        status: { $0.isEnabled ? "⌃⌥4 ready" : "Off" },
+        toggle: \.isEnabled,
         view: { AnyView(ScreenCaptureView(onBack: $0)) },
         commands: { m in [
             PaletteCommand(id: "screenCapture.start", title: "Screen Capture", subtitle: "Select an area, copy to clipboard", symbol: "camera.viewfinder", group: .screenTools, shortcut: "⌃⌥4", keywords: ["screenshot"], run: { m.startCapture() })

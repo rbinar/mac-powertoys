@@ -312,7 +312,7 @@ final class ClipboardManagerModel: ObservableObject {
                 GetEventParameter(theEvent, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &firedID)
                 guard firedID.signature == UTGetOSTypeFromString("CBMG" as CFString) else { return OSStatus(eventNotHandledErr) }
                 Task { @MainActor in
-                    NotificationCenter.default.post(name: NSNotification.Name("ShowClipboardManager"), object: nil)
+                    NotificationCenter.default.post(name: ModuleNotifications.show, object: "clipboardManager")
                 }
                 return noErr
             }

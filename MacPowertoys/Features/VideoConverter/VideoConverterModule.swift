@@ -5,6 +5,7 @@ extension VideoConverterModel: ModuleModel {}
 enum VideoConverterModule {
     @MainActor static let module = ModuleDescriptor(
         id: "videoConverter",
+        title: "Video Converter", icon: "film",
         make: { VideoConverterModel() },
         view: { AnyView(VideoConverterView(onBack: $0)) },
         commands: { m in [

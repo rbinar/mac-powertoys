@@ -185,7 +185,7 @@ final class ImageOptimizerModel: ObservableObject {
         if response == .OK {
             addImages(panel.urls)
         }
-        NotificationCenter.default.post(name: NSNotification.Name("ShowImageOptimizer"), object: nil)
+        NotificationCenter.default.post(name: ModuleNotifications.show, object: "imageOptimizer")
     }
 
     func addImages(_ urls: [URL]) {

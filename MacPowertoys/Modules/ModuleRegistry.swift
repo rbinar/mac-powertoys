@@ -10,14 +10,18 @@ final class ModuleRegistry: ObservableObject {
     private(set) var paletteCommands: [PaletteCommand] = []
     private let commandSubject = CurrentValueSubject<[PaletteCommand], Never>([])
 
-    init(catalog: [AnyModule]) {
+    /// `paletteOrder` lists module ids in palette order; modules not in it follow in catalog order.
+    init(catalog: [AnyModule], paletteOrder: [String] = ModuleCatalog.paletteOrder) {
         precondition(Set(catalog.map(\.id)).count == catalog.count, "Duplicate module id")
         self.catalog = catalog
         // Delivered on the next main-queue turn so QuickLaunch is not mutated during a view update.
         let context = ModuleContext(
             paletteCommands: commandSubject.receive(on: DispatchQueue.main).eraseToAnyPublisher())
         loaded = catalog.map { $0.load(context) }
-        paletteCommands = loaded.flatMap { $0.commands() }
+        let rank = Dictionary(uniqueKeysWithValues: paletteOrder.enumerated().map { ($1, $0) })
+        paletteCommands = loaded.enumerated()
+            .sorted { (rank[$0.element.id] ?? Int.max, $0.offset) < (rank[$1.element.id] ?? Int.max, $1.offset) }
+            .flatMap { $0.element.commands() }
         commandSubject.send(paletteCommands)
     }
 
@@ -26,8 +30,11 @@ final class ModuleRegistry: ObservableObject {
         for module in loaded { module.stop() }
     }
 
-    /// Makes every module's model available to `view` and its descendants via `@EnvironmentObject`.
-    func inject(into view: AnyView) -> AnyView {
-        loaded.reduce(view) { $1.inject($0) }
+    func module(_ id: String) -> LoadedModule? { loaded.first { $0.id == id } }
+    func meta(_ id: String) -> AnyModule? { catalog.first { $0.id == id } }
+
+    /// Hub cards in catalog order, grouped modules collapsed into one group item.
+    var hubItems: [HubItem] {
+        HubItem.layout(catalog.filter { meta in loaded.contains { $0.id == meta.id } })
     }
 }

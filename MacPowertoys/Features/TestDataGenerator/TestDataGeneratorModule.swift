@@ -5,6 +5,7 @@ extension TestDataGeneratorModel: ModuleModel {}
 enum TestDataGeneratorModule {
     @MainActor static let module = ModuleDescriptor(
         id: "testDataGenerator",
+        title: "Test Data Generator", icon: "wand.and.stars",
         make: { TestDataGeneratorModel() },
         view: { AnyView(TestDataGeneratorView(onBack: $0)) },
         commands: { m in [

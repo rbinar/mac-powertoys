@@ -44,7 +44,8 @@ private struct AppRootView: View {
     let registry: ModuleRegistry
 
     var body: some View {
-        registry.inject(into: AnyView(ContentView()))
+        ContentView()
+            .environmentObject(registry)
             .frame(width: 340, height: 640)
             .padding(.vertical, 8)
     }

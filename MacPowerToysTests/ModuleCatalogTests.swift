@@ -16,4 +16,19 @@ final class ModuleCatalogTests: XCTestCase {
         XCTAssertEqual(ids.count, Set(ids).count, "module ids must be unique")
         XCTAssertEqual(Set(ids), Self.expectedModuleIDs)
     }
+
+    func testHubOrderMatchesTheLegacyFeatureCards() {
+        let titles = HubItem.layout(ModuleCatalog.all).map { item -> String in
+            switch item {
+            case .module(let id): return ModuleCatalog.all.first { $0.id == id }!.title
+            case .group(let group, _): return group.title
+            }
+        }
+        XCTAssertEqual(titles, [
+            "Color Picker", "Screen Ruler", "ZoomIt", "Mouse Utilities", "Mouse Jiggler", "Awake", "Pomodoro Timer",
+            "Clipboard Manager", "Markdown Preview", "Screen Annotation", "Video Converter", "PDF Tools", "Quick Launch",
+            "Test Data Generator", "Speech to Text", "Port Manager", "System Info", "Screen Capture", "Image Optimizer",
+            "GitHub Notifier",
+        ])
+    }
 }

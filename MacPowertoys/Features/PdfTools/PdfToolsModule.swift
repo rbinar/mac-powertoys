@@ -5,6 +5,7 @@ extension PdfToolsModel: ModuleModel {}
 enum PdfToolsModule {
     @MainActor static let module = ModuleDescriptor(
         id: "pdfTools",
+        title: "PDF Tools", icon: "doc.badge.gearshape",
         make: { PdfToolsModel() },
         view: { AnyView(PdfToolsView(onBack: $0)) },
         commands: { m in [

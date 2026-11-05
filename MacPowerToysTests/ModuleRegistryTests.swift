@@ -23,9 +23,9 @@ final class ModuleRegistryTests: XCTestCase {
         func stopMonitoring() {}
     }
 
-    private func module(_ id: String, commandIDs: [String] = [], attach: ((ModuleContext) -> AnyCancellable?)? = nil) -> AnyModule {
+    private func module(_ id: String, group: HubGroup? = nil, commandIDs: [String] = [], attach: ((ModuleContext) -> AnyCancellable?)? = nil) -> AnyModule {
         ModuleDescriptor(
-            id: id,
+            id: id, title: id, icon: "circle", group: group,
             make: { [unowned self] in made[id, default: 0] += 1; return FakeModel(id) },
             view: { _ in AnyView(EmptyView()) },
             commands: { _ in commandIDs.map { PaletteCommand(id: $0, title: $0, subtitle: "", symbol: "circle", group: .tools) } },
@@ -72,5 +72,29 @@ final class ModuleRegistryTests: XCTestCase {
         wait(for: [received], timeout: 2)
         XCTAssertEqual(got, ["a.1"])
         withExtendedLifetime(registry) {}
+    }
+
+    private func hubDescription(_ items: [HubItem]) -> [String] {
+        items.map { item in
+            switch item {
+            case .module(let id): return id
+            case .group(let group, let ids): return "\(group.id):" + ids.joined(separator: ",")
+            }
+        }
+    }
+
+    func testHubItemsPlaceGroupAtFirstChildPosition() {
+        let g = HubGroup.mouseUtilities
+        let registry = ModuleRegistry(catalog: [
+            module("a"), module("c1", group: g), module("b"), module("c2", group: g), module("d"),
+        ])
+        XCTAssertEqual(hubDescription(registry.hubItems), ["a", "mouseUtilities:c1,c2", "b", "d"])
+    }
+
+    func testHubItemsHideGroupWithoutChildren() {
+        let g = HubGroup.mouseUtilities
+        let all = [module("a"), module("c1", group: g), module("b")]
+        XCTAssertEqual(hubDescription(HubItem.layout(all.filter { $0.group == nil })), ["a", "b"])
+        XCTAssertEqual(hubDescription(HubItem.layout(all)), ["a", "mouseUtilities:c1", "b"])
     }
 }
