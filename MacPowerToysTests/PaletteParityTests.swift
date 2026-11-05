@@ -24,7 +24,7 @@ final class PaletteParityTests: XCTestCase {
         "awake.toggle", "mouseJiggler.toggle", "crosshairs.toggle", "mouseHighlighter.toggle", "cursorWrap.toggle", "pomodoro.toggle",
         "clipboardManager.open", "pdfTools.open", "imageOptimizer.open", "videoConverter.open", "markdownPreview.open",
         "speechToText.open", "portManager.open", "systemInfo.open", "testDataGenerator.open", "gitHubNotifier.open",
-        "textExtractor.start",
+        "textExtractor.start", "fileLocksmith.open",
     ]
 
     func testGeneratedCommandsMatchTheHandWrittenPaletteByIDAndOrder() {

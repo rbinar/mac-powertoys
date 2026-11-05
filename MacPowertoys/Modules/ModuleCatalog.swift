@@ -27,6 +27,7 @@ enum ModuleCatalog {
         ImageOptimizerModule.module,
         GitHubNotifierModule.module,
         TextExtractorModule.module,
+        FileLocksmithModule.module,
     ]
 
     /// Palette order shipped in 2.2.0, kept stable. Modules missing here follow in catalog order.
