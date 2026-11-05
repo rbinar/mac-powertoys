@@ -4,6 +4,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · [SemVer](htt
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-05
+
+### Added
+- Advanced Paste (⌃⌥⇧V): paste clipboard text as plain, Markdown, JSON or changed case.
+- PowerRename: batch rename with preview, conflict checks and undo.
+- Archive: extract ZIP/7z/RAR and create ZIP/7z, with optional password (uses 7zz and unar).
+- Download Manager: parallel https downloads with pause/resume; optional yt-dlp video downloads.
+- Text Extractor (⌃⌥T): OCR a screen area and copy the text.
+- File Locksmith: find and quit processes that lock a file or folder.
+
+### Changed
+- Clipboard history (⌃⌥V) opens as a Quick Launch palette and pastes into the previous app.
+- Esc goes back on feature screens.
+- Hub, navigation and deep-links are driven by the module registry.
+
 ## [2.2.0] - 2026-11-02
 
 ### Added

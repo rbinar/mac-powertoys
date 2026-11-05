@@ -1,35 +1,28 @@
-# ⚙️ Mac PowerToys v2.2.0
+# ⚙️ Mac PowerToys v2.3.0
 
 A collection of utilities for macOS, accessible from your menu bar.
 
-## ✨ What's New in v2.2.0
+## ✨ What's New in v2.3.0
 
 ### New
-- **Command palette**: press `⌃⌥Space` to search tools, modes, installed apps and your own shortcuts.
-- **Launch at Login** toggle in the hub.
-- **Settings persistence**: tool settings are kept between launches.
-- **New app icon** and a refreshed interface: system font, consistent module headers (the whole "‹ Title" is the back button, `⌘[` also goes back), Reduce Motion support and accessibility improvements.
+- **Advanced Paste** (`⌃⌥⇧V`): paste clipboard text as plain text, Markdown, pretty or minified JSON, UPPERCASE, lowercase or Title Case.
+- **PowerRename**: rename many files at once with a live preview, conflict checks and undo.
+- **Archive**: extract ZIP, 7z and RAR archives; create ZIP and 7z archives, optionally with a password.
+- **Download Manager**: download https links over parallel connections with pause, resume and cancel; optional video downloads with yt-dlp.
+- **Text Extractor** (`⌃⌥T`): drag over any area of the screen to copy its text.
+- **File Locksmith**: see which processes are using a file or folder and quit them.
 
 ### Improvements
-- **Screen Ruler** shows real device pixels on Retina displays and can show inches, centimeters or millimeters.
-- Light mode colors are fixed.
-
-### Bug Fixes
-- Global shortcuts no longer stay inactive until the menu bar popover is opened.
-- Overlays appear on the correct display on multi-monitor setups.
-- **Screen Annotation**: drawings stay on the display they were drawn on.
-- **Screen Capture**: `Esc` cancels the selection.
-- **Command palette** opens on the screen under the cursor.
-- Many smaller behavior and stability fixes.
-
-### Removed
-- **Webhook Notifier**: it depended on a third-party or self-hosted relay server.
+- **Clipboard history** (`⌃⌥V`) opens as a wide palette with search and preview; `Return` pastes into the app you were using.
+- `Esc` goes back on tool screens.
 
 ## 📋 Requirements
 
 - **macOS 15.5 or later**
 - Apple Silicon or Intel Mac
 - FFmpeg (optional, for Video Converter; installable via Homebrew from within the app)
+- `sevenzip` and `unar` (optional, for Archive: `brew install sevenzip unar`)
+- `yt-dlp` (optional, for video downloads: `brew install yt-dlp`)
 
 ## 🚀 Installation
 
@@ -41,7 +34,7 @@ brew install --cask mac-powertoys
 ```
 
 **DMG**
-1. Download `MacPowerToys-v2.2.0.dmg` from the assets below
+1. Download `MacPowerToys-v2.3.0.dmg` from the assets below
 2. Open the DMG and drag `MacPowerToys.app` to your Applications folder
 3. Launch it; a wrench-and-screwdriver icon appears in your menu bar
 
