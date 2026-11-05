@@ -30,6 +30,7 @@ enum ModuleCatalog {
         FileLocksmithModule.module,
         AdvancedPasteModule.module,
         PowerRenameModule.module,
+        ArchiveModule.module,
     ]
 
     /// Palette order shipped in 2.2.0, kept stable. Modules missing here follow in catalog order.
