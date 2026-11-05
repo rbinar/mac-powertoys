@@ -28,6 +28,7 @@ enum ModuleCatalog {
         GitHubNotifierModule.module,
         TextExtractorModule.module,
         FileLocksmithModule.module,
+        AdvancedPasteModule.module,
     ]
 
     /// Palette order shipped in 2.2.0, kept stable. Modules missing here follow in catalog order.

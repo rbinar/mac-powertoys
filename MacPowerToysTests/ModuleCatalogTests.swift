@@ -8,7 +8,7 @@ final class ModuleCatalogTests: XCTestCase {
         "awake", "mouseJiggler", "clipboardManager", "markdownPreview", "screenAnnotation", "speechToText",
         "videoConverter", "pomodoroTimer", "testDataGenerator", "portManager", "systemInfo", "quickLaunch",
         "pdfTools", "screenCapture", "gitHubNotifier", "imageOptimizer",
-        "textExtractor", "fileLocksmith",
+        "textExtractor", "fileLocksmith", "advancedPaste",
     ]
 
     // Reads only AnyModule metadata; no model is created.
@@ -29,7 +29,7 @@ final class ModuleCatalogTests: XCTestCase {
             "Color Picker", "Screen Ruler", "ZoomIt", "Mouse Utilities", "Mouse Jiggler", "Awake", "Pomodoro Timer",
             "Clipboard Manager", "Markdown Preview", "Screen Annotation", "Video Converter", "PDF Tools", "Quick Launch",
             "Test Data Generator", "Speech to Text", "Port Manager", "System Info", "Screen Capture", "Image Optimizer",
-            "GitHub Notifier", "Text Extractor", "File Locksmith",
+            "GitHub Notifier", "Text Extractor", "File Locksmith", "Advanced Paste",
         ])
     }
 }
