@@ -131,7 +131,10 @@ final class QuickLaunchModel: ObservableObject {
 
     /// Module commands, set by the module registry.
     var commands: [PaletteCommand] = [] {
-        didSet { performSearch() }
+        didSet {
+            if let active = activeScreen, !commands.contains(where: { $0.id == active.id }) { activeScreen = nil }
+            performSearch()
+        }
     }
     @Published private(set) var recentCommandIDs: [String] = UserDefaults.standard.stringArray(forKey: "quickLaunch.recentCommands") ?? []
     @Published private(set) var sections: [PaletteSection] = []

@@ -67,6 +67,53 @@ struct GroupHubView: View {
     }
 }
 
+/// Settings screen: one on/off switch per module, in catalog order.
+struct ModulesSettingsView: View {
+    @EnvironmentObject var registry: ModuleRegistry
+    let onBack: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FeatureHeader(title: "Modules", onBack: onBack)
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(registry.catalog, id: \.id) { meta in
+                        HStack(spacing: 10) {
+                            Image(systemName: meta.icon)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 28, height: 28)
+                                .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.14)))
+                                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.primary.opacity(0.18), lineWidth: 0.8))
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(meta.title)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                if let group = meta.group {
+                                    Text(group.title)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Toggle("Enable \(meta.title)", isOn: Binding(
+                                get: { registry.isEnabled(meta.id) },
+                                set: { registry.setEnabled(meta.id, $0) }
+                            ))
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .controlSize(.small)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 private struct GroupRow: View {
     let meta: AnyModule
     let loaded: LoadedModule

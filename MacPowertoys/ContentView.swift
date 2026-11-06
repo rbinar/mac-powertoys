@@ -141,6 +141,7 @@ struct ContentView: View {
     enum Route: Hashable {
         case module(String)
         case group(String)
+        case settings
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -160,6 +161,18 @@ struct ContentView: View {
             guard let id = note.object as? String, registry.module(id) != nil else { return }
             go(.module(id))
             NSApp.activate(ignoringOtherApps: true)
+        }
+        .onReceive(registry.objectWillChange) { _ in
+            // objectWillChange fires before the mutation; check on the next main-queue turn.
+            DispatchQueue.main.async { resetRouteIfGone() }
+        }
+    }
+
+    private func resetRouteIfGone() {
+        switch route {
+        case .module(let id) where registry.module(id) == nil: route = nil
+        case .group(let id) where groupItem(id) == nil: route = nil
+        default: break
         }
     }
 
@@ -236,6 +249,10 @@ struct ContentView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Spacer()
+                Button { go(.settings) } label: { Image(systemName: "gearshape") }
+                    .buttonStyle(.borderless)
+                    .help("Modules")
+                    .accessibilityLabel("Modules")
                 Button {
                     NSApplication.shared.terminate(nil)
                 } label: {
@@ -253,6 +270,8 @@ struct ContentView: View {
     @ViewBuilder
     private func screen(for route: Route) -> some View {
         switch route {
+        case .settings:
+            ModulesSettingsView(onBack: { go(nil) })
         case .module(let id):
             if let module = registry.module(id) {
                 // Grouped modules go back to their group screen.

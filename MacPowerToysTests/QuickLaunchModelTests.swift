@@ -1,4 +1,5 @@
 import XCTest
+import SwiftUI
 @testable import MacPowerToys
 
 // Window behaviour (panel show/hide, resizing, key handling) is intentionally not tested here.
@@ -114,5 +115,18 @@ final class QuickLaunchModelTests: XCTestCase {
         for command in model.commands { model.runCommand(command) }
 
         XCTAssertEqual(model.recentCommandIDs, ["r.6", "r.5", "r.4", "r.3", "r.2"])
+    }
+
+    func testOpenScreenClosesWhenItsCommandIsRemoved() {
+        var ports = model.commands.first { $0.id == "t.ports" }!
+        ports.screen = { _ in AnyView(EmptyView()) }
+        model.openScreen(of: ports)
+        XCTAssertEqual(model.activeScreen?.id, "t.ports")
+
+        model.commands = model.commands.filter { $0.id != "t.zoom" }
+        XCTAssertEqual(model.activeScreen?.id, "t.ports", "an unrelated removal keeps the screen")
+
+        model.commands = model.commands.filter { $0.id != "t.ports" }
+        XCTAssertNil(model.activeScreen)
     }
 }
